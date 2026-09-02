@@ -167,15 +167,16 @@ write-эндпоинты сделаны там же и с той же полит
 
 ## Срез
 
-- **Phase 0 завершена (2026-09-02).** Бэкенд-блокеры `G-1…G-6` реализованы; codegen-каркас
-  `platform-web` поднят: `PLT-003` / `PLT-005` / `PLT-006` / `PLT-015` → Done, клиенты
-  `education` + `identity` сгенерированы, `tsc` чист. Остаток Phase 1: `eslint.config.js`
-  (`PLT-001`), `AppProviders` (`PLT-002`), `shared/ui` + `AppLayout` (`PLT-007`),
-  `AppRouter` + гварды + `LoginPage` (`PLT-008` / `PLT-004`).
-- **Репозитории (2026-09-03).** Бэк: `Education/` (github.com/SacarliteST/Education),
-  ветка `master`, коммит `252c26f` — G-1…G-6. Фронт: `Frontend/platform-web/`
-  (`git init`, ветка `master`), коммит `06a596c` — каркас. Не запушено. Корень `SQLTren/`
-  намеренно не git.
+- **Phase 0 закрыта полностью (2026-09-03).** Гэп-анализ, блокеры `G-1…G-6` (реализованы,
+  77/77), решения зафиксированы, БД в Docker, codegen-каркас + клиенты `education` /
+  `identity` (`tsc` чист), `AGENTS.md` + `TECH_DEBT.md`, репозитории заведены, планы
+  сведены в `docs/`. Done по картам: `PLT-003` / `PLT-005` / `PLT-006` / `PLT-015` + все `G-*`.
+- **Репозитории.** Бэк: `Education/` (github.com/SacarliteST/Education), ветка `master`,
+  коммит `252c26f` — G-1…G-6. Фронт: `Frontend/platform-web/` (`git init`, ветка `master`),
+  коммиты `06a596c` → `2069591` → `06ff67d`. Не запушено. Корень `SQLTren/` намеренно не git.
+- **Phase 1 — остаток:** `eslint.config.js` (`PLT-001`), `AppProviders` (`PLT-002`),
+  `shared/ui` + `AppLayout` (`PLT-007`), `AppRouter` + гварды + `LoginPage`
+  (`PLT-008` / `PLT-004`), live smoke каркаса (`PLT-016`). Стартует по команде.
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

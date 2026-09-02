@@ -1,0 +1,12 @@
+# deps / build
+node_modules/
+dist/
+*.local
+*.tsbuildinfo
+node_modules/.tmp/
+
+# editors / os
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

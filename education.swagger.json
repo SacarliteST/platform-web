@@ -1,0 +1,4030 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Education.Web | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5135/"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Проверка работоспособности API",
+        "description": "Возвращает успешный ответ, если приложение запущено.",
+        "operationId": "Health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/student/ping": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Проверка доступа студента",
+        "description": "Проверяет, что Bearer-токен содержит роль Student.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/teacher/ping": {
+      "get": {
+        "tags": [
+          "Teacher"
+        ],
+        "summary": "Проверка доступа преподавателя",
+        "description": "Проверяет, что Bearer-токен содержит роль Teacher.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/ping": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Проверка доступа администратора",
+        "description": "Проверяет, что Bearer-токен содержит роль Admin.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/profiles": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Получение профилей пользователей",
+        "description": "Возвращает связанные профили пользователей для администрирования.",
+        "operationId": "GetAdminProfiles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminProfileResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Создание связанного профиля",
+        "description": "Создаёт legacy-профиль пользователя и связывает его с identity-пользователем.",
+        "operationId": "CreateAdminProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdminProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/profiles/{legacyUserId}": {
+      "put": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Обновление профиля пользователя",
+        "description": "Обновляет данные legacy-профиля пользователя.",
+        "operationId": "UpdateAdminProfile",
+        "parameters": [
+          {
+            "name": "legacyUserId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/profiles/{legacyUserId}/deactivate": {
+      "put": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Деактивация связи профиля",
+        "description": "Отключает связь legacy-профиля с identity-пользователем.",
+        "operationId": "DeactivateAdminProfile",
+        "parameters": [
+          {
+            "name": "legacyUserId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/assignable-students": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Получение студентов для назначения на курс",
+        "description": "Возвращает студентов с признаком назначения на выбранный курс.",
+        "operationId": "GetCourseAssignableStudents",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssignableStudentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/assignable-students": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Получение студентов для назначения на практику",
+        "description": "Возвращает студентов с признаком назначения на выбранную практику.",
+        "operationId": "GetPracticalAssignableStudents",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssignableStudentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/students": {
+      "put": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Назначение студентов на курс",
+        "description": "Заменяет набор студентов, назначенных на выбранный курс.",
+        "operationId": "SetCourseStudents",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseStudentsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/students": {
+      "put": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Назначение студентов на практику",
+        "description": "Заменяет набор студентов, назначенных на выбранный практический материал.",
+        "operationId": "SetPracticalStudents",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePracticalStudentsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/teacher": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Получение курсов преподавателя",
+        "description": "Возвращает список курсов, доступных текущему преподавателю.",
+        "operationId": "GetTeacherCourses",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/student": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Получение курсов студента",
+        "description": "Возвращает список курсов, назначенных текущему студенту.",
+        "operationId": "GetStudentCourses",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses": {
+      "post": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Создание курса",
+        "description": "Создаёт новый курс от имени текущего преподавателя.",
+        "operationId": "CreateCourse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}": {
+      "delete": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Удаление курса",
+        "description": "Удаляет курс, если он принадлежит текущему преподавателю.",
+        "operationId": "DeleteCourse",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/modules": {
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Создание модуля",
+        "description": "Создаёт модуль внутри курса преподавателя.",
+        "operationId": "CreateModule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/modules/{moduleId}": {
+      "delete": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Удаление модуля",
+        "description": "Удаляет модуль курса преподавателя.",
+        "operationId": "DeleteModule",
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/modules/{moduleId}/theories": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Получение теории модуля",
+        "description": "Возвращает теоретические материалы выбранного модуля.",
+        "operationId": "GetModuleTheories",
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TheoryListItemResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/modules": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Получение модулей курса",
+        "description": "Возвращает модули выбранного курса.",
+        "operationId": "GetCourseModules",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/modules/{moduleId}/practicals": {
+      "get": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Получение практик модуля",
+        "description": "Возвращает практические задания выбранного модуля.",
+        "operationId": "GetModulePracticals",
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PracticalResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals": {
+      "post": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Создание практики",
+        "description": "Создаёт практическое задание внутри модуля преподавателя.",
+        "operationId": "CreatePractical",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePracticalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/publish": {
+      "put": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Публикация практики",
+        "description": "Открывает практическое задание для назначенных студентов.",
+        "operationId": "PublishPractical",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}": {
+      "delete": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Удаление практики",
+        "description": "Удаляет практическое задание, если оно принадлежит курсу текущего преподавателя.",
+        "operationId": "DeletePractical",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/tasks": {
+      "get": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Получение заданий практики",
+        "description": "Возвращает задачи, входящие в практическое задание.",
+        "operationId": "GetPracticalTasks",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Создание задания практики",
+        "description": "Создаёт задание внутри практического материала текущего преподавателя.",
+        "operationId": "CreatePracticalTask",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{taskId}/text": {
+      "put": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Обновление текста задания практики",
+        "description": "Изменяет текст задания практического материала текущего преподавателя.",
+        "operationId": "UpdatePracticalTaskText",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskTextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{taskId}": {
+      "delete": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Удаление задания практики",
+        "description": "Удаляет задание практического материала текущего преподавателя.",
+        "operationId": "DeletePracticalTask",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/questions": {
+      "get": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Получение настройки вопросов практики",
+        "description": "Возвращает вопросы модуля и признак их включения в тест практики.",
+        "operationId": "GetPracticalQuestionsSetup",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticalQuestionsSetupResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Настройка вопросов практики",
+        "description": "Обновляет набор вопросов, используемых в тесте практического задания.",
+        "operationId": "ConfigurePracticalQuestions",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigurePracticalQuestionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/modules/{moduleId}/questions": {
+      "get": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Получение вопросов модуля",
+        "description": "Возвращает вопросы, созданные преподавателем для выбранного модуля.",
+        "operationId": "GetModuleQuestions",
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/questions": {
+      "post": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Создание вопроса",
+        "description": "Создаёт вопрос для тестирования внутри модуля преподавателя.",
+        "operationId": "CreateQuestion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/questions/{questionId}": {
+      "put": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Обновление вопроса",
+        "description": "Изменяет текст, тело, ответ, вес и тип вопроса.",
+        "operationId": "UpdateQuestion",
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Удаление вопроса",
+        "description": "Удаляет вопрос преподавателя из банка вопросов.",
+        "operationId": "DeleteQuestion",
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/{theoryId}": {
+      "get": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Получение текста теории",
+        "description": "Возвращает заголовок и текст теоретического материала.",
+        "operationId": "GetTheory",
+        "parameters": [
+          {
+            "name": "theoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheoryTextResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Удаление теоретического материала",
+        "description": "Удаляет теоретический материал преподавателя.",
+        "operationId": "DeleteTheory",
+        "parameters": [
+          {
+            "name": "theoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/{theoryId}/docs": {
+      "get": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Получение документов теории",
+        "description": "Возвращает документы, прикреплённые к теоретическому материалу.",
+        "operationId": "GetTheoryDocuments",
+        "parameters": [
+          {
+            "name": "theoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TheoryDocumentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/{theoryId}/links": {
+      "get": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Получение ссылок теории",
+        "description": "Возвращает внешние ссылки, прикреплённые к теоретическому материалу.",
+        "operationId": "GetTheoryLinks",
+        "parameters": [
+          {
+            "name": "theoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TheoryLinkResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/theories": {
+      "post": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Создание теоретического материала",
+        "description": "Создаёт теоретический материал внутри модуля преподавателя.",
+        "operationId": "CreateTheory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTheoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheoryListItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/{theoryId}/title": {
+      "put": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Обновление заголовка теории",
+        "description": "Изменяет название теоретического материала.",
+        "operationId": "UpdateTheoryTitle",
+        "parameters": [
+          {
+            "name": "theoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTheoryTitleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/{theoryId}/text": {
+      "put": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Обновление текста теории",
+        "description": "Изменяет текст теоретического материала.",
+        "operationId": "UpdateTheoryText",
+        "parameters": [
+          {
+            "name": "theoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTheoryTextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/docs": {
+      "post": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Загрузка документа теории",
+        "description": "Добавляет документ к теоретическому материалу преподавателя.",
+        "operationId": "CreateTheoryDocument",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "theoryMaterialId",
+                  "file"
+                ],
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "theoryMaterialId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "descritpion": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "description": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "$ref": "#/components/schemas/IFormFile"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheoryDocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/docs/{docId}": {
+      "delete": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Удаление документа теории",
+        "description": "Удаляет документ теоретического материала преподавателя.",
+        "operationId": "DeleteTheoryDocument",
+        "parameters": [
+          {
+            "name": "docId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/links": {
+      "post": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Создание ссылки теории",
+        "description": "Добавляет внешнюю ссылку к теоретическому материалу преподавателя.",
+        "operationId": "CreateTheoryLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTheoryLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheoryLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/theories/links/{linkId}": {
+      "delete": {
+        "tags": [
+          "Theories"
+        ],
+        "summary": "Удаление ссылки теории",
+        "description": "Удаляет внешнюю ссылку теоретического материала преподавателя.",
+        "operationId": "DeleteTheoryLink",
+        "parameters": [
+          {
+            "name": "linkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/test-status": {
+      "get": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Получение статуса теста",
+        "description": "Возвращает состояние теста студента по выбранной практике.",
+        "operationId": "GetTestStatus",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/test/start": {
+      "put": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Запуск теста",
+        "description": "Создаёт новую попытку прохождения теста для текущего студента.",
+        "operationId": "StartTest",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartTestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/test/questions": {
+      "get": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Получение вопросов теста",
+        "description": "Возвращает вопросы активной попытки тестирования студента.",
+        "operationId": "GetTestQuestions",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestQuestionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/test/submit": {
+      "post": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Отправка ответов теста",
+        "description": "Сохраняет ответы студента и завершает попытку тестирования.",
+        "operationId": "SubmitTest",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestProtocolResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/protocols": {
+      "get": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Получение протоколов студента",
+        "description": "Возвращает протоколы прохождения теста текущим студентом по выбранной практике.",
+        "operationId": "GetStudentPracticalProtocols",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TestProtocolSummaryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/protocols/teacher": {
+      "get": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Получение протоколов практики",
+        "description": "Возвращает протоколы студентов по практике преподавателя.",
+        "operationId": "GetTeacherPracticalProtocols",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TestProtocolSummaryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/test-results/{testResultId}/protocol": {
+      "get": {
+        "tags": [
+          "TestResults"
+        ],
+        "summary": "Получение протокола теста",
+        "description": "Возвращает детальный протокол прохождения теста.",
+        "operationId": "GetTestProtocol",
+        "parameters": [
+          {
+            "name": "testResultId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestProtocolResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/grade": {
+      "get": {
+        "tags": [
+          "Grades"
+        ],
+        "summary": "Получение оценки за практику",
+        "description": "Возвращает итоговую оценку и поясняющие сообщения по практическому заданию студента.",
+        "operationId": "GetPracticalGrade",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticalGradeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{taskId}/file": {
+      "get": {
+        "tags": [
+          "TaskFiles"
+        ],
+        "summary": "Получение файла задания студента",
+        "description": "Возвращает файл решения текущего студента по задаче.",
+        "operationId": "GetStudentTaskFile",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskFileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "TaskFiles"
+        ],
+        "summary": "Загрузка файла задания студентом",
+        "description": "Загружает или заменяет файл решения текущего студента по задаче.",
+        "operationId": "UploadStudentTaskFile",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskFileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{taskId}/files": {
+      "get": {
+        "tags": [
+          "TaskFiles"
+        ],
+        "summary": "Получение решений по задаче",
+        "description": "Возвращает файлы решений студентов по задаче преподавателя.",
+        "operationId": "GetTeacherTaskFilesByTask",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskFileResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/task-files": {
+      "get": {
+        "tags": [
+          "TaskFiles"
+        ],
+        "summary": "Получение решений по практике",
+        "description": "Возвращает файлы решений студентов по всем задачам практики преподавателя.",
+        "operationId": "GetTeacherTaskFilesByPractical",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskFileResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/task-files/{taskFileId}/comments": {
+      "post": {
+        "tags": [
+          "TaskFiles"
+        ],
+        "summary": "Добавление комментария к решению",
+        "description": "Добавляет комментарий преподавателя к файлу решения студента.",
+        "operationId": "AddTaskFileComment",
+        "parameters": [
+          {
+            "name": "taskFileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTaskFileCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskFileCommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/task-files/{taskFileId}/accept": {
+      "put": {
+        "tags": [
+          "TaskFiles"
+        ],
+        "summary": "Приём решения студента",
+        "description": "Фиксирует оценку и статус принятия файла решения студента.",
+        "operationId": "AcceptTaskFile",
+        "parameters": [
+          {
+            "name": "taskFileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptTaskFileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/files/{storageKey}": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Скачивание файла",
+        "description": "Возвращает файл из хранилища по ключу, если текущий пользователь имеет к нему доступ.",
+        "operationId": "DownloadFile",
+        "parameters": [
+          {
+            "name": "storageKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Получение текущего пользователя",
+        "description": "Возвращает сведения о пользователе, извлечённые из Bearer JWT-токена.",
+        "operationId": "GetCurrentUser",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Завершение локальной сессии Education API",
+        "description": "Education API не хранит cookie-сессию; endpoint оставлен для совместимого выхода клиента после очистки токенов.",
+        "operationId": "LogoutEducationSession",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptTaskFileRequest": {
+        "required": [
+          "grade"
+        ],
+        "type": "object",
+        "properties": {
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Оценка за сдачу.",
+            "format": "int32"
+          }
+        },
+        "description": "Запрос на принятие файла сдачи и выставление оценки."
+      },
+      "AddTaskFileCommentRequest": {
+        "required": [
+          "comment"
+        ],
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "description": "Текст комментария."
+          }
+        },
+        "description": "Запрос на добавление комментария преподавателя к файлу сдачи."
+      },
+      "AdminProfileResponse": {
+        "required": [
+          "legacyUserId",
+          "identityUserId",
+          "login",
+          "firstName",
+          "lastName",
+          "middleName",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "legacyUserId": {
+            "type": "string",
+            "description": "Идентификатор пользователя в учебной системе.",
+            "format": "uuid"
+          },
+          "identityUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Идентификатор пользователя во внешнем identity-сервисе.",
+            "format": "uuid"
+          },
+          "login": {
+            "type": "string",
+            "description": "Отображаемый логин или имя пользователя."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя пользователя."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия пользователя."
+          },
+          "middleName": {
+            "type": "string",
+            "description": "Отчество пользователя."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Признак активной связи с identity-сервисом."
+          }
+        },
+        "description": "Локальный учебный профиль пользователя."
+      },
+      "AssignableStudentResponse": {
+        "required": [
+          "legacyUserId",
+          "fullName",
+          "isAssigned"
+        ],
+        "type": "object",
+        "properties": {
+          "legacyUserId": {
+            "type": "string",
+            "description": "Идентификатор пользователя в учебной системе.",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Полное имя пользователя."
+          },
+          "isAssigned": {
+            "type": "boolean",
+            "description": "Признак текущего назначения."
+          }
+        },
+        "description": "Студент, доступный для назначения на курс или практический материал."
+      },
+      "AuthMeResponse": {
+        "required": [
+          "userId",
+          "email",
+          "name",
+          "roles",
+          "isAuthenticated"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Идентификатор пользователя во внешнем identity-сервисе.",
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Адрес электронной почты пользователя из токена."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Отображаемое имя пользователя из токена."
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Роли пользователя из токена."
+          },
+          "isAuthenticated": {
+            "type": "boolean",
+            "description": "Признак успешной аутентификации пользователя."
+          }
+        },
+        "description": "Данные текущего пользователя, полученные из JWT-токена."
+      },
+      "ConfigurePracticalQuestionsRequest": {
+        "required": [
+          "questionIds",
+          "triesCount",
+          "percentForFive",
+          "percentForFour",
+          "percentForThree"
+        ],
+        "type": "object",
+        "properties": {
+          "questionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "triesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "percentForFive": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "percentForFour": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "percentForThree": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Запрос на настройку вопросов и порогов оценивания практического материала."
+      },
+      "CourseResponse": {
+        "required": [
+          "id",
+          "date",
+          "description",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Данные курса, возвращаемые API системы обучения."
+      },
+      "CreateAdminProfileRequest": {
+        "required": [
+          "identityUserId",
+          "login",
+          "firstName",
+          "lastName",
+          "middleName"
+        ],
+        "type": "object",
+        "properties": {
+          "identityUserId": {
+            "type": "string",
+            "description": "Идентификатор пользователя во внешнем identity-сервисе.",
+            "format": "uuid"
+          },
+          "login": {
+            "type": "string",
+            "description": "Отображаемый логин или имя пользователя."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя пользователя."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия пользователя."
+          },
+          "middleName": {
+            "type": "string",
+            "description": "Отчество пользователя."
+          }
+        },
+        "description": "Запрос на создание локального учебного профиля и связи с identity-пользователем."
+      },
+      "CreateCourseRequest": {
+        "required": [
+          "date",
+          "description",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на создание курса, принадлежащего преподавателю."
+      },
+      "CreateModuleRequest": {
+        "required": [
+          "courseId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на создание модуля внутри курса."
+      },
+      "CreatePracticalRequest": {
+        "required": [
+          "moduleId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на создание практического материала внутри модуля."
+      },
+      "CreateQuestionRequest": {
+        "required": [
+          "moduleId",
+          "type",
+          "text",
+          "body",
+          "answer",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Запрос на создание вопроса тестирования."
+      },
+      "CreateTaskRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на создание задания практического материала."
+      },
+      "CreateTheoryLinkRequest": {
+        "required": [
+          "theoryMaterialId",
+          "link",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "theoryMaterialId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "link": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на добавление внешней ссылки к теоретическому материалу."
+      },
+      "CreateTheoryRequest": {
+        "required": [
+          "moduleId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на создание теоретического материала внутри модуля."
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "ModuleResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Данные модуля, возвращаемые API системы обучения."
+      },
+      "PracticalGradeResponse": {
+        "required": [
+          "grade",
+          "messages"
+        ],
+        "type": "object",
+        "properties": {
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Итоговая оценка за практический материал или список условий для её получения."
+      },
+      "PracticalQuestionsSetupResponse": {
+        "required": [
+          "questions",
+          "isPublic",
+          "triesCount",
+          "percentForFive",
+          "percentForFour",
+          "percentForThree"
+        ],
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SelectableQuestionResponse"
+            }
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "triesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "percentForFive": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "percentForFour": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "percentForThree": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Данные для настройки теста практического материала."
+      },
+      "PracticalResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Данные практического материала, возвращаемые API системы обучения."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "QuestionResponse": {
+        "required": [
+          "id",
+          "text",
+          "type",
+          "weight",
+          "answer"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "answer": {
+            "type": "string"
+          }
+        },
+        "description": "Данные вопроса тестирования, возвращаемые API системы обучения."
+      },
+      "SelectableQuestionResponse": {
+        "required": [
+          "id",
+          "text",
+          "type",
+          "body",
+          "isSelected"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "isSelected": {
+            "type": "boolean"
+          }
+        },
+        "description": "Вопрос с признаком выбора для практического материала."
+      },
+      "StartTestResponse": {
+        "required": [
+          "tryNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "tryNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Данные начатой или продолженной попытки тестирования."
+      },
+      "SubmitAnswerRequest": {
+        "required": [
+          "id",
+          "answer"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "answer": {
+            "type": "string"
+          }
+        },
+        "description": "Ответ студента на вопрос тестирования."
+      },
+      "SubmitTestRequest": {
+        "required": [
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmitAnswerRequest"
+            }
+          }
+        },
+        "description": "Запрос на отправку ответов текущей попытки тестирования."
+      },
+      "TaskFileCommentResponse": {
+        "required": [
+          "id",
+          "text",
+          "created",
+          "isGenerated"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор комментария.",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст комментария."
+          },
+          "created": {
+            "type": "string",
+            "description": "Дата и время создания комментария.",
+            "format": "date-time"
+          },
+          "isGenerated": {
+            "type": "boolean",
+            "description": "Признак системного комментария."
+          }
+        },
+        "description": "Комментарий к файлу сдачи задания."
+      },
+      "TaskFileResponse": {
+        "required": [
+          "id",
+          "storageKey",
+          "name",
+          "userId",
+          "fullName",
+          "isAccepted",
+          "isUpdated",
+          "grade",
+          "comments"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор файла сдачи.",
+            "format": "uuid"
+          },
+          "storageKey": {
+            "type": "string",
+            "description": "Серверный ключ файла для скачивания через API."
+          },
+          "name": {
+            "type": "string",
+            "description": "Исходное имя файла."
+          },
+          "userId": {
+            "type": "string",
+            "description": "Идентификатор студента, загрузившего файл.",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Полное имя студента."
+          },
+          "isAccepted": {
+            "type": "boolean",
+            "description": "Признак принятой сдачи."
+          },
+          "isUpdated": {
+            "type": "boolean",
+            "description": "Признак последнего системного обновления файла."
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Оценка за сдачу.",
+            "format": "int32"
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskFileCommentResponse"
+            },
+            "description": "Комментарии к файлу сдачи."
+          }
+        },
+        "description": "Данные файла сдачи задания."
+      },
+      "TaskResponse": {
+        "required": [
+          "id",
+          "name",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "Данные задания практического материала."
+      },
+      "TestProtocolAnswerResponse": {
+        "required": [
+          "questionId",
+          "questionText",
+          "questionWeight",
+          "questionScore",
+          "userAnswer",
+          "isCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "questionText": {
+            "type": "string"
+          },
+          "questionWeight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "questionScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "userAnswer": {
+            "type": "string"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          }
+        },
+        "description": "Детализация ответа в протоколе попытки тестирования."
+      },
+      "TestProtocolResponse": {
+        "required": [
+          "answers",
+          "tryNumber",
+          "score",
+          "maxScore",
+          "grade"
+        ],
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestProtocolAnswerResponse"
+            }
+          },
+          "tryNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "maxScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Подробные данные протокола попытки тестирования."
+      },
+      "TestProtocolSummaryResponse": {
+        "required": [
+          "id",
+          "userId",
+          "score",
+          "maxScore",
+          "tryNumber",
+          "grade"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "maxScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "tryNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Краткие данные протокола попытки тестирования."
+      },
+      "TestQuestionResponse": {
+        "required": [
+          "id",
+          "text",
+          "type",
+          "body"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "description": "Вопрос, выдаваемый студенту в текущей попытке тестирования."
+      },
+      "TestQuestionsResponse": {
+        "required": [
+          "questions",
+          "isCompleted"
+        ],
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestQuestionResponse"
+            }
+          },
+          "isCompleted": {
+            "type": "boolean"
+          }
+        },
+        "description": "Список вопросов текущей попытки тестирования."
+      },
+      "TestStatusResponse": {
+        "required": [
+          "isStarted",
+          "tryNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "isStarted": {
+            "type": "boolean"
+          },
+          "tryNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Состояние текущей попытки тестирования."
+      },
+      "TheoryDocumentResponse": {
+        "required": [
+          "id",
+          "path",
+          "description",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Данные документа теоретического материала, возвращаемые API системы обучения."
+      },
+      "TheoryLinkResponse": {
+        "required": [
+          "id",
+          "link",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "link": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "description": "Данные ссылки теоретического материала, возвращаемые API системы обучения."
+      },
+      "TheoryListItemResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Краткие данные теоретического материала для списков внутри модуля."
+      },
+      "TheoryTextResponse": {
+        "required": [
+          "text",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Текст теоретического материала, возвращаемый API системы обучения."
+      },
+      "UpdateAdminProfileRequest": {
+        "required": [
+          "login",
+          "firstName",
+          "lastName",
+          "middleName"
+        ],
+        "type": "object",
+        "properties": {
+          "login": {
+            "type": "string",
+            "description": "Отображаемый логин или имя пользователя."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя пользователя."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия пользователя."
+          },
+          "middleName": {
+            "type": "string",
+            "description": "Отчество пользователя."
+          }
+        },
+        "description": "Запрос на обновление отображаемых данных локального учебного профиля."
+      },
+      "UpdateCourseStudentsRequest": {
+        "required": [
+          "userIds"
+        ],
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Полный желаемый набор идентификаторов студентов учебной системы."
+          }
+        },
+        "description": "Запрос на обновление набора студентов, назначенных на курс."
+      },
+      "UpdatePracticalStudentsRequest": {
+        "required": [
+          "userIds"
+        ],
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Полный желаемый набор идентификаторов студентов учебной системы."
+          }
+        },
+        "description": "Запрос на обновление набора студентов, назначенных на практический материал."
+      },
+      "UpdateQuestionRequest": {
+        "required": [
+          "text",
+          "body",
+          "answer",
+          "weight",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "type": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "description": "Запрос на обновление вопроса тестирования."
+      },
+      "UpdateTaskTextRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на обновление текста задания практического материала."
+      },
+      "UpdateTheoryTextRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на обновление текста теоретического материала."
+      },
+      "UpdateTheoryTitleRequest": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "description": "Запрос на обновление заголовка теоретического материала."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System"
+    },
+    {
+      "name": "Student"
+    },
+    {
+      "name": "Teacher"
+    },
+    {
+      "name": "Admin"
+    },
+    {
+      "name": "AdminProfiles"
+    },
+    {
+      "name": "Courses"
+    },
+    {
+      "name": "Modules"
+    },
+    {
+      "name": "Practicals"
+    },
+    {
+      "name": "Questions"
+    },
+    {
+      "name": "Theories"
+    },
+    {
+      "name": "TestResults"
+    },
+    {
+      "name": "Grades"
+    },
+    {
+      "name": "TaskFiles"
+    },
+    {
+      "name": "Files"
+    },
+    {
+      "name": "Auth"
+    }
+  ]
+}

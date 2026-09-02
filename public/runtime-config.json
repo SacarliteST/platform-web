@@ -1,0 +1,5 @@
+{
+  "educationApiUrl": "http://localhost:5135",
+  "identityApiUrl": "http://localhost:5101",
+  "basePath": "/"
+}

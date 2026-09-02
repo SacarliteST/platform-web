@@ -1,6 +1,6 @@
 # Kanban миграции `platform-web`
 
-Актуализировано: 2026-09-02.
+Актуализировано: 2026-09-03.
 
 Единая доска миграции веба платформы Scoodle со стека legacy `Frontend/platform` на
 стек `Frontend/sql-module-web` (React 19 / TS / Mantine / TanStack Query / Zustand /
@@ -172,6 +172,10 @@ write-эндпоинты сделаны там же и с той же полит
   `education` + `identity` сгенерированы, `tsc` чист. Остаток Phase 1: `eslint.config.js`
   (`PLT-001`), `AppProviders` (`PLT-002`), `shared/ui` + `AppLayout` (`PLT-007`),
   `AppRouter` + гварды + `LoginPage` (`PLT-008` / `PLT-004`).
+- **Репозитории (2026-09-03).** Бэк: `Education/` (github.com/SacarliteST/Education),
+  ветка `master`, коммит `252c26f` — G-1…G-6. Фронт: `Frontend/platform-web/`
+  (`git init`, ветка `master`), коммит `06a596c` — каркас. Не запушено. Корень `SQLTren/`
+  намеренно не git.
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

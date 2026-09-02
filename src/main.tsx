@@ -1,5 +1,5 @@
 import { readStandaloneConfig } from './app/config/read-standalone-config';
-import { setRuntimeConfig } from './app/config/runtime-config-registry';
+import { mount } from './app/mount';
 
 const rootElement = document.getElementById('root');
 
@@ -8,7 +8,5 @@ if (!rootElement) {
 }
 
 const config = await readStandaloneConfig();
-setRuntimeConfig(config);
 
-// TODO(PLT-002): mount <AppProviders><App /></AppProviders> here.
-rootElement.textContent = 'platform-web scaffold — Phase 1 pending';
+mount(rootElement, config);

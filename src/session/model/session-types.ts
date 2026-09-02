@@ -13,3 +13,10 @@ export type AuthTokens = {
   accessToken: string;
   refreshToken?: string;
 };
+
+export type TokenProvider = {
+  getAccessToken(): string | null | Promise<string | null>;
+  getRefreshToken?(): string | null | Promise<string | null>;
+  setTokens?(tokens: AuthTokens): void | Promise<void>;
+  clear?(): void | Promise<void>;
+};

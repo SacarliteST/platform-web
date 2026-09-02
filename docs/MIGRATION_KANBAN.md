@@ -8,8 +8,8 @@ RHF+Zod / Orval) и новый бэкенд `Education` API. Поконтурн�
 `Admin`) будут выделены из этой доски позже, когда дойдём до соответствующих фаз.
 
 Родственные документы:
-- [`../../PLATFORM_MIGRATION_PLAN.md`](../../PLATFORM_MIGRATION_PLAN.md) — стратегия и фазы.
-- [`../../PHASE0_API_GAP.md`](../../PHASE0_API_GAP.md) — гэп-анализ API, блокеры G1–G6.
+- [`./PLATFORM_MIGRATION_PLAN.md`](./PLATFORM_MIGRATION_PLAN.md) — стратегия и фазы.
+- [`./PHASE0_API_GAP.md`](./PHASE0_API_GAP.md) — гэп-анализ API, блокеры G1–G6.
 - [`backend-requirements/2026-09-02-teacher-write-endpoints.md`](./backend-requirements/2026-09-02-teacher-write-endpoints.md) — handoff по блокерам.
 - `TECH_DEBT.md` — заводится в PLT-015, ведёт только техдолг (`TD-NNN`), не задачи миграции.
 

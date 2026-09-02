@@ -56,13 +56,13 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| PLT-009 | Единый UX ошибок: `ProblemDetails` / `HttpValidationProblemDetails`, helpers, `401 → clearSession` | P1 | Backlog | PLT-006 | Единый формат сообщений об ошибках |
-| PLT-010 | Слой `entities` (`course/module/theory/practical/question/task/test-result/grade`): типы из DTO + RU-форматтеры + нормализаторы `number \| string` | P1 | Backlog | PLT-006 | Тонкие сущности без union-типов в UI |
-| PLT-011 | `features/questions`: 4 типа (editor / viewer / answer-viewer) на TS + Mantine + RHF/Zod, payload по `QuestionScoringService`, 4 фикс. GUID типов | P0 | Backlog | PLT-006, PLT-010 | Переиспользуемый набор вопросов для обоих контуров |
-| PLT-012 | `features/rich-text`: `@mantine/tiptap` (замена `RichTextEditor` + `ReadOnlyRichText`), совместимость Quill-HTML | P1 | Backlog | PLT-007 | Rich-text редактор и read-only просмотр |
-| PLT-013 | Компоненты списков: замена `PaginatedData` (Query + Mantine `Pagination`), `MultiSelectSearch` / `AccordionMutiSelect` → Mantine `MultiSelect` | P1 | Backlog | PLT-007 | Списки и мультиселекты на Mantine |
-| PLT-014 | Файлы: multipart-загрузка через мутатор, скачивание через fetch + Bearer → `blob` | P1 | Backlog | PLT-005 | Загрузка документов/сдач и защищённое скачивание |
-| PLT-017 | Home-страницы по ролям + 404 + Help-контур (перенос статических разделов legacy) | P2 | Backlog | PLT-008 | Стартовые экраны и справка |
+| PLT-009 | Единый UX ошибок: `ProblemDetails` / `HttpValidationProblemDetails`, helpers, `401 → clearSession` | P1 | Done | — | `shared/lib/education-problem-details` (title/message/field errors по статусу) + `shared/lib/index`; `401 → clearSession` в `create-runtime-fetch` |
+| PLT-010 | Слой `entities` (`course/module/theory/practical/question/task/test-result/grade`): типы из DTO + RU-форматтеры + нормализаторы `number \| string` | P1 | Done | — | 8 сущностей; `toNumber`/`toNullableNumber`; `question` — 4 фикс. GUID + `QuestionKind` + RU-ярлыки; `formatGrade`, `formatCourseDate`, `normalizePracticalSetup` / `normalizeTestProtocol` / `normalizeTestStatus` / `normalizePracticalGrade` |
+| PLT-011 | `features/questions`: 4 типа (editor / answer-input / answer-view) на TS + Mantine + Zod, payload по `QuestionScoringService`, 4 фикс. GUID типов | P0 | Done | — | `model/{payload,schema,transform}` — `body`/`answer` JSON точно по контракту бэкенда и legacy; `ui/{QuestionEditor, QuestionAnswerInput, QuestionAnswerView}` (все 4 вида) |
+| PLT-012 | `features/rich-text`: `@mantine/tiptap` (замена `RichTextEditor` + `ReadOnlyRichText`), совместимость Quill-HTML | P1 | Done | — | `RichTextField` (tiptap StarterKit + Link, тулбар) + `RichTextViewer` (`TypographyStylesProvider`). Зависимости: `@mantine/tiptap` + `@tiptap/{react,pm,starter-kit,extension-link}`. Проверка Quill→tiptap HTML на реальных данных — `TD-006` |
+| PLT-013 | Компоненты списков: `QueryBoundary` (loading/error/empty вместо `PaginatedData`); `MultiSelectSearch` / `AccordionMutiSelect` → Mantine `MultiSelect` напрямую | P1 | Done | — | `shared/ui/QueryBoundary`; серверная пагинация — `TD-003` |
+| PLT-014 | Файлы: multipart-загрузка (Orval строит `FormData`, мутатор не ставит `Content-Type`), скачивание через fetch + Bearer → `blob` | P1 | Done | — | `shared/http/download-file` (`downloadEducationFile`, парсинг `content-disposition`, 401 → `clearSession`) |
+| PLT-017 | Home-страницы по ролям + 404 + Help-контур | P2 | Done | — | Home / 404 / `*-home` заглушки (Phase 1); `pages/help/HelpPage` (аккордеон 7 разделов, сжатый текст) + `/help` + пункт навигации. Полный перенос legacy-прозы — по мере надобности |
 
 ### Контур администратора (Phase 3) — перенос из `sql-module-web`, затем выпил оттуда
 
@@ -174,11 +174,13 @@ write-эндпоинты сделаны там же и с той же полит
 - **Репозитории.** Бэк: `Education/` (github.com/SacarliteST/Education), ветка `master`,
   коммит `252c26f` — G-1…G-6. Фронт: `Frontend/platform-web/` (`git init`, ветка `master`),
   коммиты `06a596c` → `2069591` → `06ff67d`. Не запушено. Корень `SQLTren/` намеренно не git.
-- **Phase 1 — каркас готов (2026-09-03).** `PLT-001` / `002` / `004` / `007` / `008` → Done:
-  bootstrap + провайдеры, session-слой с гвардами и `LoginPage`, `shared/ui`, `AppLayout`,
-  `AppRouter` (контуры по ролям + заглушки). `typecheck` + `build` зелёные (963 модуля,
-  JS 470 kB / CSS 205 kB). Осталось: `PLT-016` — живой smoke на запущенных Education +
-  IdentityService (запускает владелец). Дальше — Phase 2 (`PLT-009…014`, `017`).
+- **Phase 1 — каркас готов (2026-09-03).** `PLT-001` / `002` / `004` / `007` / `008` → Done.
+  Осталось `PLT-016` — живой smoke на запущенных Education + IdentityService (запускает владелец).
+- **Phase 2 — общий слой готов (2026-09-03).** `PLT-009…014` + `017` → Done: обработка ошибок
+  Education API, слой `entities` (8, с нормализацией `number | string`), `features/questions`
+  (payload/schema/transform + editor/input/view), `features/rich-text` (`@mantine/tiptap`),
+  `QueryBoundary`, скачивание файлов, `/help`. `typecheck` + `build` зелёные. Дальше — Phase 3
+  (контур администратора, `ADM-001…011`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

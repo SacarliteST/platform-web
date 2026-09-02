@@ -1,6 +1,13 @@
 import { Route, Routes } from 'react-router-dom';
 import { LoginPage, RequireAuth, RequireRole } from '../../session';
-import { AdminHomePage, HomePage, NotFoundPage, StudentHomePage, TeacherHomePage } from '../../pages';
+import {
+  AdminHomePage,
+  HelpPage,
+  HomePage,
+  NotFoundPage,
+  StudentHomePage,
+  TeacherHomePage,
+} from '../../pages';
 import { AppLayout } from '../layout/AppLayout';
 
 export function AppRouter() {
@@ -9,6 +16,7 @@ export function AppRouter() {
       <Route element={<AppLayout />}>
         <Route index element={<HomePage />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="help" element={<HelpPage />} />
         <Route
           path="admin"
           element={

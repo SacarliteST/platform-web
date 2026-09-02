@@ -27,6 +27,7 @@ export function AppLayout() {
     { to: '/admin', label: 'Администратор', visible: canSeeAdmin(userRoles) },
     { to: '/teacher', label: 'Преподаватель', visible: canSeeTeacher(userRoles) },
     { to: '/student', label: 'Студент', visible: canSeeStudent(userRoles) },
+    { to: '/help', label: 'Справка', visible: true },
   ];
   const isLoginPage = location.pathname === '/login';
 

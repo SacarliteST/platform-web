@@ -175,7 +175,7 @@ JS→TS + Bootstrap→Mantine + axios→Orval/Query + cookie→JWT + state→pat
       `G-5`/`G-6` (назначение студентов) размещены под `AdminOnly` в срезе `AdminProfiles`.
 - [x] OpenAPI выгружает владелец; по нему сгенерированы Orval-клиенты `education` + `identity`
       (`platform-web/src/api/*`, `tsc -b --noEmit` чист).
-- [x] Админку переносим из `sql-module-web` (Phase 3), затем выпиливаем её оттуда (`ADM-010`).
+- [x] Админку переносим из `sql-module-web` (Phase 3). Выпил из `sql-module-web` — вне зоны этой миграции.
 - [x] Rich-text редактор = `@mantine/tiptap`.
 - [x] Расположение: новая папка `Frontend/platform-web`; legacy `Frontend/platform` не трогаем,
       убираем на cutover (`PLT-020`).
@@ -213,7 +213,7 @@ JS→TS + Bootstrap→Mantine + axios→Orval/Query + cookie→JWT + state→pat
 ### Phase 3 — Контур администратора
 - **Перенести контур администратора целиком из `sql-module-web`** (страницы `admin-*`,
   `features/admin-*`, `entities/user`, `entities/audit`) — он уже работает против
-  **IdentityService** `admin/users` + аудита. Из `sql-module-web` он потом выпиливается.
+  **IdentityService** `admin/users` + аудита. (Выпил контура из `sql-module-web` — не в этой миграции.)
 - Адаптировать навигацию/маршруты под платформу, оставить контракт Identity API как есть.
 - `/admin/profiles` (`Education` `admin/profiles` + assignable-students), если это админ-экран.
 - **Гейт:** `typecheck` + `build` + живой smoke create / block / смена роли.

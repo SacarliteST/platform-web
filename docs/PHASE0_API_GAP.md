@@ -185,7 +185,7 @@
 | Целевой бэкенд = `Education` API, запускается (`localhost:5135`, Scalar `/scalar/v1`) | ✅ |
 | OpenAPI выгружен (`Frontend/platform/platform_swagger.json`, 56 путей) | ✅ |
 | Гэп-анализ по всем экранам | ✅ (этот документ) |
-| Админка — перенос из `sql-module-web`, потом выпил оттуда | ✅ решено |
+| Админка — перенос из `sql-module-web` (выпил оттуда — вне зоны миграции) | ✅ решено |
 | Rich-text = `@mantine/tiptap` | ✅ принято |
 | БД: `education-postgres` в Docker, порт **5434**, `appsettings.Development` обновлён | ✅ |
 | Legacy `platform` не трогаем — держим как источник истины | ✅ зафиксировано |

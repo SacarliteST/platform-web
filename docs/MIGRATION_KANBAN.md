@@ -41,16 +41,16 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| PLT-001 | Каркас проекта: Vite 7 + React 19 + TS strict, `tsconfig.*` из `sql-module-web` | P0 | In progress | Нет | Есть `tsconfig.*` / `vite.config.ts` / `index.html`; осталось `eslint.config.js` |
-| PLT-002 | Bootstrap: `mount()`, `AppProviders` (Mantine, QueryClient, Router, RuntimeConfig) | P0 | Backlog | PLT-001 | `src/main.tsx` — заглушка; провайдеры не подключены |
+| PLT-001 | Каркас проекта: Vite 7 + React 19 + TS strict, `tsconfig.*` из `sql-module-web` | P0 | Done | — | `tsconfig.*` / `vite.config.ts` / `index.html`. ESLint не заводим — в `sql-module-web` его нет (нет ни конфига, ни `lint`-скрипта). |
+| PLT-002 | Bootstrap: `mount()`, `AppProviders` (Mantine, QueryClient, Router, RuntimeConfig) | P0 | Done | — | `app/mount.tsx` + `app/App.tsx` + `providers/{AppProviders,runtime-config-store}`; `main.tsx` монтирует реально. `build` зелёный (2026-09-03) |
 | PLT-003 | Runtime config: `app-config`, `read-standalone-config`, `runtime-config-registry`, `public/runtime-config.json` (`educationApiUrl` + `identityApiUrl`) | P0 | Done | — | Готово 2026-09-02 |
-| PLT-004 | Session-слой: перенос `session/*` из `sql-module-web` (zustand+persist, `decodeSessionUser`, `RequireAuth`, `RequireRole`, `LoginPage`) под IdentityService | P0 | In progress | PLT-002 | Готовы `model` / `decode-session-user` / `session-store` / `getDefaultSessionRoute`; осталось `RequireAuth` / `RequireRole` / `LoginPage` (нужны провайдеры и роутер) |
+| PLT-004 | Session-слой: перенос `session/*` из `sql-module-web` (zustand+persist, `decodeSessionUser`, `RequireAuth`, `RequireRole`, `LoginPage`) под IdentityService | P0 | Done | — | `model` / `lib` (+`session-user-from-token-response`) / `store` / `guards` / `ui/LoginPage` (`useLogin` Identity) / `providers`; `session/index.ts` полный |
 | PLT-005 | `shared/http`: `build-api-url`, `auth-header`, `create-runtime-fetch`, мутаторы `educationFetch` + `identityFetch` | P0 | Done | — | Готово 2026-09-02 |
 | PLT-006 | Orval: конфиг на `education` + `identity`, генерация `src/api/*` | P0 | Done | — | `education.swagger.json` (56 путей, +G-1…G-6) и `identity.swagger.json`; `npm run api:generate` → `src/api/education` + `src/api/identity`; `tsc -b --noEmit` чист |
-| PLT-007 | `shared/ui` перенос (`Page`/`PageHeader`/`PageBreadcrumbs`, `AppCard`, `EmptyState`, `ConfirmModal`, `FormActions`) + `AppLayout` (тёмная навигация, пункты по ролям) | P0 | Backlog | PLT-002 | Общий визуальный каркас платформы |
-| PLT-008 | `AppRouter`: контуры `/admin` `/teacher` `/student`, `RequireAuth` + `RequireRole`, lazy | P0 | Backlog | PLT-004, PLT-007 | Разводка по ролям, deep-link работает после reload |
+| PLT-007 | `shared/ui` перенос (`Page`/`PageHeader`/`PageBreadcrumbs`, `AppCard`, `EmptyState`, `ConfirmModal`, `FormActions`, `ContourHeader`) + `AppLayout` (тёмная навигация, пункты по ролям) | P0 | Done | — | Все компоненты + `AppLayout` (Scoodle / «Платформа обучения», пункты Админ/Препод/Студент по ролям) |
+| PLT-008 | `AppRouter`: контуры `/admin` `/teacher` `/student`, `RequireAuth` + `RequireRole` | P0 | Done | — | `AppRouter` под `AppLayout`: `/`, `/login`, `/admin` `/teacher` `/student` (гварды) + `*`; заглушки контуров `*-home`. Lazy — отложено до появления тяжёлых страниц (Phase 4/5) |
 | PLT-015 | `AGENTS.md` + `docs/TECH_DEBT.md` (`TD-NNN`) + `docs/tech-debt/records/` для `platform-web` | P1 | Done | — | Готово 2026-09-02; доска техдолга заведена с TD-001…007 |
-| PLT-016 | Live smoke каркаса: логин Identity → `/auth/me` Education → разводка ролей; `typecheck` + `build` | P0 | Backlog | PLT-008, PLT-006 | Каркас подтверждён на реальных сервисах |
+| PLT-016 | Live smoke каркаса: логин Identity → `/auth/me` Education → разводка ролей | P0 | Ready | PLT-008 | `typecheck` + `build` зелёные. Живой прогон входа/ролей — при запущенных Education (`:5135`) и IdentityService (`:5101`); запускает владелец. |
 
 ### Общий слой (Phase 2)
 
@@ -174,9 +174,11 @@ write-эндпоинты сделаны там же и с той же полит
 - **Репозитории.** Бэк: `Education/` (github.com/SacarliteST/Education), ветка `master`,
   коммит `252c26f` — G-1…G-6. Фронт: `Frontend/platform-web/` (`git init`, ветка `master`),
   коммиты `06a596c` → `2069591` → `06ff67d`. Не запушено. Корень `SQLTren/` намеренно не git.
-- **Phase 1 — остаток:** `eslint.config.js` (`PLT-001`), `AppProviders` (`PLT-002`),
-  `shared/ui` + `AppLayout` (`PLT-007`), `AppRouter` + гварды + `LoginPage`
-  (`PLT-008` / `PLT-004`), live smoke каркаса (`PLT-016`). Стартует по команде.
+- **Phase 1 — каркас готов (2026-09-03).** `PLT-001` / `002` / `004` / `007` / `008` → Done:
+  bootstrap + провайдеры, session-слой с гвардами и `LoginPage`, `shared/ui`, `AppLayout`,
+  `AppRouter` (контуры по ролям + заглушки). `typecheck` + `build` зелёные (963 модуля,
+  JS 470 kB / CSS 205 kB). Осталось: `PLT-016` — живой smoke на запущенных Education +
+  IdentityService (запускает владелец). Дальше — Phase 2 (`PLT-009…014`, `017`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

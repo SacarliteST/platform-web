@@ -1,0 +1,17 @@
+.login-page {
+  display: grid;
+  justify-items: center;
+  padding-top: 40px;
+}
+
+.login-page__inner {
+  width: min(100%, 400px);
+}
+
+.login-page__card {
+  background: #ffffff;
+}
+
+.login-page__title {
+  color: #212529;
+}

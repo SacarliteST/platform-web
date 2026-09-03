@@ -189,15 +189,14 @@ export function QuestionEditor({
               ) : (
                 <Checkbox
                   checked={option.correct}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
                     setOptions((current) =>
                       current.map((item) =>
-                        item.id === option.id
-                          ? { ...item, correct: event.currentTarget.checked }
-                          : item,
+                        item.id === option.id ? { ...item, correct: checked } : item,
                       ),
-                    )
-                  }
+                    );
+                  }}
                   aria-label="Правильный вариант"
                   mt={8}
                 />
@@ -206,13 +205,14 @@ export function QuestionEditor({
                 flex={1}
                 placeholder="Текст варианта"
                 value={option.text}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
                   setOptions((current) =>
                     current.map((item) =>
-                      item.id === option.id ? { ...item, text: event.currentTarget.value } : item,
+                      item.id === option.id ? { ...item, text: value } : item,
                     ),
-                  )
-                }
+                  );
+                }}
               />
               {kind === 'MultipleChoice' ? (
                 <NumberInput
@@ -270,25 +270,27 @@ export function QuestionEditor({
                 flex={1}
                 placeholder="Левая часть"
                 value={pair.left}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
                   setPairs((current) =>
                     current.map((item) =>
-                      item.key === pair.key ? { ...item, left: event.currentTarget.value } : item,
+                      item.key === pair.key ? { ...item, left: value } : item,
                     ),
-                  )
-                }
+                  );
+                }}
               />
               <TextInput
                 flex={1}
                 placeholder="Правая часть"
                 value={pair.right}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
                   setPairs((current) =>
                     current.map((item) =>
-                      item.key === pair.key ? { ...item, right: event.currentTarget.value } : item,
+                      item.key === pair.key ? { ...item, right: value } : item,
                     ),
-                  )
-                }
+                  );
+                }}
               />
               <NumberInput
                 w={110}

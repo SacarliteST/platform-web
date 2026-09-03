@@ -101,7 +101,7 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 | TEA-013 | Протоколы: список попыток студентов по практике + разбор результата (`GET /practicals/{id}/protocols/teacher`, `GET /test-results/{testResultId}/protocol`) | P0 | Done | — | Вкладка «Протоколы»: список попыток + разбор ответов |
 | TEA-014 | Единый UX ошибок / пустых / загрузочных состояний Teacher | P1 | Done | — | Единые `QueryBoundary` / `ConfirmModal` / `EmptyState` / `FormActions` во всех страницах контура |
 | TEA-015 | Адаптивность и доступность Teacher | P1 | Done | — | Mantine responsive-props + `aria-label` на иконочных кнопках |
-| TEA-016 | Live smoke полного цикла авторинга | P0 | Ready | TEA-001–TEA-015 | `typecheck` + `build` зелёные; живой прогон — на запущенных Education + IdentityService |
+| TEA-016 | Live smoke полного цикла авторинга | P0 | Done | TEA-001–TEA-015 | Живой прогон 2026-09-03 на Education :5135 + IdentityService :5101. Привязал `teacher@` / `student@` к Education `User` через `AdminProfilesPage`. Прошло: курс → модуль → теория (заголовок/текст tiptap/ссылка) → вопросы (создание всех 4 типов, правка через `questionToFormValues`, удаление) → практика → настройка (выбор вопросов + пороги + сохранение) → публикация → задания (создание / правка текста / удаление). Вкладки «Сдачи» / «Протоколы» — корректный пустой стейт. Баг найден и исправлен: `QuestionEditor` падал (`event.currentTarget` = null) из-за чтения события внутри updater-функций `setState` при двойном вызове в StrictMode — вынес 4 чтения наружу |
 | TEA-017 | Route-level code splitting Teacher | P2 | Done | — | `React.lazy` для admin/teacher страниц + vite `manualChunks`; предупреждение >500 kB устранено |
 
 ### Контур студента (Phase 5)
@@ -192,7 +192,12 @@ write-эндпоинты сделаны там же и с той же полит
   `QuestionEditor` + `questionToFormValues` / Практики), `TeacherTheoryPage` (заголовок +
   rich-text + ссылки + документы), `TeacherPracticalPage` (Настройка / Задания / Сдачи /
   Протоколы), route-level code splitting (`React.lazy` + vite `manualChunks`, >500 kB
-  предупреждение снято). `typecheck` + `build` зелёные. `TEA-016` (live smoke полного цикла) → Ready.
+  предупреждение снято). `typecheck` + `build` зелёные. `TEA-016` (live smoke полного цикла
+  авторинга) → **Done** (2026-09-03, весь цикл PASS): в ходе прогона найден и исправлен
+  краш `QuestionEditor` (чтение синтетического события внутри updater-функций `setState`
+  → `event.currentTarget` = null при двойном вызове updater в React StrictMode; 4 чтения
+  вынесены наружу). `teacher@` / `student@` привязаны к Education `User` через
+  `AdminProfilesPage`.
   Дальше — Phase 5 (контур студента, `STU-001…015`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.

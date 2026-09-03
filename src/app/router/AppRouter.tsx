@@ -1,7 +1,10 @@
 import { Route, Routes } from 'react-router-dom';
 import { LoginPage, RequireAuth, RequireRole } from '../../session';
 import {
+  AdminEventsPage,
   AdminHomePage,
+  AdminProfilesPage,
+  AdminSettingsPage,
   AdminUserDetailsPage,
   AdminUsersPage,
   HelpPage,
@@ -34,6 +37,9 @@ export function AppRouter() {
           path="admin/users/:userId"
           element={<AdminRoute><AdminUserDetailsPage /></AdminRoute>}
         />
+        <Route path="admin/events" element={<AdminRoute><AdminEventsPage /></AdminRoute>} />
+        <Route path="admin/profiles" element={<AdminRoute><AdminProfilesPage /></AdminRoute>} />
+        <Route path="admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 
         <Route
           path="teacher"

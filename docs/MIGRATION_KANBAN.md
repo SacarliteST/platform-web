@@ -74,13 +74,13 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 | ADM-001 | Перенос `entities/user` + `entities/audit` из `sql-module-web` (типы, форматтеры, RU-ярлыки) | P0 | Done | — | `entities/user` (`AppUser*` + форматтеры) и `entities/audit` (`formatAuditEventType`, `auditEventTypeOptions`) перенесены вербатимом |
 | ADM-002 | Перенос `features/admin-users` + `features/admin-contour` (списки, фильтры, формы создания / роли / блокировки) | P0 | Done | — | `features/admin-users` (api-команды + `AdminUsersApiError` + helpers) вербатимом; `features/admin-contour` — `AdminContourTabs` адаптирован (вкладки Обзор / Пользователи / Аудит / Учебные профили / Настройки; `dictionaries` убран); `getIdentityProblemFieldErrors` добавлен в `shared/lib` |
 | ADM-003 | Перенос страниц `admin-home` / `admin-users` / `admin-user-details` + маршруты `/admin`, `/admin/users`, `/admin/users/:userId` | P0 | Done | — | `AdminUsersPage` + `AdminUserDetailsPage` перенесены; `AdminHomePage` — лёгкая версия платформы (не 401-строчный SQL-дашборд); маршруты в `AppRouter` под `RequireRole(['Admin'])` |
-| ADM-004 | Перенос `admin-events` (журнал аудита) + маршрут `/admin/events` | P1 | Backlog | ADM-001, ADM-003 | Журнал событий безопасности с фильтрами |
-| ADM-005 | `admin-settings` (адреса сервисов из runtime config + живой health-check Education/Identity) + `/admin/settings` | P1 | Backlog | ADM-003 | Экран состояния платформы |
-| ADM-006 | Адаптация навигации / layout / брендинга admin под `platform-web` | P1 | In progress | ADM-003 | `AdminContourTabs` + admin-маршруты готовы; вкладки `/admin/events` `/admin/profiles` `/admin/settings` ведут на ещё не созданные страницы (ADM-004/005/007) |
-| ADM-007 | `Education` `admin/profiles`: экран локальных учебных профилей + связка identity ↔ legacy (`GET/POST /admin/profiles`, `PUT /admin/profiles/{legacyUserId}`, `/deactivate`) | P0 | Backlog | ADM-003, PLT-006 | Управление учебными профилями платформы |
+| ADM-004 | Перенос `admin-events` (журнал аудита) + маршрут `/admin/events` | P1 | Done | — | `AdminEventsPage` перенесён вербатимом (фильтры инициатор/объект/тип/даты, пагинация, ссылки на карточки пользователей); `/admin/events` |
+| ADM-005 | `admin-settings` (адреса сервисов из runtime config + живой health-check) + `/admin/settings` | P1 | Done | — | `AdminSettingsPage` — своя реализация: `useRuntimeConfig` для адресов + кнопка «Проверить сервисы» (fetch `/health` Education и `/.well-known/openid-configuration` Identity с фактической задержкой) |
+| ADM-006 | Адаптация навигации / layout / брендинга admin под `platform-web` | P1 | Done | — | `AdminContourTabs` (5 вкладок) + все admin-маршруты в `AppRouter` под `RequireRole(['Admin'])`: `/admin`, `/users`, `/users/:userId`, `/events`, `/profiles`, `/settings` |
+| ADM-007 | `Education` `admin/profiles`: экран локальных учебных профилей + связка identity ↔ legacy | P0 | Done | — | `AdminProfilesPage` — список профилей (`useGetAdminProfiles`), модалка «Связать пользователя» (`useCreateAdminProfile`), «Отвязать» (`useDeactivateAdminProfile`). Правка данных профиля (`useUpdateAdminProfile`) — по мере надобности |
 | ADM-008 | Перенос пользовательской документации администратора (`AdminGuide` из legacy help), если ведём справку | P3 | Backlog | PLT-017 | Справочный раздел администратора |
-| ADM-009 | Live smoke admin: создание пользователя, смена роли, блок/разблок, связывание профиля, аудит | P0 | Backlog | ADM-001–ADM-007 | Контур подтверждён на реальных IdentityService + Education |
-| ADM-011 | Назначение студентов на курсы и практики (`GET /courses/{id}/assignable-students`, `PUT /courses/{id}/students`; `GET /practicals/{id}/assignable-students`, `PUT /practicals/{id}/students`) — все `AdminOnly` | P0 | Backlog | ADM-003, PLT-006 | Экраны назначения студентов; бэкенд G-5/G-6 готов |
+| ADM-009 | Live smoke admin: создание пользователя, смена роли, блок/разблок, связывание профиля, аудит | P0 | Ready | ADM-001–ADM-007 | `typecheck` + `build` зелёные; живой прогон — при запущенных IdentityService + Education (запускает владелец) |
+| ADM-011 | Назначение студентов на курсы и практики (`PUT /courses/{id}/students`, `PUT /practicals/{id}/students` — `AdminOnly`) | P0 | Blocked | нет способа перечислить курсы/практики для админа | Бэкенд G-5/G-6 готов, но у админа нет эндпоинта списка курсов/практик (`/courses/teacher` — `TeacherOnly`). Нужен либо `GET /courses` (AdminOnly) на бэкенде, либо UI со вводом GUID вручную. Решение за владельцем |
 
 ### Контур преподавателя (Phase 4)
 
@@ -179,13 +179,14 @@ write-эндпоинты сделаны там же и с той же полит
 - **Phase 1 — каркас готов (2026-09-03).** `PLT-001` / `002` / `004` / `007` / `008` → Done.
   Осталось `PLT-016` — живой smoke на запущенных Education + IdentityService (запускает владелец).
 - **Phase 2 — общий слой готов (2026-09-03).** `PLT-009…014` + `017` → Done.
-- **Phase 3 — ядро контура администратора (2026-09-03).** `ADM-001` / `002` / `003` → Done:
+- **Phase 3 — контур администратора готов (2026-09-03).** `ADM-001…007` → Done:
   `entities/user` + `entities/audit`, `features/admin-users` + `features/admin-contour`,
-  страницы `AdminHomePage` / `AdminUsersPage` / `AdminUserDetailsPage` + маршруты
-  `/admin/*` под `RequireRole(['Admin'])`. `typecheck` + `build` зелёные (JS 652 kB —
-  route-splitting остаётся в `TD-002`). Осталось: `ADM-004` (аудит), `ADM-005` (настройки),
-  `ADM-006` (довести навигацию), `ADM-007` (учебные профили Education), `ADM-011`
-  (назначение студентов), `ADM-009` (live smoke).
+  страницы `AdminHomePage` / `AdminUsersPage` / `AdminUserDetailsPage` / `AdminEventsPage` /
+  `AdminProfilesPage` / `AdminSettingsPage` + маршруты `/admin/*` под `RequireRole(['Admin'])`.
+  `typecheck` + `build` зелёные (JS ~660 kB — route-splitting в `TD-002`).
+  `ADM-009` (live smoke) → Ready. `ADM-011` (назначение студентов) → **Blocked**: у админа
+  нет эндпоинта для списка курсов/практик — нужно решение владельца. `ADM-008` (справка) — P3.
+  Дальше — Phase 4 (контур преподавателя, `TEA-001…017`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

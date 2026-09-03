@@ -1,0 +1,1 @@
+export { TeacherModulePage } from './TeacherModulePage';

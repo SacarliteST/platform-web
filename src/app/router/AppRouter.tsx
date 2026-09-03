@@ -14,6 +14,7 @@ import {
   TeacherCoursePage,
   TeacherCoursesPage,
   TeacherHomePage,
+  TeacherModulePage,
 } from '../../pages';
 import { AppLayout } from '../layout/AppLayout';
 
@@ -56,6 +57,10 @@ export function AppRouter() {
         <Route
           path="teacher/courses/:courseId"
           element={<TeacherRoute><TeacherCoursePage /></TeacherRoute>}
+        />
+        <Route
+          path="teacher/courses/:courseId/modules/:moduleId"
+          element={<TeacherRoute><TeacherModulePage /></TeacherRoute>}
         />
         <Route
           path="student"

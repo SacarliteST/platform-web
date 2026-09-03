@@ -1,3 +1,4 @@
+import { questionKindFromTypeId } from '../../../entities';
 import type { QuestionKind } from '../../../entities';
 import type {
   MatchAnswer,
@@ -172,4 +173,65 @@ export function decodeMatchSelection(userAnswer: string): MatchUserAnswerItem[] 
       left: typeof item.left === 'string' ? item.left : '',
       right: typeof item.right === 'string' ? item.right : '',
     }));
+}
+
+// --- восстановление формы редактора из сохранённого вопроса ------------
+
+type StoredQuestion = { text: string; type: string; weight: number; answer: string };
+
+/**
+ * `QuestionResponse` (эталон в JSON) → значения формы `QuestionEditor` для режима правки.
+ * Возвращает `null`, если тип неизвестен или `answer` не парсится.
+ */
+export function questionToFormValues(question: StoredQuestion): QuestionFormValues | null {
+  const kind = questionKindFromTypeId(question.type);
+  if (!kind) {
+    return null;
+  }
+
+  const base = { text: question.text, weight: question.weight };
+
+  switch (kind) {
+    case 'SingleChoice': {
+      const parsed = parseSingleChoiceAnswer(question.answer);
+      if (!parsed) return null;
+      return {
+        kind,
+        ...base,
+        options: parsed.answers.map((option) => ({ id: option.id, text: option.text })),
+        correctAnswerId: parsed.correctAnswerId,
+      };
+    }
+    case 'MultipleChoice': {
+      const parsed = parseMultipleChoiceAnswer(question.answer);
+      if (!parsed) return null;
+      return {
+        kind,
+        ...base,
+        options: parsed.answers.map((option) => ({
+          id: option.id,
+          text: option.text,
+          correct: option.correct,
+          weight: option.weight,
+        })),
+      };
+    }
+    case 'Match': {
+      const parsed = parseMatchAnswer(question.answer);
+      if (!parsed) return null;
+      return {
+        kind,
+        ...base,
+        pairs: parsed.matches.map((match) => ({
+          left: match.left.text,
+          right: match.right.text,
+          weight: match.weight,
+        })),
+      };
+    }
+    case 'ShortAnswer': {
+      const parsed = parseShortAnswer(question.answer);
+      return { kind, ...base, answer: parsed?.answer ?? '' };
+    }
+  }
 }

@@ -27,6 +27,7 @@
 | TD-007 | Минимальная регрессионная защита фронта | Platform | P2 | Backlog | Стабилизация контуров | [Открыть](./tech-debt/records/TD-007-frontend-regression.md) |
 | TD-008 | Нет эндпоинта списка курсов/практик для админа (блокирует `ADM-011`) | Admin | P1 | Backlog | Backend: `GET /courses` (AdminOnly) либо ввод GUID вручную | [Открыть](./tech-debt/records/TD-008-admin-course-list-endpoint.md) |
 | TD-009 | Любой 401 от API полностью выкидывает из сессии | Platform | P2 | Backlog | Нет | [Открыть](./tech-debt/records/TD-009-aggressive-401-logout.md) |
+| TD-010 | Разбор протокола студента показывает сырой ответ вместо текста | Student | P3 | Backlog | Backend: `body`/`type` в `TestProtocolAnswerResponse` | [Открыть](./tech-debt/records/TD-010-student-protocol-answer-readability.md) |
 
 ## Срез
 

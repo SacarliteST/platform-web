@@ -108,21 +108,21 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| STU-001 | Каркас маршрутов и навигации Student (`/student`, `/student/courses`, `/student/courses/:courseId`, `/student/modules/:moduleId`, `/student/theories/:theoryId`, `/student/practicals/:practicalId`, `/student/practicals/:practicalId/protocols`), вкладки, lazy | P0 | Backlog | PLT-008 | Все URL самостоятельны, работают после reload |
-| STU-002 | Список назначенных курсов (`GET /courses/student`) | P0 | Backlog | STU-001, PLT-010 | Список курсов с состояниями загрузки / ошибки / пустого |
-| STU-003 | Страница курса студента: список модулей (`GET /courses/{courseId}/modules`) | P0 | Backlog | STU-002 | Модули выбранного курса |
-| STU-004 | Страница модуля студента: теория, практики, итоговые оценки (`GET /modules/{moduleId}/theories`, `/practicals`; `GET /practicals/{id}/grade`) | P0 | Backlog | STU-003 | Обзор модуля с точками входа и оценками |
-| STU-005 | Просмотр теории: read-only rich-text + ссылки + документы (`GET /theories/{theoryId}`, `/links`, `/docs`) | P0 | Backlog | STU-004, PLT-012, PLT-014 | Читаемый материал, защищённое скачивание документов |
-| STU-006 | Практика — тест: статус → старт → вопросы → отправка (`GET /practicals/{id}/test-status`, `PUT /practicals/{id}/test/start`, `GET /practicals/{id}/test/questions`, `POST /practicals/{id}/test/submit`) | P0 | Backlog | STU-004, PLT-011 | Полный цикл прохождения теста с учётом попыток |
-| STU-007 | Практика — задание: загрузка файла решения, замена файла, состояние (`GET /tasks/{taskId}/file`, `PUT /tasks/{taskId}/file`) | P0 | Backlog | STU-004, PLT-014 | Сдача задания файлом с заменой до принятия |
-| STU-008 | Вьюеры ответов на вопросы (в протоколе и тесте) — 4 типа | P1 | Backlog | STU-006, PLT-011 | Единый показ вопроса и ответа студента |
-| STU-009 | Протоколы студента: список своих попыток + разбор результата (`GET /practicals/{id}/protocols`, `GET /test-results/{testResultId}/protocol`) | P0 | Backlog | STU-006, STU-008 | История попыток текущего студента и детальный протокол |
-| STU-010 | Итоговая оценка за практику (`GET /practicals/{id}/grade`) на экранах практики и модуля | P1 | Backlog | STU-004 | Понятное отображение теста + заданий + итога |
-| STU-011 | Идемпотентная отправка теста и файла (защита от дублей) | P0 | Backlog | STU-006, STU-007 | Повтор одного запроса не создаёт дубли |
-| STU-012 | Единый UX ошибок и ограничений Student (401/403/404/409/422/timeout, retry) | P1 | Backlog | STU-002–STU-011 | Безопасные единообразные сообщения |
-| STU-013 | Адаптивность и доступность Student | P1 | Backlog | STU-002–STU-011 | Клавиатура, ноутбучные и мобильные разрешения |
-| STU-014 | Lazy loading страниц студента и тяжёлых редакторов | P2 | Backlog | STU-001 | Контролируемые бюджеты стартового chunk |
-| STU-015 | Live smoke студенческого сценария | P0 | Backlog | STU-001–STU-014 | Пройти тест + сдать задание + увидеть протокол и оценку |
+| STU-001 | Каркас маршрутов и навигации Student, вкладки, lazy | P0 | Done | PLT-008 | Вложенная схема (как у преподавателя, т.к. нет detail-эндпоинтов модуля/практики): `/student`, `/student/courses`, `/student/courses/:courseId`, `/.../modules/:moduleId`, `/.../theories/:theoryId`, `/.../practicals/:practicalId`. `StudentRoute` = `RequireAuth` + `RequireRole(['Student'])` + `<Lazy>`. Все URL самостоятельны, работают после reload |
+| STU-002 | Список назначенных курсов (`GET /courses/student`) | P0 | Done | STU-001, PLT-010 | `StudentCoursesPage`: `useGetStudentCourses`, карточки, `QueryBoundary` (загрузка / ошибка / пусто) |
+| STU-003 | Страница курса студента: список модулей (`GET /courses/{courseId}/modules`) | P0 | Done | STU-002 | `StudentCoursePage`: имя курса из списка `student`-курсов, модули таблицей |
+| STU-004 | Страница модуля студента: теория, практики, итоговые оценки | P0 | Done | STU-003 | `StudentModulePage`: вкладки Теория / Практики; в строке практики бейдж итоговой оценки (`PracticalGradeBadge` → `useGetPracticalGrade`) |
+| STU-005 | Просмотр теории: read-only rich-text + ссылки + документы | P0 | Done | STU-004, PLT-012, PLT-014 | `StudentTheoryPage`: `RichTextViewer` (без tiptap-рантайма), ссылки-якоря, защищённое скачивание документов через `downloadEducationFile` |
+| STU-006 | Практика — тест: статус → старт → вопросы → отправка | P0 | Done | STU-004, PLT-011 | `StudentPracticalPage` вкладка «Тест»: `useGetTestStatus` → `useStartTest` → `useGetTestQuestions` → `useSubmitTest`; ввод ответов через `QuestionAnswerInput` (все 4 типа); `isCompleted` → экран «Тест завершён» |
+| STU-007 | Практика — задание: загрузка файла решения, замена, состояние | P0 | Done | STU-004, PLT-014 | Вкладка «Задания»: на задачу — `StudentTaskCard` (`useGetStudentTaskFile` 200/404, статус/оценка/комментарии) + `FileButton` → `useUploadStudentTaskFile`; замена доступна пока `!isAccepted` |
+| STU-008 | Вьюеры ответов на вопросы — 4 типа | P1 | Done | STU-006, PLT-011 | `QuestionAnswerInput` в тесте покрывает все 4 типа. Разбор протокола — плоская таблица (в `TestProtocolAnswerResponse` нет `body`/`type` вопроса, богатый вьюер не построить) |
+| STU-009 | Протоколы студента: список своих попыток + разбор результата | P0 | Done | STU-006, STU-008 | Вкладка «Протоколы»: `useGetStudentPracticalProtocols` + `useGetTestProtocol` (вопрос / ответ студента / балл / верно-неверно) |
+| STU-010 | Итоговая оценка за практику на экранах практики и модуля | P1 | Done | STU-004 | Бейдж в списке практик модуля + вкладка «Оценка» (`formatGrade` + список условий из `messages`) |
+| STU-011 | Идемпотентная отправка теста и файла (защита от дублей) | P0 | Done | STU-006, STU-007 | Кнопка отправки теста `disabled` во время запроса и после завершения (`submitted` / `isCompleted`); файл — через мьютацию, замена закрыта после `isAccepted` |
+| STU-012 | Единый UX ошибок и ограничений Student | P1 | Done | STU-002–STU-011 | `QueryBoundary` на всех запросах + inline `Alert` на мьютациях; та же планка, что у контура преподавателя |
+| STU-013 | Адаптивность и доступность Student | P1 | Done | STU-002–STU-011 | Responsive-props Mantine (`SimpleGrid cols`, `wrap`), нативная семантика Mantine-компонентов |
+| STU-014 | Lazy loading страниц студента | P2 | Done | STU-001 | `React.lazy` для всех student-страниц; отдельные chunks (`test-results`, `grades`), tiptap-рантайм в контур не входит |
+| STU-015 | Live smoke студенческого сценария | P0 | Ready | STU-001–STU-014 | `typecheck` + `build` зелёные; `student@scoodle.local` уже привязан (Phase 4). Живой прогон — на запущенных Education + IdentityService |
 
 ### Cutover (Phase 6)
 
@@ -198,7 +198,15 @@ write-эндпоинты сделаны там же и с той же полит
   → `event.currentTarget` = null при двойном вызове updater в React StrictMode; 4 чтения
   вынесены наружу). `teacher@` / `student@` привязаны к Education `User` через
   `AdminProfilesPage`.
-  Дальше — Phase 5 (контур студента, `STU-001…015`).
+- **Phase 5 — контур студента готов (2026-09-03).** `STU-001…014` → Done: страницы
+  `StudentCoursesPage` / `StudentCoursePage` / `StudentModulePage` / `StudentTheoryPage` /
+  `StudentPracticalPage` (вкладки Тест / Задания / Протоколы / Оценка) + маршруты
+  `/student/*` под `RequireRole(['Student'])`, `React.lazy`. Тест — полный цикл
+  status→start→questions→submit через `QuestionAnswerInput`; сдача заданий файлом с
+  заменой до принятия; протоколы + разбор; итоговая оценка с условиями. `typecheck` +
+  `build` зелёные. Отклонение от плоской схемы URL из STU-001 — вложенная схема (как у
+  преподавателя), т.к. в Education нет detail-эндпоинтов модуля/практики (`TD-005`).
+  `STU-015` (live smoke) → Ready. Дальше — Phase 6 (cutover, `PLT-018…021`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

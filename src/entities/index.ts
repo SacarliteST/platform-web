@@ -1,3 +1,4 @@
+export * from './audit';
 export * from './course';
 export * from './grade';
 export * from './module';
@@ -6,3 +7,4 @@ export * from './question';
 export * from './task';
 export * from './test-result';
 export * from './theory';
+export * from './user';

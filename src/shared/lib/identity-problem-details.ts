@@ -29,12 +29,18 @@ const fallbackMessageByStatus: Record<number, string> = {
   422: 'Проверьте корректность заполнения формы.',
 };
 
-export const getIdentityProblemErrorMessages = (problem: IdentityApiProblem): string[] => {
+export const getIdentityProblemFieldErrors = (
+  problem: IdentityApiProblem,
+): Record<string, string[]> => {
   if (!isIdentityValidationProblem(problem)) {
-    return [];
+    return {};
   }
 
-  return Object.values(problem.errors ?? {}).flatMap((messages) => messages);
+  return (problem.errors ?? {}) as Record<string, string[]>;
+};
+
+export const getIdentityProblemErrorMessages = (problem: IdentityApiProblem): string[] => {
+  return Object.values(getIdentityProblemFieldErrors(problem)).flatMap((messages) => messages);
 };
 
 export const getIdentityProblemMessage = (

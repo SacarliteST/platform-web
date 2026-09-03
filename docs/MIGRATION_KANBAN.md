@@ -133,6 +133,32 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 | PLT-020 | Ретайр legacy `platform` → `Frontend/legacy/` (не удалять) | P2 | Done | PLT-019 | `Frontend/platform` → `Frontend/legacy/platform` (обычный `mv`, git-репо внутри нет, обратимо). `Frontend/legacy/README.md` — заморозка + инструкция отката. Ссылки в `AGENTS.md` / `README.md` обновлены |
 | PLT-021 | `README.md` `platform-web` (запуск, build, runtime-config) | P2 | Done | PLT-016 | `README.md`: стек, dev-запуск, учётки, привязка Teacher/Student, сборка, runtime-config, кодоген Orval, Docker, ссылки на доки |
 
+### Подключение практических модулей (Phase 7)
+
+Дизайн — `docs/MODULE_INTEGRATION.md`. Принято: UI модуля — тот же origin под
+путём (`/modules/<slug>/`, reverse-proxy); переход — замена вкладки, возврат по
+`return_url`; шина событий — **Kafka**; пилот — SQL-модуль. Порядок:
+контракт Education → Kafka в dev → бэкенд Education → platform-web → sql-module-web →
+SqlModule.Web → сквозной smoke.
+
+| ID | Задача | Приоритет | Статус | Зависимость | Результат |
+|---|---|---|---|---|---|
+| MOD-001 | Дизайн механизма подключения (Host–Plugin, редирект, Kafka) | P0 | Done | — | `docs/MODULE_INTEGRATION.md`: решения, компоненты, модель данных, контракты (реестр / привязка / сессия / attach / Kafka-топики / возврат), безопасность, открытые вопросы |
+| MOD-002 | Утвердить контракт Education (спека backend-requirements) | P0 | Backlog | MOD-001 | `docs/backend-requirements/*-practical-modules.md` — эндпоинты, сущности, launch-токен, Kafka-consumer, расчёт оценки; закрыть открытые вопросы 1–5 |
+| MOD-003 | Kafka в dev-инфраструктуре | P1 | Backlog | MOD-001 | одиночный брокер KRaft в `Backend/compose.yaml`, топики `scoodle.practice.events` / `.completion` |
+| MOD-004 | Education: реестр модулей + admin-CRUD | P0 | Backlog | MOD-002 | `PracticalModule` + `/api/v1/admin/practical-modules` (`AdminOnly`) |
+| MOD-005 | Education: `Practical.kind=external`, привязка модуля к практике | P0 | Backlog | MOD-004 | `PUT /api/v1/practicals/{id}/module`, внешние `PracticalTask` со ссылкой на модуль |
+| MOD-006 | Education: жизненный цикл сессии + launch-токен | P0 | Backlog | MOD-005 | `PracticalModuleSession`, `POST/GET .../module-sessions`, сбор `launchUrl` от зарегистрированного origin, `POST /module-sessions/{id}/attach` |
+| MOD-007 | Education: Kafka-consumer (события + завершение) + оценка | P0 | Backlog | MOD-003, MOD-006 | `PracticalTaskEvent` (идемпотентно по `(sessionId, seq)`), терминальный переход по completion, `grade` по порогам практики |
+| MOD-008 | platform-web: реестр модулей (экран администратора) | P1 | Backlog | MOD-004 | CRUD `PracticalModule` на `/admin/*` |
+| MOD-009 | platform-web: привязка модуля к практике (преподаватель) | P0 | Backlog | MOD-005 | выбор модуля + задания на странице практики преподавателя |
+| MOD-010 | platform-web: запуск внешней практики + возврат (студент) | P0 | Backlog | MOD-006 | распознавание `kind=external`; кнопка «Начать» → `POST session` → `window.location = launchUrl`; страница возврата `?session=` → поллинг статуса → оценка + ссылка на протокол |
+| MOD-011 | platform-web: просмотр протокола модульной сессии (события) | P1 | Backlog | MOD-007 | лента `PracticalTaskEvent` на странице практики (студент + преподаватель) |
+| MOD-012 | sql-module-web: маршрут `/launch` + embedded-режим | P0 | Backlog | MOD-006 | читает `session/task/return_url/token`; base-path `/modules/sql`; токен от хоста; по завершении → `window.location = return_url` |
+| MOD-013 | SqlModule.Web: Kafka-producer (события попыток + завершение) | P0 | Backlog | MOD-003, MOD-007 | приём `attach`; продюсер в `scoodle.practice.*` с `moduleToken` |
+| MOD-014 | Инфраструктура: reverse-proxy тот же origin | P1 | Backlog | MOD-010, MOD-012 | nginx: `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Web, `/api/v1/` → Education |
+| MOD-015 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Backlog | MOD-010…MOD-014 | запуск → решение в тренажёре → события в Kafka → возврат → оценка и протокол в платформе |
+
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 
 Реализованы в `Education` 2026-09-02 по эталону legacy `TeacherController`, срезами

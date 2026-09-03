@@ -25,6 +25,7 @@
 | TD-005 | Нет `GET /modules/{moduleId}` — имя модуля берётся из списка модулей курса | Teacher/Student | P3 | Backlog | Backend: одиночный эндпоинт модуля | [Открыть](./tech-debt/records/TD-005-module-by-id-endpoint.md) |
 | TD-006 | Совместимость HTML: Quill (legacy) → TipTap | Platform | P2 | Backlog | Нет | [Открыть](./tech-debt/records/TD-006-richtext-html-compat.md) |
 | TD-007 | Минимальная регрессионная защита фронта | Platform | P2 | Backlog | Стабилизация контуров | [Открыть](./tech-debt/records/TD-007-frontend-regression.md) |
+| TD-008 | Нет эндпоинта списка курсов/практик для админа (блокирует `ADM-011`) | Admin | P1 | Backlog | Backend: `GET /courses` (AdminOnly) либо ввод GUID вручную | [Открыть](./tech-debt/records/TD-008-admin-course-list-endpoint.md) |
 
 ## Срез
 

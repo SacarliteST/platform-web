@@ -92,17 +92,17 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 | TEA-004 | ~~Назначение студентов на курс~~ → перенесено в контур администратора (`ADM-011`); write-эндпоинт `PUT /courses/{courseId}/students` сделан `AdminOnly` в срезе `AdminProfiles`, как и парный read | — | Done (перенос) | — | Снято с контура преподавателя |
 | TEA-005 | Страница модуля: вкладки теория / практика / вопросы | P0 | Done | — | `TeacherModulePage`: вкладки Теория / Вопросы / Практики |
 | TEA-006 | Теория: список, создание, удаление (`GET /modules/{moduleId}/theories`, `POST /theories`, `DELETE /theories/{theoryId}`) | P0 | Done | — | Вкладка «Теория» (`ModuleSubList`): список, создание, удаление |
-| TEA-007 | Редактор теории: заголовок + текст (rich-text) + ссылки CRUD + документы upload/delete (`PUT /theories/{id}/title`, `/text`; `POST/DELETE /theories/links`, `/theories/docs`) | P0 | Backlog | TEA-006, PLT-012, PLT-014 | Полное редактирование одного материала |
+| TEA-007 | Редактор теории: заголовок + текст (rich-text) + ссылки CRUD + документы upload/delete (`PUT /theories/{id}/title`, `/text`; `POST/DELETE /theories/links`, `/theories/docs`) | P0 | Done | — | `TeacherTheoryPage`: заголовок + текст (`RichTextField`) + ссылки CRUD + документы (upload / `downloadEducationFile` / удалить) |
 | TEA-008 | Банк вопросов модуля: список + создание / редактирование / удаление 4 типов (`GET /modules/{moduleId}/questions`, `POST /questions`, `PUT`/`DELETE /questions/{id}`) | P0 | In progress | TEA-005, PLT-011 | Список (`normalizeQuestion` — тип+вес), создание через `QuestionEditor` с выбором типа, удаление. **Редактирование вопроса — нет** (нужна реконструкция формы из JSON `answer`) |
 | TEA-009 | Практика: список в модуле + создание + удаление (`GET /modules/{moduleId}/practicals`, `POST /practicals`, `DELETE /practicals/{id}`) | P0 | Done | — | Вкладка «Практики» (`ModuleSubList`): список, создание, удаление (G-4) |
-| TEA-010 | Настройка практики: выбор вопросов, попытки, пороги, публикация (`GET`/`PUT /practicals/{id}/questions`, `PUT /practicals/{id}/publish`). Назначение студентов вынесено в `ADM-011` | P0 | Backlog | TEA-009, PLT-011 | Практика настраивается и публикуется |
-| TEA-011 | Задания практики: список + создание + удаление + правка текста (`GET`/`POST /practicals/{id}/tasks`; `DELETE /tasks/{id}`; `PUT /tasks/{id}/text`) | P0 | Backlog | TEA-009 | Полный CRUD заданий практики (G-1…G-3 готовы) |
-| TEA-012 | Проверка сдач: список файлов по практике и по заданию, просмотр файла, комментарии, приём с оценкой (`GET /practicals/{id}/task-files`, `GET /tasks/{taskId}/files`, `POST /task-files/{id}/comments`, `PUT /task-files/{id}/accept`) | P0 | Backlog | TEA-011, PLT-014 | Экран проверки с комментариями и оценкой 2–5 |
-| TEA-013 | Протоколы: список попыток студентов по практике + разбор результата (`GET /practicals/{id}/protocols/teacher`, `GET /test-results/{testResultId}/protocol`) | P0 | Backlog | TEA-010, PLT-011 | Журнал попыток и детальный протокол с ответами |
-| TEA-014 | Единый UX ошибок / пустых / загрузочных состояний Teacher | P1 | Backlog | TEA-002–TEA-013 | Единообразные состояния во всём контуре |
-| TEA-015 | Адаптивность и доступность Teacher | P1 | Backlog | TEA-002–TEA-013 | Клавиатура и ноутбучные разрешения |
-| TEA-016 | Live smoke полного цикла авторинга | P0 | Backlog | TEA-001–TEA-015, G-1…G-6 | Happy path курс→…→протокол на реальном backend |
-| TEA-017 | Route-level code splitting Teacher | P2 | Backlog | TEA-016 | Зафиксированные бюджеты chunks |
+| TEA-010 | Настройка практики: выбор вопросов, попытки, пороги, публикация (`GET`/`PUT /practicals/{id}/questions`, `PUT /practicals/{id}/publish`). Назначение студентов вынесено в `ADM-011` | P0 | Done | — | Вкладка «Настройка» в `TeacherPracticalPage`: выбор вопросов, попытки, пороги, публикация |
+| TEA-011 | Задания практики: список + создание + удаление + правка текста (`GET`/`POST /practicals/{id}/tasks`; `DELETE /tasks/{id}`; `PUT /tasks/{id}/text`) | P0 | Done | — | Вкладка «Задания»: создание / правка текста / удаление (G-1…G-3) |
+| TEA-012 | Проверка сдач: список файлов по практике и по заданию, просмотр файла, комментарии, приём с оценкой (`GET /practicals/{id}/task-files`, `GET /tasks/{taskId}/files`, `POST /task-files/{id}/comments`, `PUT /task-files/{id}/accept`) | P0 | Done | — | Вкладка «Сдачи»: скачивание файла, комментарий, приём с оценкой 2–5 |
+| TEA-013 | Протоколы: список попыток студентов по практике + разбор результата (`GET /practicals/{id}/protocols/teacher`, `GET /test-results/{testResultId}/protocol`) | P0 | Done | — | Вкладка «Протоколы»: список попыток + разбор ответов |
+| TEA-014 | Единый UX ошибок / пустых / загрузочных состояний Teacher | P1 | Done | — | Единые `QueryBoundary` / `ConfirmModal` / `EmptyState` / `FormActions` во всех страницах контура |
+| TEA-015 | Адаптивность и доступность Teacher | P1 | Done | — | Mantine responsive-props + `aria-label` на иконочных кнопках |
+| TEA-016 | Live smoke полного цикла авторинга | P0 | Ready | TEA-001–TEA-015 | `typecheck` + `build` зелёные; живой прогон — на запущенных Education + IdentityService |
+| TEA-017 | Route-level code splitting Teacher | P2 | Done | — | `React.lazy` для admin/teacher страниц + vite `manualChunks`; предупреждение >500 kB устранено |
 
 ### Контур студента (Phase 5)
 
@@ -187,14 +187,13 @@ write-эндпоинты сделаны там же и с той же полит
   бутстрап схемы БД) — коммиты `2f63af0`, `1f5e443`.
   `ADM-011` (назначение студентов) → **Blocked** (`TD-008`: нет эндпоинта списка
   курсов/практик для админа). `ADM-008` (справка админа) — P3, backlog.
-- **Phase 4 — ядро контура преподавателя (2026-09-03).** `TEA-001/002/003/005/006/009` → Done:
-  маршруты `/teacher/courses[/:courseId[/modules/:moduleId]]` под `RequireRole(['Teacher'])`,
-  `TeacherCoursesPage` (курсы + CRUD), `TeacherCoursePage` (модули + CRUD), `TeacherModulePage`
-  (вкладки Теория / Вопросы / Практики; теория и практики — список+создание+удаление,
-  вопросы — создание через `QuestionEditor` + удаление). `TEA-008` → In progress (нет
-  редактирования вопроса). `typecheck` + `build` зелёные. Осталось: `TEA-007` (редактор
-  теории), `TEA-010` (настройка практики), `TEA-011` (задания), `TEA-012` (проверка сдач),
-  `TEA-013` (протоколы), `TEA-014…017`.
+- **Phase 4 — контур преподавателя готов (2026-09-03).** `TEA-001…003`, `005…007`, `009…017` → Done:
+  курсы/модули CRUD, `TeacherModulePage` (Теория / Вопросы / Практики), `TeacherTheoryPage`
+  (заголовок + rich-text + ссылки + документы), `TeacherPracticalPage` (Настройка / Задания /
+  Сдачи / Протоколы), route-level code splitting (`React.lazy` + vite `manualChunks`, >500 kB
+  предупреждение снято). `typecheck` + `build` зелёные. `TEA-008` → In progress — нет
+  редактирования вопроса (нужна реконструкция формы из JSON `answer`). `TEA-016` (live smoke) → Ready.
+  Дальше — Phase 5 (контур студента, `STU-001…015`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

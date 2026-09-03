@@ -145,7 +145,7 @@ export function TeacherCoursePage() {
                       <Group gap="xs" wrap="nowrap">
                         <Button
                           component={Link}
-                          to={`/teacher/modules/${module.id}`}
+                          to={`/teacher/courses/${courseId}/modules/${module.id}`}
                           size="xs"
                           variant="subtle"
                         >

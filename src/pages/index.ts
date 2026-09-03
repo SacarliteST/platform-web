@@ -11,3 +11,4 @@ export { StudentHomePage } from './student-home';
 export { TeacherCoursePage } from './teacher-course';
 export { TeacherCoursesPage } from './teacher-courses';
 export { TeacherHomePage } from './teacher-home';
+export { TeacherModulePage } from './teacher-module';

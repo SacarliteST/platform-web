@@ -86,15 +86,15 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| TEA-001 | Каркас маршрутов и навигации Teacher (`/teacher`, `/teacher/courses`, `/teacher/courses/:courseId`, `/teacher/modules/:moduleId`, `/teacher/theories/:theoryId`, `/teacher/practicals/:practicalId`, `/teacher/practicals/:practicalId/tasks/:taskId`, `/teacher/practicals/:practicalId/protocols`), `TeacherContourTabs`, breadcrumbs | P0 | Backlog | PLT-008 | Все URL самостоятельны, работают после reload |
-| TEA-002 | Список курсов + создание / удаление (`GET /courses/teacher`, `POST /courses`, `DELETE /courses/{courseId}`) | P0 | Backlog | TEA-001, PLT-010 | Список курсов, модалки создания и подтверждения удаления |
-| TEA-003 | Страница курса: список модулей + создание / удаление модуля (`GET /courses/{courseId}/modules`, `POST /modules`, `DELETE /modules/{moduleId}`) | P0 | Backlog | TEA-002 | Модули курса с CRUD-минимумом |
+| TEA-001 | Каркас маршрутов и навигации Teacher (вложенные path-параметры, хлебные крошки) | P0 | Done | — | Маршруты `/teacher`, `/teacher/courses`, `/teacher/courses/:courseId`, `/teacher/courses/:courseId/modules/:moduleId` под `RequireRole(['Teacher'])`; навигация через `PageBreadcrumbs` (отдельный `TeacherContourTabs` не нужен) |
+| TEA-002 | Список курсов + создание / удаление (`GET /courses/teacher`, `POST /courses`, `DELETE /courses/{courseId}`) | P0 | Done | — | `TeacherCoursesPage`: карточки курсов, модалка создания (RHF+Zod), подтверждение удаления |
+| TEA-003 | Страница курса: список модулей + создание / удаление модуля (`GET /courses/{courseId}/modules`, `POST /modules`, `DELETE /modules/{moduleId}`) | P0 | Done | — | `TeacherCoursePage`: имя курса из списка, список модулей, создание/удаление модуля |
 | TEA-004 | ~~Назначение студентов на курс~~ → перенесено в контур администратора (`ADM-011`); write-эндпоинт `PUT /courses/{courseId}/students` сделан `AdminOnly` в срезе `AdminProfiles`, как и парный read | — | Done (перенос) | — | Снято с контура преподавателя |
-| TEA-005 | Страница модуля: вкладки теория / практика / вопросы | P0 | Backlog | TEA-003 | Единая точка входа в наполнение модуля |
-| TEA-006 | Теория: список, создание, удаление (`GET /modules/{moduleId}/theories`, `POST /theories`, `DELETE /theories/{theoryId}`) | P0 | Backlog | TEA-005 | Список теории модуля с созданием и удалением |
+| TEA-005 | Страница модуля: вкладки теория / практика / вопросы | P0 | Done | — | `TeacherModulePage`: вкладки Теория / Вопросы / Практики |
+| TEA-006 | Теория: список, создание, удаление (`GET /modules/{moduleId}/theories`, `POST /theories`, `DELETE /theories/{theoryId}`) | P0 | Done | — | Вкладка «Теория» (`ModuleSubList`): список, создание, удаление |
 | TEA-007 | Редактор теории: заголовок + текст (rich-text) + ссылки CRUD + документы upload/delete (`PUT /theories/{id}/title`, `/text`; `POST/DELETE /theories/links`, `/theories/docs`) | P0 | Backlog | TEA-006, PLT-012, PLT-014 | Полное редактирование одного материала |
-| TEA-008 | Банк вопросов модуля: список + создание / редактирование / удаление 4 типов (`GET /modules/{moduleId}/questions`, `POST /questions`, `PUT`/`DELETE /questions/{id}`) | P0 | Backlog | TEA-005, PLT-011 | CRUD вопросов всех типов с корректным payload |
-| TEA-009 | Практика: список в модуле + создание + удаление (`GET /modules/{moduleId}/practicals`, `POST /practicals`, `DELETE /practicals/{id}`) | P0 | Backlog | TEA-005 | Список практик модуля; удаление доступно (G-4 готов) |
+| TEA-008 | Банк вопросов модуля: список + создание / редактирование / удаление 4 типов (`GET /modules/{moduleId}/questions`, `POST /questions`, `PUT`/`DELETE /questions/{id}`) | P0 | In progress | TEA-005, PLT-011 | Список (`normalizeQuestion` — тип+вес), создание через `QuestionEditor` с выбором типа, удаление. **Редактирование вопроса — нет** (нужна реконструкция формы из JSON `answer`) |
+| TEA-009 | Практика: список в модуле + создание + удаление (`GET /modules/{moduleId}/practicals`, `POST /practicals`, `DELETE /practicals/{id}`) | P0 | Done | — | Вкладка «Практики» (`ModuleSubList`): список, создание, удаление (G-4) |
 | TEA-010 | Настройка практики: выбор вопросов, попытки, пороги, публикация (`GET`/`PUT /practicals/{id}/questions`, `PUT /practicals/{id}/publish`). Назначение студентов вынесено в `ADM-011` | P0 | Backlog | TEA-009, PLT-011 | Практика настраивается и публикуется |
 | TEA-011 | Задания практики: список + создание + удаление + правка текста (`GET`/`POST /practicals/{id}/tasks`; `DELETE /tasks/{id}`; `PUT /tasks/{id}/text`) | P0 | Backlog | TEA-009 | Полный CRUD заданий практики (G-1…G-3 готовы) |
 | TEA-012 | Проверка сдач: список файлов по практике и по заданию, просмотр файла, комментарии, приём с оценкой (`GET /practicals/{id}/task-files`, `GET /tasks/{taskId}/files`, `POST /task-files/{id}/comments`, `PUT /task-files/{id}/accept`) | P0 | Backlog | TEA-011, PLT-014 | Экран проверки с комментариями и оценкой 2–5 |
@@ -187,7 +187,14 @@ write-эндпоинты сделаны там же и с той же полит
   бутстрап схемы БД) — коммиты `2f63af0`, `1f5e443`.
   `ADM-011` (назначение студентов) → **Blocked** (`TD-008`: нет эндпоинта списка
   курсов/практик для админа). `ADM-008` (справка админа) — P3, backlog.
-  `PLT-016` (каркас) — Done. Дальше — Phase 4 (контур преподавателя, `TEA-001…017`).
+- **Phase 4 — ядро контура преподавателя (2026-09-03).** `TEA-001/002/003/005/006/009` → Done:
+  маршруты `/teacher/courses[/:courseId[/modules/:moduleId]]` под `RequireRole(['Teacher'])`,
+  `TeacherCoursesPage` (курсы + CRUD), `TeacherCoursePage` (модули + CRUD), `TeacherModulePage`
+  (вкладки Теория / Вопросы / Практики; теория и практики — список+создание+удаление,
+  вопросы — создание через `QuestionEditor` + удаление). `TEA-008` → In progress (нет
+  редактирования вопроса). `typecheck` + `build` зелёные. Осталось: `TEA-007` (редактор
+  теории), `TEA-010` (настройка практики), `TEA-011` (задания), `TEA-012` (проверка сдач),
+  `TEA-013` (протоколы), `TEA-014…017`.
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

@@ -7,7 +7,6 @@ type AdminLink = {
   title: string;
   description: string;
   to: string;
-  ready: boolean;
 };
 
 const adminLinks: AdminLink[] = [
@@ -15,25 +14,21 @@ const adminLinks: AdminLink[] = [
     title: 'Пользователи',
     description: 'Поиск, создание, роли, блокировка — через IdentityService.',
     to: '/admin/users',
-    ready: true,
   },
   {
     title: 'Аудит',
     description: 'Журнал событий безопасности и активности пользователей.',
     to: '/admin/events',
-    ready: false,
   },
   {
     title: 'Учебные профили',
     description: 'Связывание identity-пользователей с локальными профилями платформы.',
     to: '/admin/profiles',
-    ready: false,
   },
   {
     title: 'Настройки',
     description: 'Адреса сервисов и состояние платформы.',
     to: '/admin/settings',
-    ready: false,
   },
 ];
 
@@ -57,14 +52,8 @@ export function AdminHomePage() {
             <Text c="dimmed" mt="xs" size="sm">
               {item.description}
             </Text>
-            <Button
-              component={Link}
-              to={item.to}
-              mt="md"
-              size="sm"
-              variant={item.ready ? 'filled' : 'default'}
-            >
-              {item.ready ? 'Открыть' : 'В разработке'}
+            <Button component={Link} to={item.to} mt="md" size="sm">
+              Открыть
             </Button>
           </AppCard>
         ))}

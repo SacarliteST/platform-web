@@ -1,0 +1,22 @@
+# Прод-раздача статики platform-web.
+#
+#   docker compose up -d --build
+#
+# Раздаётся на http://localhost:8080. Базовые URL сервисов берутся из
+# runtime-config.json, который смонтирован поверх образа — правьте его и
+# перезапускайте контейнер, пересборка не нужна.
+#
+# ВНИМАНИЕ: браузер должен доставать Education/IdentityService по этим URL,
+# поэтому для не-localhost окружений подставьте реальные адреса.
+
+services:
+  platform-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scoodle-platform-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./runtime-config.prod.json:/usr/share/nginx/html/runtime-config.json:ro

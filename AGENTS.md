@@ -5,10 +5,11 @@
 ## Что это за проект
 
 Веб платформы **Scoodle** (LMS: курсы, модули, теория, практика, тесты, задания,
-оценки, админка). Мигрирует со стека legacy `Frontend/platform` (React 18 / JS /
-Bootstrap / axios) на стек `Frontend/sql-module-web` и новый бэкенд `Education` API.
+оценки, админка). Мигрирован со стека legacy (React 18 / JS / Bootstrap / axios)
+на стек `Frontend/sql-module-web` и новый бэкенд `Education` API.
 
-Legacy `Frontend/platform` **не трогаем** — держим как источник истины поведения.
+Миграция завершена (Phase 6, `PLT-020`). Legacy заморожен в
+`Frontend/legacy/platform` — **не трогаем**, держим как источник истины поведения.
 
 Планы и доска: `docs/MIGRATION_KANBAN.md`. Стратегия и фазы: `../PLATFORM_MIGRATION_PLAN.md`.
 Гэп-анализ API: `../PHASE0_API_GAP.md`. Техдолг: `docs/TECH_DEBT.md` (`TD-NNN`).
@@ -108,5 +109,5 @@ npm run build
 - Удалять runtime config / Orval config.
 - Менять base URL сервисов.
 - Редактировать сгенерированные API-клиенты вручную.
-- Трогать legacy `Frontend/platform`.
+- Трогать legacy `Frontend/legacy/platform`.
 - Глобальный редизайн за пределами задачи.

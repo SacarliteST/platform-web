@@ -128,10 +128,10 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| PLT-018 | Полный ручной регресс по 3 ролям против Education + IdentityService | P0 | Backlog | все контуры | Регресс-лист пройден |
-| PLT-019 | Обновление `compose` / deploy на новый фронт | P1 | Backlog | PLT-018 | Новый фронт раздаётся вместо legacy |
-| PLT-020 | Ретайр legacy `platform` → `Frontend/legacy/` (не удалять) | P2 | Backlog | PLT-019 | Legacy сохранён как источник истины, выведен из сборки |
-| PLT-021 | `README.md` `platform-web` (запуск, build, runtime-config) | P2 | Backlog | PLT-016 | Входная документация проекта |
+| PLT-018 | Полный ручной регресс по 3 ролям против Education + IdentityService | P0 | Done | все контуры | `docs/REGRESSION.md` — чек-лист по 3 ролям + сквозной кросс-ролевой сценарий, прогон 2026-09-03 PASS (свод smoke `ADM-009` / `TEA-016` / `STU-015` + перепроверка на закрытии фазы: все 4 экрана админа с данными, курсы/модуль/практика преподавателя, сдача студента видна преподавателю как «Принято»). Известные дефекты сведены в конце листа (`TD-009`, `TD-010`, `ADM-011`) |
+| PLT-019 | Прод-раздача статики нового фронта | P1 | Done | PLT-018 | `Dockerfile` (multi-stage node build → nginx), `nginx.conf` (SPA-fallback, no-cache для `runtime-config.json` и `index.html`, иммутабельный кэш `/assets/`), `.dockerignore`, `compose.yaml` (`docker compose up -d --build` → :8080), `runtime-config.prod.json` (монтируется поверх образа — окружение без пересборки). `Backend/compose.yaml` не трогали (там только БД) |
+| PLT-020 | Ретайр legacy `platform` → `Frontend/legacy/` (не удалять) | P2 | Done | PLT-019 | `Frontend/platform` → `Frontend/legacy/platform` (обычный `mv`, git-репо внутри нет, обратимо). `Frontend/legacy/README.md` — заморозка + инструкция отката. Ссылки в `AGENTS.md` / `README.md` обновлены |
+| PLT-021 | `README.md` `platform-web` (запуск, build, runtime-config) | P2 | Done | PLT-016 | `README.md`: стек, dev-запуск, учётки, привязка Teacher/Student, сборка, runtime-config, кодоген Orval, Docker, ссылки на доки |
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 
@@ -211,7 +211,13 @@ write-эндпоинты сделаны там же и с той же полит
   задание (пусто → загружено → принято) → протоколы → итоговая оценка «Отлично».
   Назначение студента на курс/практику сделано через API (админ-UI нет — `ADM-011`).
   Косметический долг `TD-010` (сырой ответ в разборе протокола студента).
-  **Весь контур студента готов. Дальше — Phase 6 (cutover, `PLT-018…021`).**
+- **Phase 6 — cutover готов (2026-09-03).** `PLT-018…021` → Done: `docs/REGRESSION.md`
+  (регресс по 3 ролям + сквозной сценарий, PASS), прод-раздача статики
+  (`Dockerfile` + `nginx.conf` + `compose.yaml`, nginx :8080, runtime-config
+  монтированием), legacy заморожен в `Frontend/legacy/platform`, `README.md`.
+  **Миграция завершена.** Открытый долг вне MVP: `ADM-011`/`TD-008` (нет UI назначения
+  студентов), `TD-009` (агрессивный 401-logout), `TD-010` (сырой ответ в протоколе),
+  `TD-001/003/004/005` (доработки Education), `ADM-008` (справка админа, P3).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.
 - Контур администратора (Phase 3) — перенос из `sql-module-web`; риск только в

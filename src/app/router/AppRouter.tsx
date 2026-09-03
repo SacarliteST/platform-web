@@ -2,6 +2,8 @@ import { Route, Routes } from 'react-router-dom';
 import { LoginPage, RequireAuth, RequireRole } from '../../session';
 import {
   AdminHomePage,
+  AdminUserDetailsPage,
+  AdminUsersPage,
   HelpPage,
   HomePage,
   NotFoundPage,
@@ -10,6 +12,14 @@ import {
 } from '../../pages';
 import { AppLayout } from '../layout/AppLayout';
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <RequireAuth>
+      <RequireRole allowedRoles={['Admin']}>{children}</RequireRole>
+    </RequireAuth>
+  );
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -17,16 +27,14 @@ export function AppRouter() {
         <Route index element={<HomePage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="help" element={<HelpPage />} />
+
+        <Route path="admin" element={<AdminRoute><AdminHomePage /></AdminRoute>} />
+        <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
         <Route
-          path="admin"
-          element={
-            <RequireAuth>
-              <RequireRole allowedRoles={['Admin']}>
-                <AdminHomePage />
-              </RequireRole>
-            </RequireAuth>
-          }
+          path="admin/users/:userId"
+          element={<AdminRoute><AdminUserDetailsPage /></AdminRoute>}
         />
+
         <Route
           path="teacher"
           element={

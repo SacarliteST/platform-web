@@ -1,0 +1,24 @@
+.admin-contour-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+  padding-bottom: 4px;
+}
+
+.admin-contour-tabs__item {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--mantine-color-gray-7);
+  text-decoration: none;
+}
+
+.admin-contour-tabs__item:hover {
+  background: var(--mantine-color-gray-1);
+}
+
+.admin-contour-tabs__item--active {
+  background: #0d6efd;
+  color: #ffffff;
+}

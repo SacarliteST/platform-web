@@ -24,5 +24,6 @@ export {
   parseMultipleChoiceAnswer,
   parseShortAnswer,
   parseSingleChoiceAnswer,
+  questionToFormValues,
 } from './transform';
 export type { QuestionPayload } from './transform';

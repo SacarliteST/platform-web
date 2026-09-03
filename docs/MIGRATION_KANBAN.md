@@ -93,7 +93,7 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 | TEA-005 | Страница модуля: вкладки теория / практика / вопросы | P0 | Done | — | `TeacherModulePage`: вкладки Теория / Вопросы / Практики |
 | TEA-006 | Теория: список, создание, удаление (`GET /modules/{moduleId}/theories`, `POST /theories`, `DELETE /theories/{theoryId}`) | P0 | Done | — | Вкладка «Теория» (`ModuleSubList`): список, создание, удаление |
 | TEA-007 | Редактор теории: заголовок + текст (rich-text) + ссылки CRUD + документы upload/delete (`PUT /theories/{id}/title`, `/text`; `POST/DELETE /theories/links`, `/theories/docs`) | P0 | Done | — | `TeacherTheoryPage`: заголовок + текст (`RichTextField`) + ссылки CRUD + документы (upload / `downloadEducationFile` / удалить) |
-| TEA-008 | Банк вопросов модуля: список + создание / редактирование / удаление 4 типов (`GET /modules/{moduleId}/questions`, `POST /questions`, `PUT`/`DELETE /questions/{id}`) | P0 | In progress | TEA-005, PLT-011 | Список (`normalizeQuestion` — тип+вес), создание через `QuestionEditor` с выбором типа, удаление. **Редактирование вопроса — нет** (нужна реконструкция формы из JSON `answer`) |
+| TEA-008 | Банк вопросов модуля: список + создание / редактирование / удаление 4 типов (`GET /modules/{moduleId}/questions`, `POST /questions`, `PUT`/`DELETE /questions/{id}`) | P0 | Done | — | Список (`normalizeQuestion`), создание и **редактирование** через `QuestionEditor` (`questionToFormValues`: JSON `answer` → значения формы), удаление. Все 4 типа |
 | TEA-009 | Практика: список в модуле + создание + удаление (`GET /modules/{moduleId}/practicals`, `POST /practicals`, `DELETE /practicals/{id}`) | P0 | Done | — | Вкладка «Практики» (`ModuleSubList`): список, создание, удаление (G-4) |
 | TEA-010 | Настройка практики: выбор вопросов, попытки, пороги, публикация (`GET`/`PUT /practicals/{id}/questions`, `PUT /practicals/{id}/publish`). Назначение студентов вынесено в `ADM-011` | P0 | Done | — | Вкладка «Настройка» в `TeacherPracticalPage`: выбор вопросов, попытки, пороги, публикация |
 | TEA-011 | Задания практики: список + создание + удаление + правка текста (`GET`/`POST /practicals/{id}/tasks`; `DELETE /tasks/{id}`; `PUT /tasks/{id}/text`) | P0 | Done | — | Вкладка «Задания»: создание / правка текста / удаление (G-1…G-3) |
@@ -187,12 +187,12 @@ write-эндпоинты сделаны там же и с той же полит
   бутстрап схемы БД) — коммиты `2f63af0`, `1f5e443`.
   `ADM-011` (назначение студентов) → **Blocked** (`TD-008`: нет эндпоинта списка
   курсов/практик для админа). `ADM-008` (справка админа) — P3, backlog.
-- **Phase 4 — контур преподавателя готов (2026-09-03).** `TEA-001…003`, `005…007`, `009…017` → Done:
-  курсы/модули CRUD, `TeacherModulePage` (Теория / Вопросы / Практики), `TeacherTheoryPage`
-  (заголовок + rich-text + ссылки + документы), `TeacherPracticalPage` (Настройка / Задания /
-  Сдачи / Протоколы), route-level code splitting (`React.lazy` + vite `manualChunks`, >500 kB
-  предупреждение снято). `typecheck` + `build` зелёные. `TEA-008` → In progress — нет
-  редактирования вопроса (нужна реконструкция формы из JSON `answer`). `TEA-016` (live smoke) → Ready.
+- **Phase 4 — контур преподавателя готов (2026-09-03).** `TEA-001…015`, `017` → Done:
+  курсы/модули CRUD, `TeacherModulePage` (Теория / Вопросы — CRUD всех 4 типов через
+  `QuestionEditor` + `questionToFormValues` / Практики), `TeacherTheoryPage` (заголовок +
+  rich-text + ссылки + документы), `TeacherPracticalPage` (Настройка / Задания / Сдачи /
+  Протоколы), route-level code splitting (`React.lazy` + vite `manualChunks`, >500 kB
+  предупреждение снято). `typecheck` + `build` зелёные. `TEA-016` (live smoke полного цикла) → Ready.
   Дальше — Phase 5 (контур студента, `STU-001…015`).
 - Критический путь Phase 1–2 не зависит ни от чего внешнего.
 - Контур студента (Phase 5) полностью разблокирован — все эндпоинты есть.

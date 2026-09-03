@@ -17,15 +17,17 @@ import {
   useCreateQuestion,
   useDeleteQuestion,
   useGetModuleQuestions,
+  useUpdateQuestion,
 } from '../../api/education/questions/questions';
 import {
   QUESTION_KIND_LABELS,
   QUESTION_KIND_OPTIONS,
   normalizeQuestion,
+  type Question,
   type QuestionKind,
 } from '../../entities';
 import { ModuleSubList } from '../../features/module-content';
-import { QuestionEditor } from '../../features/questions';
+import { QuestionEditor, questionToFormValues } from '../../features/questions';
 import { getEducationProblemMessage } from '../../shared/lib';
 import {
   AppCard,
@@ -69,10 +71,12 @@ export function TeacherModulePage() {
     query: { enabled: Boolean(moduleId), retry: false },
   });
   const createQuestion = useCreateQuestion();
+  const updateQuestion = useUpdateQuestion();
   const deleteQuestion = useDeleteQuestion();
 
   const [questionModalOpened, questionModal] = useDisclosure(false);
   const [questionKind, setQuestionKind] = useState<QuestionKind>('SingleChoice');
+  const [editQuestion, setEditQuestion] = useState<Question | null>(null);
   const [deleteQuestionTarget, setDeleteQuestionTarget] = useState<string | null>(null);
 
   const base = `/teacher/courses/${courseId}/modules/${moduleId}`;
@@ -190,14 +194,24 @@ export function TeacherModulePage() {
                           <Text size="sm">{question.weight}</Text>
                         </Table.Td>
                         <Table.Td>
-                          <Button
-                            size="xs"
-                            color="red"
-                            variant="subtle"
-                            onClick={() => setDeleteQuestionTarget(question.id)}
-                          >
-                            Удалить
-                          </Button>
+                          <Group gap="xs" wrap="nowrap">
+                            <Button
+                              size="xs"
+                              variant="subtle"
+                              disabled={question.kind === null}
+                              onClick={() => setEditQuestion(question)}
+                            >
+                              Изменить
+                            </Button>
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="subtle"
+                              onClick={() => setDeleteQuestionTarget(question.id)}
+                            >
+                              Удалить
+                            </Button>
+                          </Group>
                         </Table.Td>
                       </Table.Tr>
                     ))}
@@ -280,6 +294,34 @@ export function TeacherModulePage() {
             }}
           />
         </Stack>
+      </Modal>
+
+      <Modal
+        opened={editQuestion !== null}
+        onClose={() => setEditQuestion(null)}
+        title="Изменить вопрос"
+        centered
+        size="lg"
+      >
+        {editQuestion && editQuestion.kind ? (
+          <QuestionEditor
+            key={editQuestion.id}
+            kind={editQuestion.kind}
+            initialValues={questionToFormValues(editQuestion) ?? undefined}
+            submitting={updateQuestion.isPending}
+            submitLabel="Сохранить"
+            onCancel={() => setEditQuestion(null)}
+            onSubmit={async (payload) => {
+              const response = await updateQuestion
+                .mutateAsync({ questionId: editQuestion.id, data: payload })
+                .catch(() => null);
+              if (response && response.status === 204) {
+                await questionsQuery.refetch();
+                setEditQuestion(null);
+              }
+            }}
+          />
+        ) : null}
       </Modal>
 
       <ConfirmModal

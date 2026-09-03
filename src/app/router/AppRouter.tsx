@@ -35,6 +35,22 @@ const TeacherPracticalPage = lazy(() =>
   import('../../pages/teacher-practical').then((m) => ({ default: m.TeacherPracticalPage })),
 );
 
+const StudentCoursesPage = lazy(() =>
+  import('../../pages/student-courses').then((m) => ({ default: m.StudentCoursesPage })),
+);
+const StudentCoursePage = lazy(() =>
+  import('../../pages/student-course').then((m) => ({ default: m.StudentCoursePage })),
+);
+const StudentModulePage = lazy(() =>
+  import('../../pages/student-module').then((m) => ({ default: m.StudentModulePage })),
+);
+const StudentTheoryPage = lazy(() =>
+  import('../../pages/student-theory').then((m) => ({ default: m.StudentTheoryPage })),
+);
+const StudentPracticalPage = lazy(() =>
+  import('../../pages/student-practical').then((m) => ({ default: m.StudentPracticalPage })),
+);
+
 function Lazy({ children }: { children: ReactNode }) {
   return (
     <Suspense
@@ -63,6 +79,16 @@ function TeacherRoute({ children }: { children: ReactNode }) {
   return (
     <RequireAuth>
       <RequireRole allowedRoles={['Teacher']}>
+        <Lazy>{children}</Lazy>
+      </RequireRole>
+    </RequireAuth>
+  );
+}
+
+function StudentRoute({ children }: { children: ReactNode }) {
+  return (
+    <RequireAuth>
+      <RequireRole allowedRoles={['Student']}>
         <Lazy>{children}</Lazy>
       </RequireRole>
     </RequireAuth>
@@ -131,6 +157,24 @@ export function AppRouter() {
             </RequireAuth>
           }
         />
+        <Route path="student/courses" element={<StudentRoute><StudentCoursesPage /></StudentRoute>} />
+        <Route
+          path="student/courses/:courseId"
+          element={<StudentRoute><StudentCoursePage /></StudentRoute>}
+        />
+        <Route
+          path="student/courses/:courseId/modules/:moduleId"
+          element={<StudentRoute><StudentModulePage /></StudentRoute>}
+        />
+        <Route
+          path="student/courses/:courseId/modules/:moduleId/theories/:theoryId"
+          element={<StudentRoute><StudentTheoryPage /></StudentRoute>}
+        />
+        <Route
+          path="student/courses/:courseId/modules/:moduleId/practicals/:practicalId"
+          element={<StudentRoute><StudentPracticalPage /></StudentRoute>}
+        />
+
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

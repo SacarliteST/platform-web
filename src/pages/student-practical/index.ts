@@ -1,0 +1,1 @@
+export { StudentPracticalPage } from './StudentPracticalPage';

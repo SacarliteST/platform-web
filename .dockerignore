@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.idea
+.vscode
+*.tsbuildinfo
+*.local
+docs
+promts
+Dockerfile
+.dockerignore
+compose.yaml
+README.md
+AGENTS.md

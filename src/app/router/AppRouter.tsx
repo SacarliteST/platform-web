@@ -11,6 +11,8 @@ import {
   HomePage,
   NotFoundPage,
   StudentHomePage,
+  TeacherCoursePage,
+  TeacherCoursesPage,
   TeacherHomePage,
 } from '../../pages';
 import { AppLayout } from '../layout/AppLayout';
@@ -19,6 +21,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return (
     <RequireAuth>
       <RequireRole allowedRoles={['Admin']}>{children}</RequireRole>
+    </RequireAuth>
+  );
+}
+
+function TeacherRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <RequireAuth>
+      <RequireRole allowedRoles={['Teacher']}>{children}</RequireRole>
     </RequireAuth>
   );
 }
@@ -41,15 +51,11 @@ export function AppRouter() {
         <Route path="admin/profiles" element={<AdminRoute><AdminProfilesPage /></AdminRoute>} />
         <Route path="admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 
+        <Route path="teacher" element={<TeacherRoute><TeacherHomePage /></TeacherRoute>} />
+        <Route path="teacher/courses" element={<TeacherRoute><TeacherCoursesPage /></TeacherRoute>} />
         <Route
-          path="teacher"
-          element={
-            <RequireAuth>
-              <RequireRole allowedRoles={['Teacher']}>
-                <TeacherHomePage />
-              </RequireRole>
-            </RequireAuth>
-          }
+          path="teacher/courses/:courseId"
+          element={<TeacherRoute><TeacherCoursePage /></TeacherRoute>}
         />
         <Route
           path="student"

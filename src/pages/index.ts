@@ -8,4 +8,6 @@ export { HelpPage } from './help';
 export { HomePage } from './home';
 export { NotFoundPage } from './not-found';
 export { StudentHomePage } from './student-home';
+export { TeacherCoursePage } from './teacher-course';
+export { TeacherCoursesPage } from './teacher-courses';
 export { TeacherHomePage } from './teacher-home';

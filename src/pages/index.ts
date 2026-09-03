@@ -12,3 +12,5 @@ export { TeacherCoursePage } from './teacher-course';
 export { TeacherCoursesPage } from './teacher-courses';
 export { TeacherHomePage } from './teacher-home';
 export { TeacherModulePage } from './teacher-module';
+export { TeacherPracticalPage } from './teacher-practical';
+export { TeacherTheoryPage } from './teacher-theory';

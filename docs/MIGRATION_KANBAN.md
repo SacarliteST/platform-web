@@ -140,32 +140,38 @@ UI модуля — тот же origin под путём (`/modules/<slug>/`, е
 замена вкладки, возврат по `return_url`; шина событий — **Kafka**; **оценку ставит
 модуль** (готовая `grade` в completion, ядро не считает); **1 задание на внешнюю
 практику** (MVP); цифровой след — постфактум, без live-пуша; каталог заданий —
-выбор из списка (ядро проксирует ручку модуля); аутентификация UI модуля —
-переиспользуем `access_token` IdentityService студента через фрагмент URL + новый
-`TokenProvider: handoff` в `sql-module-web` (см. доку, раздел «Аутентификация»).
-Пилот — SQL-модуль. Порядок: контракт Education → Kafka в dev → бэкенд Education →
-platform-web → sql-module-web → SqlModule.Web → сквозной smoke.
+выбор из списка (ядро проксирует ручку модуля); **повторные попытки — есть**,
+`triesCount` списывается на старте (вкл. `EXPIRED`), оценка — `MAX(grade)` по
+завершённым, по образцу внутреннего теста; аутентификация UI модуля — **Token
+Exchange через IdentityService** (модуль получает токен со своей `audience`,
+не токен платформы — см. доку, раздел «Аутентификация UI модуля»).
+Пилот — SQL-модуль. Порядок: контракт Education → IdentityService (Token
+Exchange) → Kafka в dev → бэкенд Education → platform-web → sql-module-web →
+SqlModule.Web → сквозной smoke.
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| MOD-001 | Дизайн механизма подключения (Host–Plugin, редирект, Kafka) | P0 | Done | — | `docs/MODULE_INTEGRATION.md`: решения, компоненты, модель данных, контракты (реестр / каталог / привязка / сессия / attach / Kafka-топики / возврат), аутентификация, безопасность — все развилки закрыты |
-| MOD-002 | Утвердить контракт Education (спека backend-requirements) | P0 | Backlog | MOD-001 | `docs/backend-requirements/*-practical-modules.md` — эндпоинты, сущности, launch-токен, Kafka-consumer; остаточные вопросы (Kafka init, `catalogEndpoint` формат) закрыть по ходу |
+| MOD-001 | Дизайн механизма подключения (Host–Plugin, редирект, Kafka, Token Exchange, ретраи) | P0 | Done | — | `docs/MODULE_INTEGRATION.md`: решения, полный путь, компоненты, модель данных, контракты, аутентификация (Token Exchange), повторные попытки, безопасность — все развилки закрыты |
+| MOD-002 | Утвердить контракт Education (спека backend-requirements) | P0 | Backlog | MOD-001 | `docs/backend-requirements/*-practical-modules.md` — эндпоинты, сущности, launch-токен, Kafka-consumer, `triesCount`/best-of-N; остаточные вопросы (Kafka init, `catalogEndpoint` формат, TTL до `EXPIRED`) закрыть по ходу |
+| MOD-002a | IdentityService: реестр клиентов | P0 | Backlog | MOD-002 | `Clients` (`client_id`, `client_secret_hash`, `allowed_audiences`); одна запись — `education-core` с `allowed_audiences=["sql-module-api"]` |
+| MOD-002b | IdentityService: эндпоинт Token Exchange | P0 | Backlog | MOD-002a | `POST /api/v1/auth/token/exchange` (Basic client_id:secret, `subjectToken`+`audience` → новый JWT с целевой `aud`, короче TTL, без refresh) |
 | MOD-003 | Kafka в dev-инфраструктуре | P1 | Backlog | MOD-001 | одиночный брокер KRaft в `Backend/compose.yaml`, топики `scoodle.practice.events` / `.completion` |
-| MOD-004 | Education: реестр модулей + admin-CRUD | P0 | Backlog | MOD-002 | `PracticalModule` (с `configuration.catalogEndpoint`) + `/api/v1/admin/practical-modules` (`AdminOnly`) |
+| MOD-004 | Education: реестр модулей + admin-CRUD | P0 | Backlog | MOD-002 | `PracticalModule` (`identityAudience`, `configuration.catalogEndpoint`) + `/api/v1/admin/practical-modules` (`AdminOnly`) |
 | MOD-005 | Education: проксирование каталога заданий модуля | P0 | Backlog | MOD-004, MOD-013a | `GET /api/v1/practical-modules/{id}/tasks` (`TeacherOnly`) — сервер-сервер вызов ручки модуля, без прямого доступа браузера |
-| MOD-006 | Education: `Practical.kind=external`, привязка модуля к практике (1:1) | P0 | Backlog | MOD-005 | `PUT /api/v1/practicals/{id}/module { practicalModuleId, externalTaskRef }`, единственный внешний `PracticalTask` |
-| MOD-007 | Education: жизненный цикл сессии + launch-токен | P0 | Backlog | MOD-006 | `PracticalModuleSession`, `POST/GET .../module-sessions`, сбор `launchUrl` (query + `access_token` во фрагменте) от зарегистрированного origin, `POST /module-sessions/{id}/attach` |
+| MOD-006 | Education: `Practical.kind=external`, привязка модуля к практике (1:1) + `triesCount` | P0 | Backlog | MOD-005 | `PUT /api/v1/practicals/{id}/module { practicalModuleId, externalTaskRef, triesCount }`, единственный внешний `PracticalTask` |
+| MOD-007 | Education: жизненный цикл сессии, гейт попыток, Token Exchange при launch | P0 | Backlog | MOD-002b, MOD-006 | `PracticalModuleSession` (`tryNumber`, статусы `ACTIVE/COMPLETED/EXPIRED`), `POST` гейтит по `attemptsCount>=triesCount` и активной сессии, вызывает Token Exchange, собирает `launchUrl` (query + `access_token` во фрагменте) от зарегистрированного origin, `GET .../current` для гейта UI, `POST /module-sessions/{id}/attach` |
 | MOD-008 | Education: Kafka-consumer (события + completion с `grade` от модуля) | P0 | Backlog | MOD-003, MOD-007 | `PracticalTaskEvent` (идемпотентно по `(sessionId, seq)`), терминальный переход по completion, `grade`/`score`/`completionData` сохраняются как прислал модуль |
+| MOD-008a | Education: best-of-N в оценке практики | P1 | Backlog | MOD-008 | `GET /practicals/{id}/grade` — `MAX(grade)` по `COMPLETED`-сессиям для `kind=external`, по образцу `EfGradesRepository` |
 | MOD-009 | platform-web: реестр модулей (экран администратора) | P1 | Backlog | MOD-004 | CRUD `PracticalModule` на `/admin/*` |
-| MOD-010 | platform-web: привязка модуля к практике (преподаватель) | P0 | Backlog | MOD-006 | выбор модуля + задания **из каталога** (MOD-005) на странице практики преподавателя |
-| MOD-011 | platform-web: запуск внешней практики + возврат (студент) | P0 | Backlog | MOD-007 | распознавание `kind=external`; кнопка «Начать» → `POST session` → `window.location = launchUrl`; страница возврата `?session=` → поллинг статуса → оценка + ссылка на протокол |
-| MOD-012 | platform-web: просмотр протокола модульной сессии (события) | P1 | Backlog | MOD-008 | лента `PracticalTaskEvent` на странице практики (студент + преподаватель), постфактум |
-| MOD-013 | sql-module-web: маршрут `/launch` + `TokenProvider: handoff` | P0 | Backlog | MOD-007 | читает `session/task/return_url` из query, `access_token` из фрагмента (→ `sessionStorage`, чистит URL); base-path `/modules/sql`; по завершении → `window.location = return_url` |
+| MOD-010 | platform-web: привязка модуля к практике (преподаватель) | P0 | Backlog | MOD-006 | выбор модуля + задания **из каталога** (MOD-005) + `triesCount` на странице практики преподавателя |
+| MOD-011 | platform-web: запуск внешней практики + гейт попыток + возврат (студент) | P0 | Backlog | MOD-007 | распознавание `kind=external`; гейт «Начать» по `GET .../current` (не только по `?session=`); кнопка → `POST session` → `window.location = launchUrl`; страница возврата `?session=` → поллинг статуса (таймаут + «Обновить») → оценка + ссылка на протокол |
+| MOD-012 | platform-web: просмотр протокола модульной сессии (события) | P1 | Backlog | MOD-008 | лента `PracticalTaskEvent` на странице практики (студент + преподаватель), постфактум, по попыткам |
+| MOD-013 | sql-module-web: маршрут `/launch` + `TokenProvider: handoff` | P0 | Backlog | MOD-007 | читает `session/task/return_url` из query, `access_token` из фрагмента (→ `sessionStorage`, чистит URL через `history.replaceState`); base-path `/modules/sql`; по завершении → `window.location = return_url` |
 | MOD-013a | SqlModule.Web: ручка каталога заданий (`.../training/tasks-catalog`) | P0 | Backlog | — | список заданий модуля для проксирования ядром (MOD-005) |
 | MOD-014 | SqlModule.Web: Kafka-producer (события попыток + завершение с `grade`) | P0 | Backlog | MOD-003, MOD-008 | приём `attach`; продюсер в `scoodle.practice.*` с `moduleToken`; сам вычисляет и шлёт `grade` |
-| MOD-014a | SqlModule.Web: `Authority`/`Audience` = как у Education | P0 | Backlog | MOD-013 | тот же IdentityService — иначе `access_token` студента не пройдёт валидацию в API модуля |
+| MOD-014a | SqlModule.Web: собственная `Audience` (Token Exchange) | P0 | Backlog | MOD-002b, MOD-013 | `Authority`=IdentityService, `Audience="sql-module-api"` — отдельная от Education аудитория, токен платформы против неё не пройдёт |
 | MOD-015 | Инфраструктура: единый reverse-proxy | P1 | Backlog | MOD-011, MOD-013 | один nginx: `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Web, `/api/v1/` → Education |
-| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Backlog | MOD-011…MOD-015 | запуск → решение в тренажёре → события в Kafka → возврат → оценка (от модуля) и протокол в платформе |
+| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Backlog | MOD-011…MOD-015 | запуск → решение в тренажёре → события в Kafka → возврат → оценка (от модуля) и протокол в платформе; повторная попытка после `EXPIRED`/неудачи → лучшая оценка засчитана |
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 

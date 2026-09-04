@@ -135,29 +135,37 @@ IdentityService и path-параметры вместо `useLocation().state`. L
 
 ### Подключение практических модулей (Phase 7)
 
-Дизайн — `docs/MODULE_INTEGRATION.md`. Принято: UI модуля — тот же origin под
-путём (`/modules/<slug>/`, reverse-proxy); переход — замена вкладки, возврат по
-`return_url`; шина событий — **Kafka**; пилот — SQL-модуль. Порядок:
-контракт Education → Kafka в dev → бэкенд Education → platform-web → sql-module-web →
-SqlModule.Web → сквозной smoke.
+Дизайн — `docs/MODULE_INTEGRATION.md`. Решения владельца (2026-09-03, закрыты):
+UI модуля — тот же origin под путём (`/modules/<slug>/`, единый nginx); переход —
+замена вкладки, возврат по `return_url`; шина событий — **Kafka**; **оценку ставит
+модуль** (готовая `grade` в completion, ядро не считает); **1 задание на внешнюю
+практику** (MVP); цифровой след — постфактум, без live-пуша; каталог заданий —
+выбор из списка (ядро проксирует ручку модуля); аутентификация UI модуля —
+переиспользуем `access_token` IdentityService студента через фрагмент URL + новый
+`TokenProvider: handoff` в `sql-module-web` (см. доку, раздел «Аутентификация»).
+Пилот — SQL-модуль. Порядок: контракт Education → Kafka в dev → бэкенд Education →
+platform-web → sql-module-web → SqlModule.Web → сквозной smoke.
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|
-| MOD-001 | Дизайн механизма подключения (Host–Plugin, редирект, Kafka) | P0 | Done | — | `docs/MODULE_INTEGRATION.md`: решения, компоненты, модель данных, контракты (реестр / привязка / сессия / attach / Kafka-топики / возврат), безопасность, открытые вопросы |
-| MOD-002 | Утвердить контракт Education (спека backend-requirements) | P0 | Backlog | MOD-001 | `docs/backend-requirements/*-practical-modules.md` — эндпоинты, сущности, launch-токен, Kafka-consumer, расчёт оценки; закрыть открытые вопросы 1–5 |
+| MOD-001 | Дизайн механизма подключения (Host–Plugin, редирект, Kafka) | P0 | Done | — | `docs/MODULE_INTEGRATION.md`: решения, компоненты, модель данных, контракты (реестр / каталог / привязка / сессия / attach / Kafka-топики / возврат), аутентификация, безопасность — все развилки закрыты |
+| MOD-002 | Утвердить контракт Education (спека backend-requirements) | P0 | Backlog | MOD-001 | `docs/backend-requirements/*-practical-modules.md` — эндпоинты, сущности, launch-токен, Kafka-consumer; остаточные вопросы (Kafka init, `catalogEndpoint` формат) закрыть по ходу |
 | MOD-003 | Kafka в dev-инфраструктуре | P1 | Backlog | MOD-001 | одиночный брокер KRaft в `Backend/compose.yaml`, топики `scoodle.practice.events` / `.completion` |
-| MOD-004 | Education: реестр модулей + admin-CRUD | P0 | Backlog | MOD-002 | `PracticalModule` + `/api/v1/admin/practical-modules` (`AdminOnly`) |
-| MOD-005 | Education: `Practical.kind=external`, привязка модуля к практике | P0 | Backlog | MOD-004 | `PUT /api/v1/practicals/{id}/module`, внешние `PracticalTask` со ссылкой на модуль |
-| MOD-006 | Education: жизненный цикл сессии + launch-токен | P0 | Backlog | MOD-005 | `PracticalModuleSession`, `POST/GET .../module-sessions`, сбор `launchUrl` от зарегистрированного origin, `POST /module-sessions/{id}/attach` |
-| MOD-007 | Education: Kafka-consumer (события + завершение) + оценка | P0 | Backlog | MOD-003, MOD-006 | `PracticalTaskEvent` (идемпотентно по `(sessionId, seq)`), терминальный переход по completion, `grade` по порогам практики |
-| MOD-008 | platform-web: реестр модулей (экран администратора) | P1 | Backlog | MOD-004 | CRUD `PracticalModule` на `/admin/*` |
-| MOD-009 | platform-web: привязка модуля к практике (преподаватель) | P0 | Backlog | MOD-005 | выбор модуля + задания на странице практики преподавателя |
-| MOD-010 | platform-web: запуск внешней практики + возврат (студент) | P0 | Backlog | MOD-006 | распознавание `kind=external`; кнопка «Начать» → `POST session` → `window.location = launchUrl`; страница возврата `?session=` → поллинг статуса → оценка + ссылка на протокол |
-| MOD-011 | platform-web: просмотр протокола модульной сессии (события) | P1 | Backlog | MOD-007 | лента `PracticalTaskEvent` на странице практики (студент + преподаватель) |
-| MOD-012 | sql-module-web: маршрут `/launch` + embedded-режим | P0 | Backlog | MOD-006 | читает `session/task/return_url/token`; base-path `/modules/sql`; токен от хоста; по завершении → `window.location = return_url` |
-| MOD-013 | SqlModule.Web: Kafka-producer (события попыток + завершение) | P0 | Backlog | MOD-003, MOD-007 | приём `attach`; продюсер в `scoodle.practice.*` с `moduleToken` |
-| MOD-014 | Инфраструктура: reverse-proxy тот же origin | P1 | Backlog | MOD-010, MOD-012 | nginx: `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Web, `/api/v1/` → Education |
-| MOD-015 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Backlog | MOD-010…MOD-014 | запуск → решение в тренажёре → события в Kafka → возврат → оценка и протокол в платформе |
+| MOD-004 | Education: реестр модулей + admin-CRUD | P0 | Backlog | MOD-002 | `PracticalModule` (с `configuration.catalogEndpoint`) + `/api/v1/admin/practical-modules` (`AdminOnly`) |
+| MOD-005 | Education: проксирование каталога заданий модуля | P0 | Backlog | MOD-004, MOD-013a | `GET /api/v1/practical-modules/{id}/tasks` (`TeacherOnly`) — сервер-сервер вызов ручки модуля, без прямого доступа браузера |
+| MOD-006 | Education: `Practical.kind=external`, привязка модуля к практике (1:1) | P0 | Backlog | MOD-005 | `PUT /api/v1/practicals/{id}/module { practicalModuleId, externalTaskRef }`, единственный внешний `PracticalTask` |
+| MOD-007 | Education: жизненный цикл сессии + launch-токен | P0 | Backlog | MOD-006 | `PracticalModuleSession`, `POST/GET .../module-sessions`, сбор `launchUrl` (query + `access_token` во фрагменте) от зарегистрированного origin, `POST /module-sessions/{id}/attach` |
+| MOD-008 | Education: Kafka-consumer (события + completion с `grade` от модуля) | P0 | Backlog | MOD-003, MOD-007 | `PracticalTaskEvent` (идемпотентно по `(sessionId, seq)`), терминальный переход по completion, `grade`/`score`/`completionData` сохраняются как прислал модуль |
+| MOD-009 | platform-web: реестр модулей (экран администратора) | P1 | Backlog | MOD-004 | CRUD `PracticalModule` на `/admin/*` |
+| MOD-010 | platform-web: привязка модуля к практике (преподаватель) | P0 | Backlog | MOD-006 | выбор модуля + задания **из каталога** (MOD-005) на странице практики преподавателя |
+| MOD-011 | platform-web: запуск внешней практики + возврат (студент) | P0 | Backlog | MOD-007 | распознавание `kind=external`; кнопка «Начать» → `POST session` → `window.location = launchUrl`; страница возврата `?session=` → поллинг статуса → оценка + ссылка на протокол |
+| MOD-012 | platform-web: просмотр протокола модульной сессии (события) | P1 | Backlog | MOD-008 | лента `PracticalTaskEvent` на странице практики (студент + преподаватель), постфактум |
+| MOD-013 | sql-module-web: маршрут `/launch` + `TokenProvider: handoff` | P0 | Backlog | MOD-007 | читает `session/task/return_url` из query, `access_token` из фрагмента (→ `sessionStorage`, чистит URL); base-path `/modules/sql`; по завершении → `window.location = return_url` |
+| MOD-013a | SqlModule.Web: ручка каталога заданий (`.../training/tasks-catalog`) | P0 | Backlog | — | список заданий модуля для проксирования ядром (MOD-005) |
+| MOD-014 | SqlModule.Web: Kafka-producer (события попыток + завершение с `grade`) | P0 | Backlog | MOD-003, MOD-008 | приём `attach`; продюсер в `scoodle.practice.*` с `moduleToken`; сам вычисляет и шлёт `grade` |
+| MOD-014a | SqlModule.Web: `Authority`/`Audience` = как у Education | P0 | Backlog | MOD-013 | тот же IdentityService — иначе `access_token` студента не пройдёт валидацию в API модуля |
+| MOD-015 | Инфраструктура: единый reverse-proxy | P1 | Backlog | MOD-011, MOD-013 | один nginx: `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Web, `/api/v1/` → Education |
+| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Backlog | MOD-011…MOD-015 | запуск → решение в тренажёре → события в Kafka → возврат → оценка (от модуля) и протокол в платформе |
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 

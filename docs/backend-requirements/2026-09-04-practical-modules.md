@@ -1,7 +1,9 @@
 # Backend handoff — подключение практических модулей (Education)
 
-Дата: 2026-09-04, **переписан под пересмотренный концепт 2026-09-05.**
-**Статус: E1 реализован (`MOD-004`, 2026-09-05), E2–E11 — спека.**
+Дата: 2026-09-04, переписан под концепт 2026-09-05.
+**Статус: РЕАЛИЗОВАНО. E1–E11 в `Education` (коммиты `bc2e45d`, `7e79e46`,
+`4bae06f`, `094934f`, `a4fd185`, `3522126`, `1465aa6`), покрыто тестами
+(Education.Tests 109/112 — 3 предсуществующих нестабильных).**
 Проект бэкенда: `Education` (`C:\Users\vladislav.bokovoi\SQLTren\Education`).
 Контекст: подключение внешних модулей отработки навыков к платформе
 (`Frontend/platform-web`, `MOD-` в `docs/MIGRATION_KANBAN.md`, Phase 7).
@@ -330,31 +332,41 @@ var bestGrade = sessions
 
 ## Приёмка
 
-- [x] `PracticalModule` — EF-конфигурация, `EnsureCreated` (`MOD-004`, `bc2e45d`).
-- [x] E1 (`MOD-004`): `GET/POST/PUT/DELETE /api/v1/admin/practical-modules`,
-      `AdminOnly`, валидация slug/basePath, тесты в `PracticalModulesApiTests`.
-- [ ] `PracticalModuleSession` (+ `session_key`/`return_url`/`expires_at`/
-      `end_reason`), `PracticalTaskEvent` (+ `id=eventId`/`kind`/`payload`) —
-      EF-конфигурации, `EnsureCreated`.
-- [ ] `Practical.Kind`/`TriesCount`/`TimeLimitMinutes`,
-      `PracticalTask.PracticalModuleId`/`ExternalTaskRef` — расширения агрегатов.
-- [ ] E2–E11 реализованы, под нужными политиками, с проверкой владения.
-- [ ] E4: продолжение `ACTIVE`-сессии (не `409`), гейт `TriesExhausted`,
-      `resumed`-флаг, `502` при недоступном модуле — покрыто тестами.
-- [ ] E6/E7: пуш в модуль и приём `/complete` — `X-Service-Key` + `sessionKey`,
-      `/complete` идемпотентен, `409` для не-`ACTIVE` — тесты.
-- [ ] E8: consumer идемпотентен по `eventId`, события после terminal
-      отбрасываются; `Education.Contracts.Kafka` приведён к новому формату,
-      `completion` удалён.
-- [ ] E9: `abandon` → `EXPIRED`/`abandoned`, `409` на терминальной — тест.
-- [ ] E10: best-of-N покрыт тестом (несколько `COMPLETED` → максимум).
-- [ ] E11: ленивое истечение по `expires_at` и потолок 24 ч — тест.
-- [ ] OpenAPI обновлён; `platform-web` перегенерировал Orval-клиент.
+- [x] `PracticalModule` — EF, `EnsureCreated` (`MOD-004`, `bc2e45d`).
+- [x] E1 (`MOD-004`): admin-CRUD реестра, `PracticalModulesApiTests`.
+- [x] `PracticalModuleSession` (`session_key`/`return_url`/`expires_at`/`end_reason`),
+      `PracticalTaskEvent` (`id=eventId`/`kind`/`payload`) — EF, `EnsureCreated`.
+- [x] `PracticalMaterial.Kind`/`TimeLimitMinutes`, `Case.PracticalModuleId`/`ExternalTaskRef`.
+- [x] E2 (`MOD-005`): прокси каталога, `X-Service-Key`, `502` — `ModuleCatalogApiTests` 5/5.
+- [x] E3 (`MOD-006`): `PUT /practicals/{id}/module`, `PracticalModuleBindingApiTests` 5/5.
+- [x] E4: продолжение `ACTIVE`-сессии (не `409`), `TriesExhausted`, `resumed`,
+      `502`-не-жжёт-попытку — `ModuleSessionsApiTests` 12/12.
+- [x] E6/E7 (`MOD-007`): пуш в модуль и `/complete` (`X-Service-Key` + `sessionKey`,
+      идемпотентно, `409` для не-`ACTIVE`).
+- [x] E8 (`MOD-008`): consumer идемпотентен по `eventId`, события после terminal
+      отброшены; `Education.Contracts.Kafka` под новый формат, `completion` удалён —
+      `PracticeEventHandlerTests` 5/5.
+- [x] E9: `abandon` → `EXPIRED`/`abandoned`, `409` на терминальной.
+- [x] E10/E11 (`MOD-008a`): best-of-N по `COMPLETED`; ленивое истечение + потолок 24ч.
+- [ ] OpenAPI Education экспортирован владельцем; `platform-web` перегенерировал Orval.
+
+## Остаточные доработки Education (в бэклоге, для UI platform-web)
+
+- **`MOD-006b`** — чтение текущей привязки практики: `GET /api/v1/practicals/{id}`
+  (detail) либо расширить ответ списка практик полями `kind`, `timeLimitMinutes`,
+  `{practicalModuleId, externalTaskRef}`. Без этого UI преподавателя (`MOD-010`) не
+  покажет, что практика уже внешняя и к чему привязана.
+- **`MOD-012a`** — read-эндпоинт ленты: `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events`
+  (студент — свои; преподаватель — в своём курсе). Нужен для `MOD-012` (протокол).
+- `ReturnUrlTemplate` по умолчанию использует плоский `/student/practicals/{practicalId}` —
+  согласовать с фактическим вложенным маршрутом platform-web.
 
 ## Не входит в эту итерацию
 
 - Реализация самого SQL-модуля — отдельные задачи (`MOD-013…014a`).
 - Живой просмотр «цифрового следа» преподавателем (push) — сознательно не делаем.
 - Более одного задания на внешнюю практику — ограничение MVP.
-- Общий инстанс модуля на оба audience — позже (сейчас два deployment-профиля у
-  модуля, Education это не касается).
+- Строгий счётчик «пропустить poison-message после 5» в consumer — базовый
+  `KafkaConsumerBackgroundService` и так не блокируется в рамках прогона.
+- Проверка назначения студента на практику при старте сессии — как и в других
+  student-эндпоинтах Education, не проверяется.

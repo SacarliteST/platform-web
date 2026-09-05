@@ -504,11 +504,19 @@ Education, и наоборот. Сейчас в IdentityService разделен
 
 ## Открытые вопросы (не блокируют, решить по ходу)
 
-- Тратится ли попытка, если пуш в модуль не прошёл (§4.5): предпочтительно
-  создавать сессию **после** успешного пуша — тогда `502` не жжёт попытку.
-- Формат `configuration.catalogEndpoint` — прямой URL до модуля в docker-сети или
-  через тот же nginx.
+- Формат `configuration.catalogEndpoint`/`sessionsEndpoint` — прямой URL до модуля
+  в docker-сети или через тот же nginx.
 - Точное `timeLimitMinutes` по умолчанию в UI преподавателя (предложить ~120).
+- `return_url` строится по `{origin}/student/practicals/{practicalId}` — а страница
+  практики platform-web вложена в `/student/courses/:c/modules/:m/practicals/:p`.
+  Нужен плоский redirect-маршрут в platform-web либо `courseId/moduleId` в шаблоне
+  (join в `MOD-007`).
+
+## Закрыто при реализации
+
+- **Тратится ли попытка при неудачном пуше в модуль** — нет. `MOD-007` создаёт
+  `PracticalModuleSession` **после** успешного пуша; `502 ModuleUnavailable` не
+  жжёт попытку. Подтверждено тестом `Start_ModuleUnavailable_Returns502_AndDoesNotBurnTry`.
 
 ## Закрыто в MOD-003
 

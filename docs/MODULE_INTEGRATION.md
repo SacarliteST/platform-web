@@ -1,470 +1,547 @@
-# Подключение практических модулей (Host–Plugin, редирект + Kafka)
+# Подключение практических модулей (Host–Plugin, редирект)
 
-Проработка механизма подключения внешних модулей отработки навыков к платформе
-Scoodle. Пилот — **SQL-модуль** (`Backend/SqlModule` + `Frontend/sql-module-web`).
+Механизм подключения внешних модулей отработки навыков к платформе Scoodle.
+Пилот — **SQL-модуль** (`Backend/SqlModule` + `Frontend/sql-module-web`).
 
-Статус: **дизайн, к реализации не приступали.** Основа — концепция курсовой
-(«Хост–Плагин», EDA, разделы 2.2 и 2.5): ядро `Education` — диспетчер, модули —
-самостоятельные единицы; «цифровой след» течёт в ядро отдельным каналом, поэтому
-модуль не «чёрный ящик».
+Статус: **концепт пересмотрен 2026-09-05, к реализации не приступали.** Основа —
+курсовая («Хост–Плагин», EDA): ядро `Education` — диспетчер, модули —
+самостоятельные единицы; «цифровой след» течёт в ядро отдельным каналом.
+
+> Эта редакция заменяет более раннюю схему (`attach`-релей, оценка через Kafka,
+> отдельный `moduleToken`, `seq`, claim `module_session_required`). Что и почему
+> поменялось — в конце, раздел «Отличия от первой редакции».
+
+---
+
+## Две задачи доверия — всё остальное обвязка для них
+
+Между платформой и модулем есть ровно две вещи, которые нужно защитить. Разберёшь
+их — понятен весь механизм.
+
+### Доверие 1: модуль верит «это студент X»
+
+Написать имя в ссылке нельзя — подделают. Наш IdentityService выдаёт подписанный
+токен: «это X, роли такие-то, токен для SQL-тренажёра (`aud=sql-module-api`)».
+Модуль проверяет подпись — и всё. Токен едет в браузере, в части URL после `#`
+(фрагмент не уходит на серверы и не пишется в логи).
+
+### Доверие 2: платформа верит «эта оценка и этот лог — правда от сессии S»
+
+Оценка и события действий идут в платформу отдельно от браузера. Кто угодно, кто
+дотянется до канала, мог бы написать «X получил 100». Значит каждое сообщение
+несёт **ключ сессии** — случайный секрет, который:
+
+- платформа придумывает при создании сессии;
+- платформа отдаёт бэкенду модуля **напрямую, сервер-серверу** (в браузер не
+  попадает → не утечёт);
+- модуль вставляет в каждое Kafka-событие и в HTTP-запрос с оценкой;
+- платформа сверяет: ключ совпал с тем, что я выдала для сессии? Нет — выбрасываю.
+
+Никакого рукопожатия, никакого обратного `attach`.
+
+---
+
+## Словарь — 4 слова
+
+| Слово | Что | Кто создаёт | Где ходит |
+|---|---|---|---|
+| **`module_access_token`** | JWT логина студента: `aud=sql-module-api`, `sub`=студент, claim `session_id` | IdentityService (Token Exchange, зовёт Education) | Education → фрагмент `launchUrl` → `sessionStorage` модуля → в каждом вызове API модуля |
+| **ключ сессии** (`session_key`) | случайный секрет сессии: подпись Kafka-событий + аутентификация HTTP-оценки | Education | Education → бэкенд модуля напрямую (пуш) → БД модуля → в каждом сообщении/оценке. **Никогда в браузер** |
+| **`sessionId`** | Guid = `PracticalModuleSession.Id`, просто имя сессии | Education | у всех: query-параметр, ключ Kafka, ключ поллинга |
+| **`serviceKey`** | статический общий пароль Education↔модуль для прямых вызовов (каталог, пуш, оценка) | задан в secret-конфиге обоих | только прямые сервер-сервер вызовы, не в браузере |
+
+Идентификаторы заданий: `externalTaskRef` — непрозрачная строка модуля (для
+SQL-модуля = `SqlTask.Id`), платформа хранит и передаёт как есть.
+
+---
+
+## Полный путь (happy path)
+
+```
+0. ГЕЙТ
+   platform-web: GET /practicals/{id}/module-sessions/current
+     нет ACTIVE-сессии, attemptsCount < triesCount  → «Начать»
+     есть ACTIVE-сессия (не истекла)                → «Продолжить» + «Прервать»
+     attemptsCount >= triesCount                    → заблокировано, лучшая оценка
+
+1. ЗАПУСК
+   browser → Education: POST /practicals/{id}/module-sessions { taskId }   Bearer platform_token
+   Education:
+     - лениво истекает старую ACTIVE-сессию, если её expiresAt прошёл
+     - если ACTIVE-сессия жива → это ПРОДОЛЖЕНИЕ (не новая, tryNumber и startedAt не трогаются)
+     - иначе: attemptsCount (вкл. EXPIRED) >= triesCount → 409 TriesExhausted;
+              создаёт PracticalModuleSession: ACTIVE, tryNumber++, startedAt=сейчас,
+              expiresAt = startedAt + timeLimitMinutes (или null), генерит session_key,
+              строит return_url и сохраняет на сессии
+     - ПУШ → модуль (сервер-сервер, X-Service-Key):
+         POST {module}/module-integration/sessions
+         { sessionId, sessionKey, userId, taskRef, returnUrl, expiresAt }
+       модуль делает upsert локальной ModuleSession; Education ретраит до 2xx
+       (модуль недоступен → весь запуск 409/502, студент остаётся на платформе)
+     - Token Exchange → IdentityService:
+         { subjectToken: platform_token, audience: "sql-module-api", sessionId }
+       ← module_access_token  (внутри claim session_id)
+     - 200 { sessionId, launchUrl, expiresAt, tryNumber, resumed }
+   launchUrl = {origin}/modules/sql/launch?session={sessionId}#access_token={module_access_token}
+   ── в query только sessionId; секрет (токен) во фрагменте; ключ сессии в URL НЕ входит ──
+   browser: window.location.assign(launchUrl)
+
+2. РАБОТА В МОДУЛЕ
+   sql-module-web на /launch:
+     - #access_token → sessionStorage, сразу history.replaceState (чистит фрагмент)
+     - GET /module-integration/sessions/current   Bearer module_access_token
+       ← { taskId, returnUrl }   ← канонические значения из того, что запушил Education
+     - navigate → /student/tasks/{taskId};  sessionId держит в контексте вкладки
+
+   студент решает:
+     POST /training/attempts/submit { taskId, submittedSql }   Bearer module_access_token
+       (сессия берётся из claim session_id в токене — заголовок не нужен)
+     модуль:
+       - сохраняет Attempt (как сейчас, синхронная проверка)
+       - кладёт в таблицу pending_publish строку события
+       - если IsCorrect и сессия ещё ACTIVE:
+           кладёт в pending_publish строку «оценка», ModuleSession → COMPLETED
+     фоновый publisher разгребает pending_publish:
+       - события → Kafka scoodle.practice.events
+       - оценка → HTTP POST {education}/module-sessions/{S}/complete
+       - retry после сбоя/рестарта, пока не подтвердится
+
+   Education:
+     - Kafka consumer: INSERT PracticalTaskEvent ON CONFLICT (eventId) DO NOTHING → лента
+     - POST /complete: сверяет sessionKey, ACTIVE → COMPLETED, grade сохранён как есть,
+       идемпотентно (повтор → 200 без изменений; не ACTIVE → 409)
+
+3. ВОЗВРАТ
+   sql-module-web: по завершению → window.location.assign(returnUrl)   (из шага 2, не из URL)
+   platform-web: видит ?session={sessionId} → GET /module-sessions/{sessionId}
+     COMPLETED → сразу показывает grade + ссылку на протокол
+     ACTIVE    → «обрабатывается» (оценка ещё едет по HTTP-ретраю), обновление раз в ~2с
+```
+
+`module_access_token` в браузере — единственный секрет, который туда попадает.
+Ключ сессии идёт мимо браузера. Оценка — по HTTP при завершении, **не** через
+Kafka. Kafka — только лог действий.
+
+---
+
+## Модель сбоев
+
+### Два разных таймера — не путать
+
+| Таймер | Значение (MVP) | Отсчёт от | Кто следит |
+|---|---|---|---|
+| Свежесть `module_access_token` | ~5 мин | выдача токена | IdentityService. Протух → мёртвая страница, студент возвращается на платформу и жмёт «Продолжить» |
+| Время на попытку | **задаёт преподаватель** (`timeLimitMinutes`, или без лимита) | `startedAt` | Education. Модуль показывает отсчёт, но авторитет — Education |
+
+Экспирации по бездействию нет. При «без лимита» действует жёсткий потолок **24 ч**
+на любую `ACTIVE`-сессию — это сборка мусора, не «время на задание».
+
+### Состояния
+
+```
+клик «Начать»
+  → сессия S = ACTIVE, tryNumber++, ПОПЫТКА СПИСАНА, startedAt=сейчас,
+    expiresAt = startedAt + timeLimitMinutes (или null)
+  → пуш модулю, Token Exchange, редирект
+
+из ACTIVE:
+  ├─ пришёл HTTP /complete            → COMPLETED  (endReason=completed)
+  ├─ now > expiresAt (если задан)     → EXPIRED    (endReason=timeout, лениво при чтении статуса)
+  ├─ now > startedAt + 24ч            → EXPIRED    (endReason=timeout, потолок-GC)
+  ├─ клик «Прервать попытку»          → EXPIRED    (endReason=abandoned, сразу)
+  └─ закрыл модуль / нажал «Назад»    → всё ещё ACTIVE (платформе не сообщили)
+        практика: «Попытка выполняется» + «Продолжить» + «Прервать»
+
+конец (COMPLETED / EXPIRED):
+  attemptsCount < triesCount  → «Начать» (новая сессия, новый tryNumber)
+  attemptsCount >= triesCount → заблокировано, «Попытки исчерпаны», лучшая оценка
+```
+
+Состояния три. `endReason` (`completed | timeout | abandoned`) — только для текста
+в UI, на логику не влияет.
+
+**Правило:** попытка списывается в момент «Начать», не при завершении. Закрыл
+модуль, ушёл назад, вышло время, прервал — бесплатной попытки не даёт. Как
+внутренний тест (`EfTestResultsRepository.StartTestAsync` считает строку на старте).
+
+### Продолжение попытки (идемпотентно)
+
+`ACTIVE`-сессию можно переоткрывать сколько угодно, не создавая новую и не тратя
+попытку. `POST /module-sessions` при живой `ACTIVE`-сессии того же студента по
+тому же заданию — это **не** `409`, а продолжение:
+
+- сессия S остаётся, `tryNumber` не растёт, `startedAt`/`expiresAt` не трогаются
+  (продолжение не докупает время);
+- Education заново пушит модулю ту же `{ sessionId, sessionKey, … }` — модуль
+  обрабатывает как upsert (есть S — обновил, нет — вставил);
+- Education заново делает Token Exchange (свежий `module_access_token`, снова ~5 мин);
+- возвращает тот же `launchUrl`, `resumed: true`.
+
+Жать «Продолжить» можно многократно — каждый клик просто перевыпускает токен и
+редиректит. Ограничения: только пока `ACTIVE` и не истекла, только владелец
+(`sub` токена == `user_id` сессии).
+
+### Идемпотентность оценки
+
+`POST /module-sessions/{S}/complete` у модуля может уйти повторно (его фоновый
+publisher ретраит). Education: первый вызов ставит `COMPLETED` + `grade`, отвечает
+`200`. Повтор — видит «уже `COMPLETED`» → `200`, тело игнорирует, оценку не
+перезаписывает (чтобы модуль перестал ретраить). Сессия уже `EXPIRED` →
+`409`, поздняя оценка не принимается (студент не выиграет, подкрутив часы в модуле).
+
+### Потеря Kafka-события
+
+Событие потерялось/опоздало → дырка в ленте цифрового следа, **на оценку не
+влияет** (оценка идёт по отдельному надёжному HTTP-каналу с ретраем). Дедуп при
+переигрывании — по `eventId`.
+
+---
 
 ## Принятые решения
 
 | Вопрос | Решение |
 |---|---|
-| Размещение UI модуля | **Тот же origin, под путём** — `/<platform>/modules/<slug>/…`, единый реверс-прокси заводит SPA модуля внутрь платформы. |
-| Переход в модуль | **Замена вкладки** — `window.location.assign(launchUrl)`. |
-| Возврат | Модуль по завершении редиректит на **`return_url`** платформы (origin платформы, собирает ядро). Страница практики поллит статус сессии. |
-| Шина событий | **Kafka** (не SignalR). Модуль — producer, `Education` — consumer. |
-| Оценка | **Ставит модуль**, не ядро. Completion несёт готовую `grade` (2–5); ядро её только хранит. |
-| Заданий на практику | **1:1** — одна внешняя практика ↔ одно задание модуля (MVP). |
-| Просмотр «цифрового следа» | **Постфактум**, без живого пуша. |
-| Каталог заданий модуля | Выбор из списка (новая ручка у модуля, ядро проксирует), не ручной ввод. |
-| Реверс-прокси | **Единый nginx** перед всем. |
-| Аутентификация UI модуля к своему API | **Token Exchange через IdentityService** — модуль получает токен со своей собственной `audience`, не токен платформы (см. раздел «Аутентификация»). |
-| Повторные попытки | **Есть**, по образцу внутреннего теста: `triesCount`, попытка списывается **на старте** (включая `EXPIRED`), итоговая оценка — **лучшая из завершённых** (`MAX(grade)`). |
+| Размещение UI модуля | Тот же origin, под путём `/modules/<slug>/…`, единый nginx перед всем |
+| Переход в модуль | Замена вкладки, `window.location.assign(launchUrl)` |
+| Возврат | Модуль редиректит на `return_url` (строит Education, отдаёт модулю в пуше). Страница практики читает статус |
+| Оценка | **HTTP-запрос модуль → Education при завершении**, не Kafka. Оценку ставит модуль (`grade` 0–100), ядро только хранит |
+| Цифровой след | **Только Kafka, только лог.** Событие = что модуль сам счёл действием; ядро не разбирает содержимое, копит ленту постфактум |
+| Заданий на практику | 1:1 (MVP) |
+| Каталог заданий | Выбор из списка (ручка у модуля, Education проксирует), не ручной ввод |
+| Аутентификация UI модуля | Token Exchange через IdentityService, `aud=sql-module-api` + claim `session_id` |
+| Повторные попытки | `triesCount` (преподаватель), списывается на старте (вкл. `EXPIRED`), итог — `MAX(grade)` по `COMPLETED` |
+| Время на попытку | `timeLimitMinutes` задаёт преподаватель при привязке (или без лимита + потолок 24 ч) |
+| Прерывание | Кнопка «Прервать попытку» → сессия `EXPIRED`, попытка засчитана |
+| Связь модуля с платформой | Education **пушит** сессию модулю при старте (сервер-сервер), обратного `attach` нет |
+| Секрет сессии | Один `session_key`: и подпись Kafka, и аутентификация `/complete`. В браузер не уходит |
+| standalone-режим модуля | Постоянный обязательный режим. Пока **два deployment-профиля** (`platform` / `standalone`, разные конфиги, один билд); переход на общий инстанс — позже |
 
-## Полный путь, целиком
-
-```
-══ 0. ГЕЙТ ПЕРЕД ЗАПУСКОМ ═══════════════════════════════════════════════════
-Студент открывает страницу практики (kind=external).
-platform-web: GET /practicals/{id}/module-sessions/current
-  ├─ нет сессии / последняя EXPIRED, attemptsCount < triesCount
-  │    → «Начать» активна, «Попытка N из triesCount»
-  ├─ есть сессия ACTIVE
-  │    → «Начать» заблокирована, «Попытка обрабатывается»
-  └─ attemptsCount >= triesCount (считая EXPIRED)
-       → «Начать» заблокирована навсегда, «Попытки исчерпаны»,
-         показана лучшая оценка из COMPLETED (если есть)
-
-══ 1. ЗАПУСК ════════════════════════════════════════════════════════════════
-Браузер (platform_token, aud=education-api)
-  │ POST /practicals/{id}/module-sessions {taskId}   Bearer platform_token
-  ▼
-Education
-  ├─ attemptsCount = COUNT(PracticalModuleSession WHERE user+task)   -- вкл. EXPIRED
-  ├─ attemptsCount >= triesCount   → 409 «Попытки исчерпаны»
-  ├─ есть ACTIVE сессия            → 409 «Попытка уже выполняется»
-  ├─ создаёт PracticalModuleSession: status=ACTIVE, tryNumber=attemptsCount+1,
-  │    startedAt=сейчас, launchToken (одноразовый, для attach)
-  ├─ POST /api/v1/auth/token/exchange → IdentityService        [сервер-сервер]
-  │    Authorization: Basic education_client_id:secret
-  │    { subjectToken: platform_token, audience: "sql-module-api" }
-  │  ← { accessToken: module_access_token, expiresIn: 1800 }
-  ├─ собирает launchUrl (тот же origin):
-  │    /modules/sql/launch
-  │      ?session={sessionId}&task={externalTaskRef}
-  │      &return_url={ENC(https://platform/…/practicals/{p}?session={sessionId})}
-  │      &token={launchToken}
-  │      #access_token={module_access_token}
-  ▼
- 200 { sessionId, launchUrl, expiresAt, tryNumber }
-  ▼
-Браузер: window.location.assign(launchUrl)   ← замена вкладки, попытка уже списана
-
-══ 2. РАБОТА В МОДУЛЕ ═══════════════════════════════════════════════════════
-sql-module-web (открылся на /modules/sql/launch?…)
-  ├─ TokenProvider: handoff — читает module_access_token из #фрагмента
-  │    → sessionStorage, чистит фрагмент (history.replaceState)
-  ├─ POST /module-api/sql/attach {launchToken}
-  ▼
-SqlModule.Web
-  ├─ POST /api/v1/module-sessions/{sessionId}/attach {launchToken} → Education
-  │  ← { moduleToken, userId, taskRef, kafka: {...} }     (launchToken гасится)
-  ├─ вызовы студента — Bearer module_access_token, Audience=sql-module-api
-  ├─ каждая попытка → Kafka producer → scoodle.practice.events
-  │    {sessionId, moduleToken, seq, eventType, payload}
-  ▼
-Education (Kafka consumer, фоново)
-  └─ append PracticalTaskEvent, идемпотентно по (sessionId, seq)
-
-… студент решает задачу …
-
-SqlModule.Web (студент нажал «Сдать», модуль сам посчитал вердикт)
-  └─ Kafka producer → scoodle.practice.completion
-       {sessionId, moduleToken, status: "COMPLETED",
-        grade: 5,   ← оценку ставит МОДУЛЬ
-        finalScore, maxScore, completionData}
-  ▼
-Education (consumer, терминальный переход — только один раз)
-  └─ PracticalModuleSession.status=COMPLETED, grade/score/completionData сохранены
-
-══ 3. ВОЗВРАТ ════════════════════════════════════════════════════════════════
-sql-module-web
-  └─ window.location.assign(return_url)
-       = https://platform/…/practicals/{p}?session={sessionId}
-  ▼
-Браузер: полная навигация обратно, тот же origin — platform_token в сторе платформы
-         никуда не делся, повторный вход не нужен
-  ▼
-platform-web: страница практики видит ?session={sessionId}
-  ├─ GET /practicals/{id}/module-sessions/{sessionId}   Bearer platform_token
-  ├─ status ACTIVE     → поллинг раз в ~2с (гонка с Kafka), «Попытка обрабатывается»,
-  │                       таймаут ~30–60с → «обрабатывается дольше обычного» + «Обновить»
-  └─ status COMPLETED  → «Оценка: {grade}» (лучшая из всех COMPLETED — MAX(grade)
-                          на вкладке «Оценка»), ссылка на протокол (постфактум)
-
-Кнопка «Начать» на этой же странице — снова смотрит на шаг 0: если
-attemptsCount < triesCount, можно начать ещё раз (новый tryNumber).
-```
+---
 
 ## Компоненты и зоны ответственности
 
 | Компонент | Что делает нового |
 |---|---|
-| **IdentityService** (отдельный воркстрим — новая ответственность) | реестр клиентов (`Clients`, allow-list разрешённых `audience` на клиента); эндпоинт **Token Exchange** (`/api/v1/auth/token/exchange`), аутентификация клиента Basic client_id:secret |
-| **Education** (бэкенд, моя зона — спека) | сущности `PracticalModule` (+ `identity_audience`, `configuration.catalogEndpoint`), `Practical.kind=external`, `PracticalModuleSession` (+ `try_number`), `PracticalTaskEvent`; admin-CRUD реестра; проксирование каталога заданий; привязка модуля (1:1) с `triesCount`; жизненный цикл сессии с гейтом попыток; вызов Token Exchange при выпуске `launchUrl`; **Kafka consumer** (события + completion с `grade` от модуля); best-of-N в `GetPracticalGrade` |
-| **platform-web** (моя зона — реализация) | распознавание вида практики; гейт «Начать» по `current`-сессии + `triesCount`; кнопка «Начать» → `POST session` → `window.location = launchUrl`; страница возврата (`?session=` → поллинг → результат + протокол); UI преподавателя «привязать модуль + каталог + triesCount»; UI администратора для реестра модулей |
-| **sql-module-web** (отдельный воркстрим) | маршрут `/launch`; новый `TokenProvider: handoff` (читает `access_token` из фрагмента, не JS-передача из `CONCEPT.md §5` — там расчёт на монтирование, у нас полная навигация); по завершении → `window.location = return_url` |
-| **SqlModule.Web** (отдельный воркстрим) | приём `attach`; **ручка каталога заданий**; **Kafka producer** (события + completion с `grade`, которую вычисляет сам); `Authority`=IdentityService / `Audience=sql-module-api` — **собственная**, отличная от Education |
-| **Инфраструктура** | Kafka в `Backend/compose.yaml`; единый nginx (`/`→platform-web, `/modules/sql/`→sql-module-web, `/module-api/sql/`→SqlModule.Web, `/api/v1/`→Education) |
+| **IdentityService** (отдельный воркстрим) | реестр клиентов + Token Exchange (`/api/v1/auth/token/exchange`, Basic client_id:secret); в exchange-токен добавляется claim `session_id` из параметра запроса |
+| **Education** (бэкенд, спека — `2026-09-04-practical-modules.md`) | `PracticalModule` (реестр), `Practical.kind=external` + `triesCount` + `timeLimitMinutes`, `PracticalModuleSession` (+ `expiresAt`, `endReason`, `session_key`, `return_url`), `PracticalTaskEvent` (дедуп по `eventId`); admin-CRUD реестра; прокси каталога; привязка модуля 1:1; жизненный цикл сессии + гейт попыток + продолжение + `abandon`; **пуш сессии модулю** при старте; Token Exchange при старте; `POST /module-sessions/{id}/complete` (приём оценки); **Kafka consumer** (только события → лента); best-of-N |
+| **platform-web** (реализация) | вид практики; гейт «Начать»/«Продолжить»/«Прервать» по `current`; кнопки → `POST session` → `window.location = launchUrl`; страница возврата (`?session=` → статус → grade/протокол); UI преподавателя (привязать модуль + каталог + `triesCount` + `timeLimitMinutes`); UI администратора реестра |
+| **sql-module-web** (отдельный воркстрим — `2026-09-05-sql-module-integration.md`) | маршрут `/launch`; `TokenProvider: handoff` (`sessionStorage`, без refresh) + абстракция источника токена в HTTP-слое; контекст активного запуска; по завершению → `window.location = returnUrl` |
+| **SqlModule** (бэкенд — тот же handoff-док) | ручка каталога (`X-Service-Key`); приём пуша `POST /module-integration/sessions` (upsert); `GET /module-integration/sessions/current`; локальные `ModuleSession` + `pending_publish`; фоновый publisher (события → Kafka, оценка → HTTP `/complete`); `Auth:Audience=sql-module-api` (профиль `platform`) |
+| **Инфраструктура** | Kafka в `Backend/compose.yaml` (один топик задействован); единый nginx (`/`→platform-web, `/modules/sql/`→sql-module-web, `/module-api/sql/`→SqlModule, `/api/v1/`→Education) |
+
+---
 
 ## Модель данных (Education, новое)
 
 ```
 PracticalModule
-  id                uuid  PK
-  slug              text  AK          -- "sql"
-  name              text
-  description       text
-  practice_type     text                -- "SQL_SIMULATOR"
-  base_path         text                -- "/modules/sql"
-  identity_audience text                -- "sql-module-api" — для Token Exchange
+  id                uuid PK
+  slug              text AK          -- "sql"
+  name / description text
+  practice_type     text            -- "SQL_SIMULATOR"
+  base_path         text            -- "/modules/sql"
+  identity_audience text            -- "sql-module-api" — для Token Exchange
   is_enabled        bool
-  configuration     jsonb               -- catalogEndpoint и прочая специфика модуля
+  configuration     jsonb           -- catalogEndpoint и прочее; СЕКРЕТОВ тут нет (отдаётся admin-API)
 
-Practical (существующая) + kind text  -- "internal" | "external"
-                          + tries_count int4  -- переиспользуется и для external
+Practical (существующая)
+  + kind               text        -- "internal" (дефолт) | "external"
+  + tries_count        int4
+  + time_limit_minutes int4 null    -- задаёт преподаватель; null = без лимита (потолок 24ч)
 
-PracticalTask (существующая) + practical_module_id uuid null FK
-                              + external_task_ref  text null
+PracticalTask (существующая)
+  + practical_module_id uuid null FK
+  + external_task_ref   text null
 
 PracticalModuleSession
-  id            uuid  PK
-  practical_task_id  uuid FK
-  user_id       uuid FK              -- Education User
-  try_number    int4                 -- 1..triesCount
-  status        text                 -- ACTIVE | COMPLETED | EXPIRED
-  launch_token  text                 -- одноразовый, для attach
-  module_token  text                 -- секрет Kafka, в браузер не уходит
-  started_at    timestamptz
-  completed_at  timestamptz null
-  score         float8 null          -- метаданные модуля, для отображения
-  max_score     float8 null          --   (оценку по ним ядро НЕ считает)
-  grade         int4 null            -- присылает модуль, ядро только хранит
+  id              uuid PK
+  practical_task_id uuid FK
+  user_id         uuid FK
+  try_number      int4
+  status          text            -- ACTIVE | COMPLETED | EXPIRED
+  end_reason      text null       -- completed | timeout | abandoned
+  session_key     text            -- секрет: подпись Kafka + аутентификация /complete; в браузер не уходит
+  return_url      text            -- собран ядром при старте, уходит модулю в пуше
+  started_at      timestamptz
+  expires_at      timestamptz null
+  completed_at    timestamptz null
+  grade           int4 null       -- 0..100, ставит модуль
   completion_data jsonb null
 
 PracticalTaskEvent
-  id            uuid  PK
-  session_id    uuid FK
-  seq           int8
-  event_type    text
-  occurred_at   timestamptz
-  data          jsonb
-  intermediate_result jsonb null
-  UNIQUE (session_id, seq)
+  id           uuid PK            -- = eventId от модуля (дедуп)
+  session_id   uuid FK
+  kind         text               -- произвольная строка модуля, ядро не разбирает
+  occurred_at  timestamptz
+  payload      jsonb
 ```
 
-Статусов три (не пять, как в первой версии дизайна) — `PENDING`/`ABANDONED` убраны:
-переход по ссылке = попытка уже началась, поэтому сессия создаётся сразу в `ACTIVE`.
+`serviceKey` для каждого модуля — в secret-конфиге Education по slug'у
+(напр. `PracticalModules:sql:ServiceKey`), **не** в колонке `configuration`
+(её возвращает admin-API).
+
+---
 
 ## Контракты
 
 ### 1. Реестр модулей — администратор (Education, `AdminOnly`)
 
 ```
-GET    /api/v1/admin/practical-modules
-POST   /api/v1/admin/practical-modules   { slug, name, description, practiceType,
-                                            basePath, identityAudience, configuration }
-PUT    /api/v1/admin/practical-modules/{id}
-DELETE /api/v1/admin/practical-modules/{id}
+GET/POST/PUT/DELETE /api/v1/admin/practical-modules
+  POST { slug, name, description, practiceType, basePath, identityAudience, configuration }
 ```
+
+Реализовано в `MOD-004`.
 
 ### 2. Каталог заданий модуля — преподаватель (Education, `TeacherOnly`)
 
 ```
-GET /api/v1/practical-modules/{practicalModuleId}/tasks
- 200 [ { ref, name, description } ]
+GET /api/v1/practical-modules/{practicalModuleId}/tasks   → 200 [ { ref, name, description } ]
 ```
 
-Ядро дёргает **сервер-сервер** ручку каталога у самого модуля
-(`PracticalModule.configuration.catalogEndpoint`) и отдаёт нормализованный список —
-браузер к API модуля напрямую не ходит.
+Education дёргает **сервер-сервер** ручку каталога модуля
+(`configuration.catalogEndpoint`, заголовок `X-Service-Key`), нормализует, отдаёт.
+Браузер к API модуля не ходит. Таймаут 2–3 с, недоступен → `502`.
 
 ### 3. Привязка модуля к практике — преподаватель (Education, `TeacherOnly`)
 
 ```
 PUT /api/v1/practicals/{practicalId}/module
-    { practicalModuleId, externalTaskRef, triesCount }
-    -- переводит практику в kind=external, единственный PracticalTask (1:1, MVP)
+    { practicalModuleId, externalTaskRef, triesCount, timeLimitMinutes }
 ```
 
-`externalTaskRef` — из каталога §2. `triesCount` — тот же смысл, что у внутреннего
-теста (`PracticalMaterial.TriesCount`).
+Переводит практику в `kind=external`, создаёт единственный `PracticalTask` (1:1).
+`externalTaskRef` — из каталога §2. `timeLimitMinutes` — положительное число или
+`null`. Смена значения при живой сессии на неё не влияет (`expiresAt` заморожен
+при старте).
 
-### 4. Инициализация сессии — студент (Education, `StudentOnly`)
+### 4. Старт / продолжение сессии — студент (Education, `StudentOnly`)
 
 ```
 POST /api/v1/practicals/{practicalId}/module-sessions   { taskId }
- 200 { sessionId, launchUrl, expiresAt, tryNumber }
- 409 { reason: "TriesExhausted" }       -- attemptsCount (вкл. EXPIRED) >= triesCount
- 409 { reason: "SessionActive" }        -- есть незавершённая ACTIVE сессия
+ 200 { sessionId, launchUrl, expiresAt, tryNumber, resumed }
+ 409 { reason: "TriesExhausted" }   -- attemptsCount (вкл. EXPIRED) >= triesCount
+ 502 { reason: "ModuleUnavailable" } -- пуш в модуль не прошёл
 ```
 
-`launchUrl` (тот же origin; query — для сессии, фрагмент — для токена доступа
-модуля к своему API, см. «Аутентификация»):
-
-```
-/modules/sql/launch
-  ?session={sessionId}
-  &task={externalTaskRef}
-  &return_url={ENC(https://<platform-origin>/student/courses/{c}/modules/{m}/practicals/{p}?session={sessionId})}
-  &token={launchToken}        -- одноразовый, TTL ~10 мин, для attach; НЕ для вызовов API модуля
-  #access_token={module_access_token}   -- фрагмент, не уходит на сервер/в логи
-```
-
-`return_url` собирает **ядро** из зарегистрированного origin платформы.
+Логика:
+1. Есть `ACTIVE`-сессия студента по заданию и `now <= expiresAt` → **продолжение**:
+   re-пуш модулю, новый Token Exchange, вернуть её `launchUrl`, `resumed: true`.
+   `tryNumber`/`startedAt`/`expiresAt` не меняются.
+2. Есть `ACTIVE`, но `now > expiresAt` → пометить `EXPIRED` и идти в п.3.
+3. `attemptsCount = COUNT(PracticalModuleSession по user+task, включая EXPIRED)`;
+   `>= triesCount` → `409`.
+4. Создать сессию `ACTIVE`, `tryNumber = attemptsCount + 1`, `startedAt = now`,
+   `expiresAt = timeLimitMinutes ? now + timeLimitMinutes : null`, `session_key`,
+   `return_url` (из зарегистрированного origin платформы — не из заголовков запроса).
+5. Пуш модулю (§6). Не 2xx после ретраев → `502`, сессия помечается `EXPIRED`
+   (`endReason=timeout`), попытка НЕ возвращается (или: не создавать до успешного
+   пуша — предпочтительно, тогда попытка не тратится; решить при реализации).
+6. Token Exchange (§ «Аутентификация»), `sessionId` в параметрах.
+7. Вернуть `launchUrl = {origin}/modules/{slug}/launch?session={sessionId}#access_token={token}`.
 
 ### 5. Статус сессии — студент (Education, `StudentOnly`)
 
 ```
 GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}
- 200 { status, tryNumber, score, maxScore, grade, startedAt, completedAt, eventCount }
+ 200 { status, tryNumber, startedAt, expiresAt, endReason, grade, completedAt, eventCount }
 
 GET /api/v1/practicals/{practicalId}/module-sessions/current
- 200 { session: {...} | null, attemptsCount, triesCount, bestGrade }
-    -- всегда используется для гейта «Начать», не только из return_url
+ 200 { session: { sessionId, status, tryNumber, startedAt, expiresAt, endReason, grade } | null,
+       attemptsCount, triesCount, timeLimitMinutes, bestGrade }
 ```
 
-### 6. Обмен launch-токена — бэкенд модуля → Education
+`current` — единственный источник для гейта кнопок (не `?session=` из `return_url`):
+- `session` `ACTIVE` и `now <= expiresAt` → «Продолжить» + «Прервать»;
+- иначе `attemptsCount < triesCount` → «Начать»;
+- иначе → заблокировано, показать `bestGrade`.
+
+Чтение `current`/`{sessionId}` лениво истекает просроченную `ACTIVE`-сессию.
+
+### 6. Пуш сессии в модуль — Education → бэкенд модуля (сервер-сервер)
 
 ```
-POST /api/v1/module-sessions/{sessionId}/attach   { launchToken }
- 200 { moduleToken, userId, taskRef, kafka: { bootstrap, eventsTopic, completionTopic } }
- 401 — токен истёк / израсходован / не тот модуль
+POST {module}/module-integration/sessions
+  X-Service-Key: <serviceKey>
+  { sessionId, sessionKey, userId, taskRef, returnUrl, expiresAt }
+ 200  -- upsert выполнен
 ```
 
-`moduleToken` — серверный секрет сессии, в каждом Kafka-сообщении, в браузер не
-попадает. Это **не** тот токен, которым модуль ходит в свой API как пользователь.
+Модуль: если строки с `sessionId` нет — вставляет; если есть — обновляет (это же
+используется для продолжения попытки). Идемпотентно. Education ретраит до `2xx`
+ограниченно (в рамках запроса студента, ~2–3 быстрые попытки).
 
-### 7. Kafka — модуль (producer) → Education (consumer)
+### 7. Оценка — бэкенд модуля → Education (сервер-сервер, HTTP)
 
-Топик `scoodle.practice.events`, key = `sessionId`:
+```
+POST /api/v1/module-sessions/{sessionId}/complete
+  X-Service-Key: <serviceKey>
+  { sessionKey, grade, completionData, completedAt }
+ 200  -- ACTIVE → COMPLETED, grade сохранён; либо уже COMPLETED → 200 (no-op)
+ 409  -- сессия не ACTIVE (EXPIRED/abandoned) — оценка отклонена
+ 401  -- serviceKey или sessionKey не совпал
+```
+
+`grade` — 0..100, ставит модуль, ядро не пересчитывает. Модуль ретраит до `200`
+(или `409` — тогда прекращает: сессия закрыта не в его пользу).
+
+### 8. Цифровой след — модуль (producer) → Education (consumer), Kafka
+
+Топик `scoodle.practice.events`, key = `sessionId`. **Только лог, ничего
+терминального.**
 
 ```json
 {
-  "sessionId": "88e73f-2211-4a",
-  "moduleToken": "…server secret…",
-  "moduleSlug": "sql",
-  "taskRef": "sql-join-001",
-  "seq": 7,
-  "eventType": "CODE_EXECUTION",
-  "occurredAt": "2026-02-15T10:15:30Z",
-  "payload": { "input_code": "SELECT * FROM orders WHERE user_id = 1",
-               "execution_status": "SUCCESS", "rows_affected": 25 },
-  "intermediateResult": { "correct": false }
+  "sessionId": "88e73f-…",
+  "sessionKey": "…секрет сессии…",
+  "eventId": "uuid — дедуп",
+  "kind": "sql_submit",
+  "occurredAt": "2026-09-05T10:15:30Z",
+  "payload": { "submittedSql": "SELECT …", "status": "SUCCESS", "isCorrect": false }
 }
 ```
 
-Топик `scoodle.practice.completion`, key = `sessionId`:
+- `kind` — произвольная строка модуля (`sql_submit`, `sql_run`, `hint_open`, …),
+  Education её не перечисляет и не интерпретирует.
+- `payload` — любой JSON, Education хранит как есть, показывает лентой на странице
+  практики постфактум.
+- Consumer: сверяет `sessionKey`; `INSERT PracticalTaskEvent ON CONFLICT (id) DO
+  NOTHING`; события по сессии в терминальном статусе — отбрасывает.
 
-```json
-{
-  "sessionId": "88e73f-2211-4a",
-  "moduleToken": "…server secret…",
-  "status": "COMPLETED",
-  "grade": 5,
-  "finalScore": 95.0,
-  "maxScore": 100.0,
-  "completionData": { "total_attempts": 3, "correctness_ratio": 1.0 },
-  "completedAt": "2026-02-15T10:40:00Z"
-}
+### 9. Прерывание попытки — студент (Education, `StudentOnly`)
+
+```
+POST /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/abandon
+ 200  -- ACTIVE → EXPIRED, endReason=abandoned
+ 409  -- сессия уже терминальна
 ```
 
-`grade` — обязательное поле, **ставит модуль**. Ядро оценку не пересчитывает.
+Модулю не сообщается: если студент дорешает в другой вкладке, его `/complete`
+упрётся в `409` (§7).
 
-Consumer ядра: проверяет `moduleToken`; события — append в `PracticalTaskEvent`
-(идемпотентно по `(sessionId, seq)`); completion — статус `COMPLETED`, сохраняет
-`grade`/`score`/`maxScore`/`completionData` как есть. Обрабатывается один раз
-(терминальный переход).
+### 10. Возврат
 
-### 8. Итоговая оценка практики (best-of-N)
+Модуль по завершению: `window.location.assign(returnUrl)` (значение из §6/`current`,
+не из URL). Страница практики видит `?session=` → §5:
+- `COMPLETED` → сразу `grade` + протокол;
+- `ACTIVE` → «обрабатывается», обновление раз в ~2с (оценка ещё в HTTP-ретрае у
+  модуля), таймаут ~30–60с → «дольше обычного» + «Обновить».
 
-Аналогично внутреннему тесту (`EfGradesRepository.GetPracticalGradeAsync`,
-`testResults.Max(...)`):
+### 11. Итоговая оценка практики (best-of-N)
 
 ```
 GET /api/v1/practicals/{practicalId}/grade
- 200 { grade: MAX(grade) по всем PracticalModuleSession.status=COMPLETED, messages }
+ 200 { grade: MAX(grade) по PracticalModuleSession.status=COMPLETED, messages }
 ```
 
-Если ни одной `COMPLETED` сессии нет — `grade: null`, `messages: ["Пройдите практику"]`.
+Нет ни одной `COMPLETED` → `grade: null`, `messages: ["Пройдите практику"]`.
+Как `EfGradesRepository.GetPracticalGradeAsync` для внутреннего теста.
 
-### 9. Возврат в платформу
-
-Модуль по завершении: `window.location.assign(return_url)`. Страница практики
-видит `?session=…`, поллит §5 каждые ~2с, пока `status` не терминальный
-(таймаут ~30–60с → сообщение + ручное «Обновить»), затем показывает
-`grade`/протокол. Пуш не нужен — событийность на стороне ядра.
+---
 
 ## Аутентификация UI модуля (Token Exchange)
 
-**Почему не «переиспользовать токен платформы как есть».** Токен, выданный
-IdentityService, должен быть годен ровно для того сервиса, под который выписан
-(`aud`), а не работать «универсальным ключом» по всей системе — если он утечёт
-из вкладки модуля, не должен открывать API Education, и наоборот. Сейчас в
-IdentityService такого разделения нет (`Backend/IdentityService/.../appsettings*.json`
-— один глобальный `Jwt.Audience` на весь инстанс, никакого понятия клиента).
-Значит нужен настоящий механизм per-service токенов, а не констатация
-случайного совпадения аудиторий.
+**Почему не «переиспользовать токен платформы».** Токен IdentityService должен
+быть годен ровно для сервиса, под который выписан (`aud`), а не быть
+«универсальным ключом»: утёк из вкладки модуля — не должен открывать API
+Education, и наоборот. Сейчас в IdentityService разделения нет (один глобальный
+`Jwt.Audience`).
 
-**Схема — Token Exchange (RFC 8693-стиль), выполняет ядро, сервер-сервер:**
+**Схема (RFC 8693-стиль), выполняет Education, сервер-сервер:**
 
-1. У IdentityService появляется **реестр клиентов**:
-   ```
-   Clients
-     client_id          text PK   -- "education-core"
-     client_secret_hash text
-     allowed_audiences  text[]    -- ["sql-module-api", …] — что клиенту можно запрашивать
-   ```
-   Один клиент — Education. Новый модуль = новая аудитория в allow-list, без нового кода.
-
-2. Новый эндпоинт:
+1. Реестр клиентов в IdentityService: `client_id` (`education-core`),
+   `client_secret_hash`, `allowed_audiences text[]` (`["sql-module-api"]`).
+   Новый модуль = новая аудитория в allow-list, без кода. **Реализовано в
+   `MOD-002a/b`.**
+2. Эндпоинт:
    ```
    POST /api/v1/auth/token/exchange
      Authorization: Basic base64(client_id:client_secret)
-     { grantType: "token-exchange", subjectToken, audience }
+     { grantType: "token-exchange", subjectToken, audience, sessionId }
     200 { accessToken, expiresIn }
-    401 — клиент неизвестен / audience не в allow-list / subjectToken невалиден
    ```
-   IdentityService: валидирует `subjectToken` как обычно, проверяет что клиент
-   (`education-core`) вправе запрашивать `audience=sql-module-api`, минтит новый
-   подписанный токен: тот же `sub`/роли, `aud=sql-module-api`, TTL короче обычного
-   (напр. 30 мин — можно больше 15, т.к. аудитория узкая). Refresh-токен для него
-   не выдаётся — он одноразовый по смыслу, живёт только на длительность сессии в модуле.
+   IdentityService валидирует `subjectToken`, проверяет право клиента на
+   `audience`, минтит токен: тот же `sub`/роли, `aud=sql-module-api`, **claim
+   `session_id` = переданный `sessionId`**, TTL ~5 мин, без refresh.
+3. Education зовёт это на шаге 4.6 «Полного пути», кладёт результат во **фрагмент**
+   `launchUrl`.
+4. `sql-module-web` использует `TokenProvider: handoff` — читает `access_token`
+   из `location.hash`, кладёт в `sessionStorage`, чистит фрагмент через
+   `history.replaceState`. Без auto-refresh.
+5. `SqlModule` (профиль `platform`) валидирует JWT как раньше, но `Audience` —
+   **своя** (`sql-module-api`). Сессию берёт из claim `session_id` — заголовок
+   `X-Module-Session-Id` не нужен.
 
-3. Education вызывает это при сборке `launchUrl` (шаг 1 «Полного пути»), кладёт
-   результат в **фрагмент** `launchUrl` (не query — фрагмент не уходит на сервер
-   и не попадает в access-логи nginx).
+**Что даёт.** Токен из вкладки модуля не проходит против API Education (другой
+`aud`) и привязан к одной сессии (claim). Компрометация вкладки не даёт доступа
+ни к другому сервису, ни к другой сессии.
 
-4. `sql-module-web` не может использовать готовый `TokenProvider: host-token` из
-   своего `CONCEPT.md §5` — тот спроектирован для **JS-встраивания**
-   (`mount(element, config)`, токен передаётся объектом в памяти того же процесса).
-   Наш запуск — полная навигация, новый JS-контекст, объекта передать некому.
-   Нужен новый вариант — **`handoff`**: читает `access_token` из `location.hash`
-   на старте, кладёт в `sessionStorage`, сразу чистит фрагмент через
-   `history.replaceState`. Дальше — как обычный Bearer, до истечения или до возврата.
+**Остаточный риск.** Длинная сессия модуля может пережить TTL токена. На MVP не
+решаем (истёк — студент жмёт «Продолжить», получает свежий токен на ту же сессию).
 
-5. `SqlModule.Web` продолжает валидировать JWT ровно как раньше (`Authority`/`Audience`
-   из конфига, `WebExtensions.cs`) — просто `Audience` теперь **своя**
-   (`sql-module-api`), а не совпадающая с Education по случайности.
-
-**Что это даёт.** Токен из вкладки модуля физически не проходит против API
-Education (другой `aud`) — и наоборot. Компрометация одной вкладки не даёт
-доступа к другому сервису. Компрометация самого механизма exchange ограничена
-allow-list'ом клиентов в IdentityService — только Education может попросить
-`sql-module-api`-токен, и только потому что явно на это уполномочен.
-
-**Остаточный риск.** Долгая сессия модуля может пережить TTL обменянного токена.
-На MVP не решаем (TTL — компромиссный, крупнее обычного, т.к. риск утечки ниже
-из-за узкой аудитории); на будущее — Education может хранить выданный при exchange
-refresh и перевыпускать модульный токен по запросу через `moduleToken`
-(`POST /module-sessions/{id}/refresh-token`), не трогая пользователя.
-
-## Повторные попытки (по образцу внутреннего теста)
-
-Скопировано с уже работающей политики `PracticalMaterial.CanStartAttempt` /
-`EfTestResultsRepository.StartTestAsync` / `EfGradesRepository.GetPracticalGradeAsync`
-(`testResults.Max(...)`) — единая механика попыток что для внутреннего теста, что
-для внешнего модуля:
-
-- Лимит — `Practical.triesCount`, задаёт преподаватель при привязке модуля (§3).
-- **Списывается на старте**, не на завершении: `attemptsCount = COUNT(*)` всех
-  `PracticalModuleSession` пользователя по практике, **включая `EXPIRED`** —
-  как и во внутреннем тесте, обрыв/незавершение не даёт бесплатной попытки.
-- Итоговая оценка практики — **`MAX(grade)`** по всем `COMPLETED`-сессиям (§8),
-  не последняя и не средняя — так же, как `testResults.Max(...)` для теста.
-- Отказ при исчерпании — `409` на `POST .../module-sessions`, тот же паттерн
-  сообщения, что уже есть у внутреннего теста («Попытки исчерпаны»).
-
-## Состояния сессии
-
-```
-(нет сессии) ──POST /module-sessions──▶ ACTIVE (startedAt=сейчас, tryNumber++)
-                                            │
-                Kafka: completion получена  │  TTL истёк (напр. 2ч без событий),
-                и обработана                │  completion не пришла
-                ▼                           ▼
-            COMPLETED                    EXPIRED
-        (терминально для ЭТОЙ           (терминально для ЭТОЙ попытки,
-         попытки; новую можно            но НЕ освобождает лимит —
-         начать, если остались           попытка всё равно списана,
-         попытки)                        см. «Повторные попытки»)
-```
-
-Гейт на `POST /module-sessions` и на UI кнопки «Начать» — всегда через
-`GET .../module-sessions/current` (§5), а не только через `?session=` из
-`return_url` — работает одинаково и сразу после честного возврата, и если
-студент просто открыл страницу практики заново, и если нажал «назад» в модуле:
-пока последняя попытка `ACTIVE`, новую начать нельзя ни при каких условиях
-(сервер, не клиентское состояние).
+---
 
 ## Безопасность
 
-- `launchToken` — одноразовый, короткоживущий, привязан к `sessionId+userId+taskRef`,
-  гасится при `attach`. В URL (query) — допустимо (TTL мал, single-use), не логировать.
-- `module_access_token` — выпускается Token Exchange специально под
-  `sql-module-api`, короче обычного TTL; передаётся во **фрагменте** URL;
-  вычищается модулем через `history.replaceState`; бесполезен против API Education.
-- `moduleToken` — только сервер↔сервер, в каждом Kafka-сообщении, никогда в браузер.
-- `return_url` строит ядро из зарегистрированного origin платформы; модуль не влияет.
-- Kafka — SASL/ACL: producer-права на `scoodle.practice.*` только у сервис-аккаунта
-  модуля; ядро — только consumer.
-- Token Exchange — только зарегистрированные клиенты (Basic client_id:secret),
-  только разрешённые для клиента `audience` (allow-list, не произвольная строка).
-- Сессия одноразовая: повторный `attach` или `completion` по завершённой сессии — 409/ignore.
-- Тот же origin → CSRF-поверхность общая с платформой; формы модуля защищены как обычно.
+- `module_access_token` — во фрагменте URL, короткий TTL, привязан к `aud` и
+  `session_id`; модуль чистит фрагмент; бесполезен против API Education.
+- `session_key` — только сервер↔сервер, в каждом Kafka-сообщении и в `/complete`,
+  никогда в браузер. Хранение у модуля — с redaction в логах/ProblemDetails/
+  telemetry (шифрование в БД — tech-debt, не MVP).
+- `serviceKey` — статический, в secret-конфиге Education и модуля; не в
+  `PracticalModule.configuration`; admin-API его не возвращает.
+- `return_url` строит Education из зарегистрированного origin; модуль на него не
+  влияет; `/launch` не редиректит по недоверенному параметру.
+- Kafka — producer-права на `scoodle.practice.*` только у сервис-аккаунта модуля;
+  Education — только consumer.
+- Оценку студент подделать не может: `grade` идёт от бэкенда модуля с `session_key`
+  и `serviceKey`, ни один из которых не был в его браузере; Kafka из браузера
+  недоступна.
+- Сессия одноразовая: повторный `/complete` по завершённой — `200`/`409`, оценка
+  не переписывается.
 
-## Закрытые вопросы (решения владельца, 2026-09-03)
+---
 
-1. Оценку ставит **модуль** (§7, `grade` обязательное поле в completion).
-2. Заданий на практику — **1:1** (MVP).
-3. Цифровой след — **постфактум**, без живого пуша.
-4. Каталог заданий модуля — **выбор из списка** (§2), у модуля новая ручка.
-5. Аутентификация — **Token Exchange через IdentityService**, а не переиспользование
-   токена платформы как есть (см. «Аутентификация UI модуля» выше — это финальная
-   версия, отменяет более раннюю идею «просто передать существующий токен»).
-6. Реверс-прокси — **единый nginx**.
-7. Повторные попытки — **есть**, `triesCount` списывается на старте (вкл. `EXPIRED`),
-   оценка — `MAX(grade)` по завершённым, по образцу внутреннего теста.
+## Открытые вопросы (не блокируют, решить по ходу)
+
+- Тратится ли попытка, если пуш в модуль не прошёл (§4.5): предпочтительно
+  создавать сессию **после** успешного пуша — тогда `502` не жжёт попытку.
+- Формат `configuration.catalogEndpoint` — прямой URL до модуля в docker-сети или
+  через тот же nginx.
+- Точное `timeLimitMinutes` по умолчанию в UI преподавателя (предложить ~120).
 
 ## Закрыто в MOD-003
 
-- **Kafka в dev** — явный init-скрипт (`kafka-init` в `Backend/compose.yaml`, пред-создаёт
-  оба топика с 3 партициями) **плюс** `AUTO_CREATE_TOPICS=true` — на одном брокере иначе не
-  создаётся внутренний `__consumer_offsets`, и любая consumer-группа виснет с
-  `COORDINATOR_NOT_AVAILABLE` без единой ошибки на стороне продюсера. Проверено на реальном
-  контейнере (продюсер репортит успех, консьюмер молча ничего не читает — нашли только
-  включив debug-лог консьюмера).
-- `Education/src/Education.Kafka` — **только абстракции** (`IKafkaProducer<T>`,
-  `KafkaConsumerBackgroundService<T>`, `KafkaOptions`), без ссылок на другие слои Education —
-  переносимо при появлении общего NuGet-фида между репозиториями. Контракты сообщений
-  (`KafkaTopics`, `PracticeEventMessage`, `PracticeCompletionMessage`) — в
-  `Education.Contracts/Kafka/`, рядом с `ApiRoutes`. Конкретная реализация консьюмера —
-  в `Education.Application` (`MOD-008`), не в `Education.Kafka`.
+- Kafka в dev: `kafka-init` пред-создаёт топики + `AUTO_CREATE_TOPICS=true`
+  (на одном брокере иначе не создаётся `__consumer_offsets`, consumer-группа виснет
+  с `COORDINATOR_NOT_AVAILABLE` молча — проверено на реальном контейнере).
+- `Education/src/Education.Kafka` — только абстракции; контракты сообщений в
+  `Education.Contracts/Kafka/`; конкретный consumer — в `Education.Application`
+  (`MOD-008`). **Задействован один топик** — `scoodle.practice.events`; топик
+  `scoodle.practice.completion` из первой редакции больше не нужен (оценка по HTTP).
 
-## Остаточные вопросы (не блокируют `MOD-002`, решить по ходу реализации)
+---
 
-- Долгая сессия модуля vs TTL обменянного токена — см. «Аутентификация», не блокер.
-- Формат `PracticalModule.configuration.catalogEndpoint` — прямой URL до
-  `SqlModule.Web` внутри docker-сети или через тот же nginx?
-- TTL сессии до `EXPIRED` (перегиб между «дать доработать» и «не висеть вечно») —
-  предварительно ~2 часа без событий, подтвердить при реализации `MOD-007`.
+## Отличия от первой редакции
+
+| Было (редакция от 2026-09-04) | Стало |
+|---|---|
+| Модуль вызывает Education `attach`, получает секрет | Education **пушит** сессию модулю при старте |
+| `launch_token` едет в браузере (фрагмент), гасится при attach | Нет `launch_token`: секрет (`session_key`) идёт пушем, в браузер не попадает |
+| Отдельный `moduleToken` для Kafka | Один `session_key` на оба канала |
+| Оценка через Kafka-топик `scoodle.practice.completion` | Оценка — HTTP `POST /module-sessions/{id}/complete` |
+| Kafka: события + completion | Kafka: **только события** (лог) |
+| `seq` — счётчик на сессию + транзакция ради него | `eventId` (uuid) на событие, дедуп по нему |
+| claim `module_session_required` + заголовок `X-Module-Session-Id` | claim `session_id` в exchange-токене |
+| `Idempotency-Key` на submit | Не нужен: `/complete` идемпотентен по состоянию сессии |
+| Transactional outbox (как паттерн) | Таблица `pending_publish` + фоновый цикл (та же надёжность) |
+| Поллинг статуса — основной путь возврата | Оценка записана до редиректа (HTTP); поллинг — редкий запасной путь |
+| Время сессии ~2ч фиксировано | `timeLimitMinutes` задаёт преподаватель (или без лимита + потолок 24ч) |
+| — | Кнопка «Прервать попытку» (`abandon` → `EXPIRED`) |
+| — | Продолжение `ACTIVE`-сессии вместо `409 SessionActive` |
 
 ## План работ
 
-Раздел `Phase 7 — Подключение практических модулей` в `MIGRATION_KANBAN.md`,
-серия `MOD-`. Порядок: контракт Education (спека) → IdentityService (Token
-Exchange) → Kafka в dev → Education backend → platform-web → sql-module-web →
-SqlModule.Web → сквозной smoke.
+Раздел `Phase 7` в `MIGRATION_KANBAN.md`, серия `MOD-`. Порядок: контракт
+Education (спека) → IdentityService (Token Exchange + `session_id` claim) → Kafka в
+dev → Education backend → platform-web → sql-module-web → SqlModule → сквозной smoke.

@@ -1,11 +1,19 @@
 # Backend handoff — Token Exchange (IdentityService)
 
-Дата: 2026-09-04. **Статус: спека, к реализации не приступали.**
+Дата: 2026-09-04. **Статус: базовый Token Exchange реализован (`MOD-002a`/`MOD-002b`,
+коммит `7d8d692` в `IdentityService`). Ниже — исходная спека + доработка от
+2026-09-05 (claim `session_id`), которая ещё НЕ сделана.**
 Проект бэкенда: `IdentityService` (`C:\Users\vladislav.bokovoi\SQLTren\Backend\IdentityService`).
 Контекст: подключение внешних практических модулей к платформе
 (`Frontend/platform-web`, `MOD-002a`/`MOD-002b` в `docs/MIGRATION_KANBAN.md`).
-Полное обоснование — [`../MODULE_INTEGRATION.md`](../MODULE_INTEGRATION.md),
-раздел «Аутентификация UI модуля».
+Полное обоснование — [`../MODULE_INTEGRATION.md`](../MODULE_INTEGRATION.md)
+(редакция 2026-09-05), раздел «Аутентификация UI модуля».
+
+> **Доработка 2026-09-05 (не реализована):** по пересмотренному концепту сессию
+> модуля создаёт Education и передаёт её `sessionId` в вызов exchange;
+> IdentityService кладёт его в claim `session_id` выпускаемого токена. Это
+> позволяет `SqlModule` определять модульную сессию из самого токена, без
+> отдельного заголовка. См. §«Требуемый эндпоинт» п. 4 и «Приёмка».
 
 ## Суть
 
@@ -46,7 +54,8 @@ POST /api/v1/auth/token/exchange
   {
     "grantType": "urn:ietf:params:oauth:grant-type:token-exchange",
     "subjectToken": "<jwt, valid, aud=scoodle-api>",
-    "audience": "sql-module-api"
+    "audience": "sql-module-api",
+    "sessionId": "<guid, опционально>"      // доработка 2026-09-05
   }
 
  200 { "accessToken": "<новый jwt>", "expiresIn": 1800 }
@@ -68,6 +77,10 @@ POST /api/v1/auth/token/exchange
    `aud = запрошенная audience`; `iss` — тот же; `exp` — короче обычного
    (по умолчанию 30 мин, конфигурируемо; короче не обязательно — аудитория и
    так узкая, поэтому TTL можно оставить длиннее 15-минутного обычного access-токена).
+   **Доработка 2026-09-05:** если в запросе есть `sessionId` — добавить в токен
+   claim `session_id` с этим значением. `SqlModule` берёт модульную сессию из
+   этого claim (отдельного заголовка `X-Module-Session-Id` в новом концепте нет).
+   Токен без `session_id` (обычный обмен без сессии) остаётся валидным.
 5. **Refresh-токен не выдаётся.** Обменянный токен — одноразовый по смыслу,
    живёт ровно на длительность сессии в модуле; истёк — новый обмен со стороны
    `Education` при следующем запуске.
@@ -86,11 +99,14 @@ POST /api/v1/auth/token/exchange
 
 ## Приёмка
 
-- [ ] `Clients` — таблица/конфигурация, одна запись для `education-core`.
-- [ ] `POST /api/v1/auth/token/exchange` реализован, покрыт тестами:
+- [x] `Clients` — таблица/конфигурация, одна запись для `education-core` (`MOD-002a`, `7d8d692`).
+- [x] `POST /api/v1/auth/token/exchange` реализован, покрыт тестами (`MOD-002b`):
       happy path; неверный секрет клиента → 401; `audience` не в allow-list → 401;
       `subjectToken` истёк/невалиден → 401; выданный токен проходит
       JWT-bearer валидацию с `Audience=sql-module-api`, но НЕ проходит
       с `Audience=scoodle-api`.
-- [ ] `AuditEvent` на каждый обмен.
-- [ ] `Education` получил `client_id`/`client_secret` в свою конфигурацию (dev — `appsettings.Development.json`, как остальные секреты сервиса).
+- [x] `AuditEvent` на каждый обмен (`TokenExchanged`).
+- [x] `Education` получил `client_id`/`client_secret` в свою конфигурацию (dev — `appsettings.Development.json`).
+- [ ] **Доработка 2026-09-05:** запрос принимает `sessionId`; при его наличии
+      токен несёт claim `session_id` с этим значением; токен без `sessionId`
+      по-прежнему валиден — покрыто тестом.

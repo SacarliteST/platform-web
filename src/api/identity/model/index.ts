@@ -17,6 +17,8 @@ export * from './loginRequest';
 export * from './problemDetails';
 export * from './refreshRequest';
 export * from './registerRequest';
+export * from './tokenExchangeRequest';
+export * from './tokenExchangeResponse';
 export * from './tokenResponse';
 export * from './updateUserRolesRequest';
 export * from './userDetailsDto';

@@ -20,6 +20,8 @@ import type {
   ProblemDetails,
   RefreshRequest,
   RegisterRequest,
+  TokenExchangeRequest,
+  TokenExchangeResponse,
   TokenResponse,
   ValidationProblemDetails
 } from '../model';
@@ -31,7 +33,111 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export type registerResponse201 = {
+export type tokenExchangeResponse200 = {
+  data: TokenExchangeResponse
+  status: 200
+}
+
+export type tokenExchangeResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type tokenExchangeResponse422 = {
+  data: ValidationProblemDetails
+  status: 422
+}
+
+export type tokenExchangeResponseSuccess = (tokenExchangeResponse200) & {
+  headers: Headers;
+};
+export type tokenExchangeResponseError = (tokenExchangeResponse401 | tokenExchangeResponse422) & {
+  headers: Headers;
+};
+
+export type tokenExchangeResponse = (tokenExchangeResponseSuccess | tokenExchangeResponseError)
+
+export const getTokenExchangeUrl = () => {
+
+
+
+
+  return `/api/v1/auth/token/exchange`
+}
+
+/**
+ * Server-to-server: доверенный клиент (Authorization: Basic client_id:client_secret) обменивает токен пользователя на новый токен, ограниченный целевой audience. Refresh-токен не выдаётся.
+ * @summary Обмен токена на аудиторию другого сервиса
+ */
+export const tokenExchange = async (tokenExchangeRequest: TokenExchangeRequest, options?: Parameters<typeof identityFetch>[1]): Promise<tokenExchangeResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return identityFetch<tokenExchangeResponse>(getTokenExchangeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(tokenExchangeRequest)
+  }
+);}
+
+
+
+
+
+export const getTokenExchangeMutationKey = () => ['tokenExchange'] as const;
+
+export const getTokenExchangeMutationOptions = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tokenExchange>>, TError,TokenExchangeMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof tokenExchange>>, TError,TokenExchangeMutationVariables, TContext> => {
+
+const mutationKey = getTokenExchangeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof tokenExchange>>, TokenExchangeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  tokenExchange(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TokenExchangeMutationResult = NonNullable<Awaited<ReturnType<typeof tokenExchange>>>
+    export type TokenExchangeMutationBody = TokenExchangeRequest
+    export type TokenExchangeMutationError = ProblemDetails | ValidationProblemDetails
+    export type TokenExchangeMutationVariables = {data: TokenExchangeRequest}
+
+    /**
+ * @summary Обмен токена на аудиторию другого сервиса
+ */
+export const useTokenExchange = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tokenExchange>>, TError,TokenExchangeMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof tokenExchange>>,
+        TError,
+        TokenExchangeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTokenExchangeMutationOptions(options), queryClient);
+    }
+    export type registerResponse201 = {
   data: TokenResponse
   status: 201
 }

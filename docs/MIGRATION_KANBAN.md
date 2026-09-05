@@ -161,7 +161,9 @@ sql-module-web → SqlModule → сквозной smoke.
 ТЗ модуля (as-built контракты) —
 [`2026-09-05-sql-module-integration.md`](./backend-requirements/2026-09-05-sql-module-integration.md).
 Весь backend Education под интеграцию — включая `MOD-006b`/`MOD-012a` — закрыт.
-Открыто по Education: только экспорт OpenAPI + регенерация Orval в `platform-web`.
+OpenAPI экспортирован, Orval-клиент `platform-web` перегенерирован (коммит `359c517`,
+`src/api/education/{module-sessions,practical-modules}`, typecheck+build зелёные).
+Дальше — только экраны `MOD-009…012` (команда platform-web).
 
 | ID | Задача | Приоритет | Статус | Зависимость | Результат |
 |---|---|---|---|---|---|

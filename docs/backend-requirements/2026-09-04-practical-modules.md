@@ -350,16 +350,24 @@ var bestGrade = sessions
 - [x] E10/E11 (`MOD-008a`): best-of-N по `COMPLETED`; ленивое истечение + потолок 24ч.
 - [ ] OpenAPI Education экспортирован владельцем; `platform-web` перегенерировал Orval.
 
-## Остаточные доработки Education (в бэклоге, для UI platform-web)
+## Дополнительные эндпоинты для UI platform-web (реализованы)
 
-- **`MOD-006b`** — чтение текущей привязки практики: `GET /api/v1/practicals/{id}`
-  (detail) либо расширить ответ списка практик полями `kind`, `timeLimitMinutes`,
-  `{practicalModuleId, externalTaskRef}`. Без этого UI преподавателя (`MOD-010`) не
-  покажет, что практика уже внешняя и к чему привязана.
-- **`MOD-012a`** — read-эндпоинт ленты: `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events`
-  (студент — свои; преподаватель — в своём курсе). Нужен для `MOD-012` (протокол).
+- **E12 (`MOD-006b`)** — `GET /api/v1/practicals/{practicalId}` (`AuthenticatedEducationUser`)
+  → `PracticalDetailResponse { id, name, kind, isPublic, triesCount, timeLimitMinutes,
+  moduleBinding? { practicalModuleId, practicalModuleSlug, practicalModuleName, taskId,
+  externalTaskRef } }`. `404` — практика не найдена.
+- **E13 (`MOD-012a`)** — `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events`
+  (`AuthenticatedEducationUser`) → `[{ eventId, kind, occurredAt, payload }]`.
+  Доступ: владелец сессии ИЛИ преподаватель курса практики; иначе/несуществующая → `404`.
+
+Коммит `64c2d39`, покрыто тестами.
+
+## Остаётся
+
 - `ReturnUrlTemplate` по умолчанию использует плоский `/student/practicals/{practicalId}` —
-  согласовать с фактическим вложенным маршрутом platform-web.
+  согласовать с фактическим вложенным маршрутом platform-web
+  (`/student/courses/:c/modules/:m/practicals/:p`).
+- Экспорт OpenAPI Education владельцем; регенерация Orval в `platform-web`.
 
 ## Не входит в эту итерацию
 

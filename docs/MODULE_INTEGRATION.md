@@ -447,10 +447,12 @@ refresh и перевыпускать модульный токен по зап�
   `COORDINATOR_NOT_AVAILABLE` без единой ошибки на стороне продюсера. Проверено на реальном
   контейнере (продюсер репортит успех, консьюмер молча ничего не читает — нашли только
   включив debug-лог консьюмера).
-- Абстракции вынесены в отдельный проект `Education/src/Education.Kafka` — не зависит от
-  `Education.Domain`/`Education.Application`, чтобы контракты сообщений и обёртки над
-  `Confluent.Kafka` были переносимы (при появлении общего NuGet-фида между репозиториями —
-  без переписывания).
+- `Education/src/Education.Kafka` — **только абстракции** (`IKafkaProducer<T>`,
+  `KafkaConsumerBackgroundService<T>`, `KafkaOptions`), без ссылок на другие слои Education —
+  переносимо при появлении общего NuGet-фида между репозиториями. Контракты сообщений
+  (`KafkaTopics`, `PracticeEventMessage`, `PracticeCompletionMessage`) — в
+  `Education.Contracts/Kafka/`, рядом с `ApiRoutes`. Конкретная реализация консьюмера —
+  в `Education.Application` (`MOD-008`), не в `Education.Kafka`.
 
 ## Остаточные вопросы (не блокируют `MOD-002`, решить по ходу реализации)
 

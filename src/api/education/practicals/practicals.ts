@@ -24,10 +24,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BindPracticalModuleRequest,
   ConfigurePracticalQuestionsRequest,
   CreatePracticalRequest,
   CreateTaskRequest,
   HttpValidationProblemDetails,
+  PracticalDetailResponse,
   PracticalQuestionsSetupResponse,
   PracticalResponse,
   TaskResponse,
@@ -295,6 +297,234 @@ export const useCreatePractical = <TError = HttpValidationProblemDetails | void,
       > => {
       return useMutation(getCreatePracticalMutationOptions(options), queryClient);
     }
+    export type getPracticalDetailResponse200 = {
+  data: PracticalDetailResponse
+  status: 200
+}
+
+export type getPracticalDetailResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getPracticalDetailResponse404 = {
+  data: void
+  status: 404
+}
+
+export type getPracticalDetailResponseSuccess = (getPracticalDetailResponse200) & {
+  headers: Headers;
+};
+export type getPracticalDetailResponseError = (getPracticalDetailResponse401 | getPracticalDetailResponse404) & {
+  headers: Headers;
+};
+
+export type getPracticalDetailResponse = (getPracticalDetailResponseSuccess | getPracticalDetailResponseError)
+
+export const getGetPracticalDetailUrl = (practicalId: string,) => {
+
+
+
+
+  return `/api/v1/practicals/${practicalId}`
+}
+
+/**
+ * Вид практики (internal/external), лимиты и привязка к внешнему модулю.
+ * @summary Детали практики
+ */
+export const getPracticalDetail = async (practicalId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getPracticalDetailResponse> => {
+
+  return educationFetch<getPracticalDetailResponse>(getGetPracticalDetailUrl(practicalId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPracticalDetailQueryKey = (practicalId: string,) => {
+    return [
+    `/api/v1/practicals/${practicalId}`
+    ] as const;
+    }
+
+
+export const getGetPracticalDetailQueryOptions = <TData = Awaited<ReturnType<typeof getPracticalDetail>>, TError = void>(practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalDetail>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticalDetailQueryKey(practicalId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticalDetail>>> = ({ signal }) => getPracticalDetail(practicalId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: practicalId !== null && practicalId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPracticalDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPracticalDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getPracticalDetail>>>
+export type GetPracticalDetailQueryError = void
+
+
+export function useGetPracticalDetail<TData = Awaited<ReturnType<typeof getPracticalDetail>>, TError = void>(
+ practicalId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalDetail>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPracticalDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getPracticalDetail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticalDetail<TData = Awaited<ReturnType<typeof getPracticalDetail>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalDetail>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPracticalDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getPracticalDetail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticalDetail<TData = Awaited<ReturnType<typeof getPracticalDetail>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalDetail>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Детали практики
+ */
+
+export function useGetPracticalDetail<TData = Awaited<ReturnType<typeof getPracticalDetail>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalDetail>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPracticalDetailQueryOptions(practicalId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type deletePracticalResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deletePracticalResponse401 = {
+  data: void
+  status: 401
+}
+
+export type deletePracticalResponse403 = {
+  data: void
+  status: 403
+}
+
+export type deletePracticalResponse404 = {
+  data: void
+  status: 404
+}
+
+export type deletePracticalResponseSuccess = (deletePracticalResponse204) & {
+  headers: Headers;
+};
+export type deletePracticalResponseError = (deletePracticalResponse401 | deletePracticalResponse403 | deletePracticalResponse404) & {
+  headers: Headers;
+};
+
+export type deletePracticalResponse = (deletePracticalResponseSuccess | deletePracticalResponseError)
+
+export const getDeletePracticalUrl = (practicalId: string,) => {
+
+
+
+
+  return `/api/v1/practicals/${practicalId}`
+}
+
+/**
+ * Удаляет практическое задание, если оно принадлежит курсу текущего преподавателя.
+ * @summary Удаление практики
+ */
+export const deletePractical = async (practicalId: string, options?: Parameters<typeof educationFetch>[1]): Promise<deletePracticalResponse> => {
+
+  return educationFetch<deletePracticalResponse>(getDeletePracticalUrl(practicalId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeletePracticalMutationKey = () => ['deletePractical'] as const;
+
+export const getDeletePracticalMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePractical>>, TError,DeletePracticalMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePractical>>, TError,DeletePracticalMutationVariables, TContext> => {
+
+const mutationKey = getDeletePracticalMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePractical>>, DeletePracticalMutationVariables> = (props) => {
+          const {practicalId} = props ?? {};
+
+          return  deletePractical(practicalId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePracticalMutationResult = NonNullable<Awaited<ReturnType<typeof deletePractical>>>
+
+    export type DeletePracticalMutationError = void
+    export type DeletePracticalMutationVariables = {practicalId: string}
+
+    /**
+ * @summary Удаление практики
+ */
+export const useDeletePractical = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePractical>>, TError,DeletePracticalMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePractical>>,
+        TError,
+        DeletePracticalMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeletePracticalMutationOptions(options), queryClient);
+    }
     export type publishPracticalResponse204 = {
   data: void
   status: 204
@@ -397,109 +627,6 @@ export const usePublishPractical = <TError = void,
         TContext
       > => {
       return useMutation(getPublishPracticalMutationOptions(options), queryClient);
-    }
-    export type deletePracticalResponse204 = {
-  data: void
-  status: 204
-}
-
-export type deletePracticalResponse401 = {
-  data: void
-  status: 401
-}
-
-export type deletePracticalResponse403 = {
-  data: void
-  status: 403
-}
-
-export type deletePracticalResponse404 = {
-  data: void
-  status: 404
-}
-
-export type deletePracticalResponseSuccess = (deletePracticalResponse204) & {
-  headers: Headers;
-};
-export type deletePracticalResponseError = (deletePracticalResponse401 | deletePracticalResponse403 | deletePracticalResponse404) & {
-  headers: Headers;
-};
-
-export type deletePracticalResponse = (deletePracticalResponseSuccess | deletePracticalResponseError)
-
-export const getDeletePracticalUrl = (practicalId: string,) => {
-
-
-
-
-  return `/api/v1/practicals/${practicalId}`
-}
-
-/**
- * Удаляет практическое задание, если оно принадлежит курсу текущего преподавателя.
- * @summary Удаление практики
- */
-export const deletePractical = async (practicalId: string, options?: Parameters<typeof educationFetch>[1]): Promise<deletePracticalResponse> => {
-
-  return educationFetch<deletePracticalResponse>(getDeletePracticalUrl(practicalId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-
-export const getDeletePracticalMutationKey = () => ['deletePractical'] as const;
-
-export const getDeletePracticalMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePractical>>, TError,DeletePracticalMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deletePractical>>, TError,DeletePracticalMutationVariables, TContext> => {
-
-const mutationKey = getDeletePracticalMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePractical>>, DeletePracticalMutationVariables> = (props) => {
-          const {practicalId} = props ?? {};
-
-          return  deletePractical(practicalId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeletePracticalMutationResult = NonNullable<Awaited<ReturnType<typeof deletePractical>>>
-
-    export type DeletePracticalMutationError = void
-    export type DeletePracticalMutationVariables = {practicalId: string}
-
-    /**
- * @summary Удаление практики
- */
-export const useDeletePractical = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePractical>>, TError,DeletePracticalMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deletePractical>>,
-        TError,
-        DeletePracticalMutationVariables,
-        TContext
-      > => {
-      return useMutation(getDeletePracticalMutationOptions(options), queryClient);
     }
     export type getPracticalTasksResponse200 = {
   data: TaskResponse[]
@@ -958,6 +1085,121 @@ export const useDeletePracticalTask = <TError = void,
         TContext
       > => {
       return useMutation(getDeletePracticalTaskMutationOptions(options), queryClient);
+    }
+    export type bindPracticalModuleResponse204 = {
+  data: void
+  status: 204
+}
+
+export type bindPracticalModuleResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
+export type bindPracticalModuleResponse401 = {
+  data: void
+  status: 401
+}
+
+export type bindPracticalModuleResponse403 = {
+  data: void
+  status: 403
+}
+
+export type bindPracticalModuleResponse404 = {
+  data: void
+  status: 404
+}
+
+export type bindPracticalModuleResponseSuccess = (bindPracticalModuleResponse204) & {
+  headers: Headers;
+};
+export type bindPracticalModuleResponseError = (bindPracticalModuleResponse400 | bindPracticalModuleResponse401 | bindPracticalModuleResponse403 | bindPracticalModuleResponse404) & {
+  headers: Headers;
+};
+
+export type bindPracticalModuleResponse = (bindPracticalModuleResponseSuccess | bindPracticalModuleResponseError)
+
+export const getBindPracticalModuleUrl = (practicalId: string,) => {
+
+
+
+
+  return `/api/v1/practicals/${practicalId}/module`
+}
+
+/**
+ * Переводит практику в kind=external и связывает её с заданием внешнего модуля (1:1).
+ * @summary Привязка внешнего модуля к практике
+ */
+export const bindPracticalModule = async (practicalId: string,
+    bindPracticalModuleRequest: BindPracticalModuleRequest, options?: Parameters<typeof educationFetch>[1]): Promise<bindPracticalModuleResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return educationFetch<bindPracticalModuleResponse>(getBindPracticalModuleUrl(practicalId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(bindPracticalModuleRequest)
+  }
+);}
+
+
+
+
+
+export const getBindPracticalModuleMutationKey = () => ['bindPracticalModule'] as const;
+
+export const getBindPracticalModuleMutationOptions = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bindPracticalModule>>, TError,BindPracticalModuleMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bindPracticalModule>>, TError,BindPracticalModuleMutationVariables, TContext> => {
+
+const mutationKey = getBindPracticalModuleMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bindPracticalModule>>, BindPracticalModuleMutationVariables> = (props) => {
+          const {practicalId,data} = props ?? {};
+
+          return  bindPracticalModule(practicalId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BindPracticalModuleMutationResult = NonNullable<Awaited<ReturnType<typeof bindPracticalModule>>>
+    export type BindPracticalModuleMutationBody = BindPracticalModuleRequest
+    export type BindPracticalModuleMutationError = HttpValidationProblemDetails | void
+    export type BindPracticalModuleMutationVariables = {practicalId: string;data: BindPracticalModuleRequest}
+
+    /**
+ * @summary Привязка внешнего модуля к практике
+ */
+export const useBindPracticalModule = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bindPracticalModule>>, TError,BindPracticalModuleMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bindPracticalModule>>,
+        TError,
+        BindPracticalModuleMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBindPracticalModuleMutationOptions(options), queryClient);
     }
     export type getPracticalQuestionsSetupResponse200 = {
   data: PracticalQuestionsSetupResponse

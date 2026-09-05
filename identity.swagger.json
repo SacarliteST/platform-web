@@ -227,6 +227,63 @@
         }
       }
     },
+    "/api/v1/auth/token/exchange": {
+      "post": {
+        "tags": [
+          "Аутентификация"
+        ],
+        "summary": "Обмен токена на аудиторию другого сервиса",
+        "description": "Server-to-server: доверенный клиент (Authorization: Basic client_id:client_secret) обменивает токен пользователя на новый токен, ограниченный целевой audience. Refresh-токен не выдаётся.",
+        "operationId": "TokenExchange",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TokenExchangeRequest"
+                  }
+                ],
+                "description": "Запрос на обмен токена пользователя на токен, ограниченный аудиторией другого сервиса\r\n(RFC 8693-style). Аутентификация вызывающего клиента — заголовком\r\n`Authorization: Basic base64(client_id:client_secret)`, не телом запроса."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenExchangeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
@@ -1145,6 +1202,59 @@
         },
         "additionalProperties": false,
         "description": "Запрос на регистрацию нового пользователя."
+      },
+      "TokenExchangeRequest": {
+        "required": [
+          "audience",
+          "grantType",
+          "subjectToken"
+        ],
+        "type": "object",
+        "properties": {
+          "grantType": {
+            "type": "string",
+            "description": "Всегда `urn:ietf:params:oauth:grant-type:token-exchange`."
+          },
+          "subjectToken": {
+            "type": "string",
+            "description": "Валидный токен пользователя, выданный этим инстансом."
+          },
+          "audience": {
+            "type": "string",
+            "description": "Целевая аудитория (должна быть в allow-list клиента)."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Необязательный идентификатор практической сессии (передаёт Education). При наличии\r\nпопадает в выпускаемый токен как claim `session_id` — бэкенд внешнего модуля\r\nпо нему привязывает вызовы к платформенной сессии.",
+            "nullable": true
+          },
+          "sessionExpiresAt": {
+            "type": "string",
+            "description": "Необязательное время истечения практической сессии. Если раньше стандартного TTL\r\nобменянного токена — `exp` токена обрезается по нему.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обмен токена пользователя на токен, ограниченный аудиторией другого сервиса\r\n(RFC 8693-style). Аутентификация вызывающего клиента — заголовком\r\n`Authorization: Basic base64(client_id:client_secret)`, не телом запроса."
+      },
+      "TokenExchangeResponse": {
+        "required": [
+          "accessToken",
+          "expiresIn"
+        ],
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ на обмен токена. Только access-токен — Token Exchange не выпускает refresh-токен,\r\nобменянный токен одноразовый по смыслу и живёт ровно на длительность запуска."
       },
       "TokenResponse": {
         "required": [

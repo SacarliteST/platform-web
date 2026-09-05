@@ -456,6 +456,527 @@
         }
       }
     },
+    "/api/v1/admin/practical-modules": {
+      "get": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Получение реестра практических модулей",
+        "description": "Возвращает все зарегистрированные внешние практические модули.",
+        "operationId": "GetPracticalModules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PracticalModuleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Регистрация практического модуля",
+        "description": "Добавляет новую запись в реестр внешних практических модулей.",
+        "operationId": "CreatePracticalModule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePracticalModuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticalModuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/practical-modules/{id}": {
+      "put": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Изменение практического модуля",
+        "description": "Обновляет запись реестра практического модуля. Slug не меняется.",
+        "operationId": "UpdatePracticalModule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePracticalModuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticalModuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Удаление практического модуля",
+        "description": "Удаляет запись реестра практического модуля.",
+        "operationId": "DeletePracticalModule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practical-modules/{practicalModuleId}/tasks": {
+      "get": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Каталог заданий внешнего модуля",
+        "description": "Сервер-сервер: ядро проксирует ручку каталога модуля. Браузер к API модуля не ходит.",
+        "operationId": "GetPracticalModuleTasks",
+        "parameters": [
+          {
+            "name": "practicalModuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleTaskResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "502": {
+            "description": "Bad Gateway"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/module-sessions": {
+      "post": {
+        "tags": [
+          "ModuleSessions"
+        ],
+        "summary": "Запуск/продолжение попытки внешнего модуля",
+        "operationId": "StartModuleSession",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartModuleSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartModuleSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "502": {
+            "description": "Bad Gateway"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/module-sessions/current": {
+      "get": {
+        "tags": [
+          "ModuleSessions"
+        ],
+        "summary": "Гейт кнопок запуска внешней практики",
+        "operationId": "GetCurrentModuleSession",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentModuleSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/module-sessions/{sessionId}": {
+      "get": {
+        "tags": [
+          "ModuleSessions"
+        ],
+        "summary": "Статус попытки внешнего модуля",
+        "operationId": "GetModuleSession",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/module-sessions/{sessionId}/abandon": {
+      "post": {
+        "tags": [
+          "ModuleSessions"
+        ],
+        "summary": "Прервать попытку внешнего модуля",
+        "operationId": "AbandonModuleSession",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events": {
+      "get": {
+        "tags": [
+          "ModuleSessions"
+        ],
+        "summary": "Лента событий попытки внешнего модуля",
+        "description": "«Цифровой след» попытки. Доступ: владелец сессии или преподаватель курса практики.",
+        "operationId": "GetModuleSessionEvents",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleSessionEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/module-sessions/{sessionId}/complete": {
+      "post": {
+        "tags": [
+          "ModuleSessions"
+        ],
+        "summary": "Приём оценки от бэкенда модуля",
+        "operationId": "CompleteModuleSession",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteModuleSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
     "/api/v1/courses/teacher": {
       "get": {
         "tags": [
@@ -864,14 +1385,51 @@
         }
       }
     },
-    "/api/v1/practicals/{practicalId}/publish": {
-      "put": {
+    "/api/v1/practicals/{practicalId}": {
+      "get": {
         "tags": [
           "Practicals"
         ],
-        "summary": "Публикация практики",
-        "description": "Открывает практическое задание для назначенных студентов.",
-        "operationId": "PublishPractical",
+        "summary": "Детали практики",
+        "description": "Вид практики (internal/external), лимиты и привязка к внешнему модулю.",
+        "operationId": "GetPracticalDetail",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticalDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Удаление практики",
+        "description": "Удаляет практическое задание, если оно принадлежит курсу текущего преподавателя.",
+        "operationId": "DeletePractical",
         "parameters": [
           {
             "name": "practicalId",
@@ -899,14 +1457,14 @@
         }
       }
     },
-    "/api/v1/practicals/{practicalId}": {
-      "delete": {
+    "/api/v1/practicals/{practicalId}/publish": {
+      "put": {
         "tags": [
           "Practicals"
         ],
-        "summary": "Удаление практики",
-        "description": "Удаляет практическое задание, если оно принадлежит курсу текущего преподавателя.",
-        "operationId": "DeletePractical",
+        "summary": "Публикация практики",
+        "description": "Открывает практическое задание для назначенных студентов.",
+        "operationId": "PublishPractical",
         "parameters": [
           {
             "name": "practicalId",
@@ -1113,6 +1671,61 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/module": {
+      "put": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Привязка внешнего модуля к практике",
+        "description": "Переводит практику в kind=external и связывает её с заданием внешнего модуля (1:1).",
+        "operationId": "BindPracticalModule",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindPracticalModuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -2861,6 +3474,79 @@
         },
         "description": "Данные текущего пользователя, полученные из JWT-токена."
       },
+      "BindPracticalModuleRequest": {
+        "required": [
+          "practicalModuleId",
+          "externalTaskRef",
+          "triesCount",
+          "timeLimitMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "practicalModuleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "externalTaskRef": {
+            "type": "string"
+          },
+          "triesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "timeLimitMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Запрос привязки внешнего модуля к практике."
+      },
+      "CompleteModuleSessionRequest": {
+        "required": [
+          "sessionKey",
+          "grade",
+          "completionData",
+          "completedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "sessionKey": {
+            "type": "string"
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "completionData": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Тело приёма оценки от модуля (заголовок `X-Service-Key` — вне тела)."
+      },
       "ConfigurePracticalQuestionsRequest": {
         "required": [
           "questionIds",
@@ -3011,6 +3697,45 @@
         },
         "description": "Запрос на создание модуля внутри курса."
       },
+      "CreatePracticalModuleRequest": {
+        "required": [
+          "slug",
+          "name",
+          "description",
+          "practiceType",
+          "basePath",
+          "identityAudience",
+          "configuration"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "practiceType": {
+            "type": "string"
+          },
+          "basePath": {
+            "type": "string"
+          },
+          "identityAudience": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Запрос на регистрацию нового практического модуля."
+      },
       "CreatePracticalRequest": {
         "required": [
           "moduleId",
@@ -3117,6 +3842,93 @@
         },
         "description": "Запрос на создание теоретического материала внутри модуля."
       },
+      "CurrentModuleSessionResponse": {
+        "required": [
+          "session",
+          "attemptsCount",
+          "triesCount",
+          "timeLimitMinutes",
+          "bestGrade"
+        ],
+        "type": "object",
+        "properties": {
+          "session": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModuleSessionResponse"
+              }
+            ]
+          },
+          "attemptsCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "triesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "timeLimitMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "bestGrade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Данные гейта кнопок «Начать»/«Продолжить»/«Прервать»."
+      },
+      "ExternalModuleBindingResponse": {
+        "required": [
+          "practicalModuleId",
+          "practicalModuleSlug",
+          "practicalModuleName",
+          "taskId",
+          "externalTaskRef"
+        ],
+        "type": "object",
+        "properties": {
+          "practicalModuleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "practicalModuleSlug": {
+            "type": "string"
+          },
+          "practicalModuleName": {
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "externalTaskRef": {
+            "type": "string"
+          }
+        },
+        "description": "Привязка внешней практики к заданию модуля."
+      },
       "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
@@ -3168,6 +3980,7 @@
         "type": "string",
         "format": "binary"
       },
+      "JsonElement": { },
       "ModuleResponse": {
         "required": [
           "id",
@@ -3184,6 +3997,171 @@
           }
         },
         "description": "Данные модуля, возвращаемые API системы обучения."
+      },
+      "ModuleSessionEventResponse": {
+        "required": [
+          "eventId",
+          "kind",
+          "occurredAt",
+          "payload"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        },
+        "description": "Одно событие ленты «цифрового следа» попытки."
+      },
+      "ModuleSessionResponse": {
+        "required": [
+          "sessionId",
+          "status",
+          "tryNumber",
+          "startedAt",
+          "expiresAt",
+          "endReason",
+          "grade",
+          "endedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tryNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "grade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "endedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Статус попытки внешнего модуля."
+      },
+      "ModuleTaskResponse": {
+        "required": [
+          "ref",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "description": "Задание из каталога внешнего практического модуля."
+      },
+      "PracticalDetailResponse": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "isPublic",
+          "triesCount",
+          "timeLimitMinutes",
+          "moduleBinding"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "triesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "timeLimitMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "moduleBinding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ExternalModuleBindingResponse"
+              }
+            ]
+          }
+        },
+        "description": "Детали практики: вид, лимиты и привязка к внешнему модулю."
       },
       "PracticalGradeResponse": {
         "required": [
@@ -3209,6 +4187,51 @@
           }
         },
         "description": "Итоговая оценка за практический материал или список условий для её получения."
+      },
+      "PracticalModuleResponse": {
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "practiceType",
+          "basePath",
+          "identityAudience",
+          "isEnabled",
+          "configuration"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "practiceType": {
+            "type": "string"
+          },
+          "basePath": {
+            "type": "string"
+          },
+          "identityAudience": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "configuration": {
+            "type": "string"
+          }
+        },
+        "description": "Запись реестра внешнего практического модуля."
       },
       "PracticalQuestionsSetupResponse": {
         "required": [
@@ -3384,6 +4407,57 @@
           }
         },
         "description": "Вопрос с признаком выбора для практического материала."
+      },
+      "StartModuleSessionRequest": {
+        "required": [
+          "taskId"
+        ],
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "description": "Запрос запуска/продолжения попытки внешнего модуля."
+      },
+      "StartModuleSessionResponse": {
+        "required": [
+          "sessionId",
+          "launchUrl",
+          "expiresAt",
+          "tryNumber",
+          "resumed"
+        ],
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "launchUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "tryNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "resumed": {
+            "type": "boolean"
+          }
+        },
+        "description": "Ответ запуска: адрес перехода в модуль и метаданные попытки."
       },
       "StartTestResponse": {
         "required": [
@@ -3891,6 +4965,45 @@
         },
         "description": "Запрос на обновление набора студентов, назначенных на курс."
       },
+      "UpdatePracticalModuleRequest": {
+        "required": [
+          "name",
+          "description",
+          "practiceType",
+          "basePath",
+          "identityAudience",
+          "configuration",
+          "isEnabled"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "practiceType": {
+            "type": "string"
+          },
+          "basePath": {
+            "type": "string"
+          },
+          "identityAudience": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "description": "Запрос на изменение записи реестра практического модуля. Slug не меняется."
+      },
       "UpdatePracticalStudentsRequest": {
         "required": [
           "userIds"
@@ -3995,6 +5108,12 @@
     },
     {
       "name": "AdminProfiles"
+    },
+    {
+      "name": "PracticalModules"
+    },
+    {
+      "name": "ModuleSessions"
     },
     {
       "name": "Courses"

@@ -1,6 +1,6 @@
 # Backend handoff — подключение практических модулей (Education)
 
-Дата: 2026-09-04. **Статус: спека, к реализации не приступали.**
+Дата: 2026-09-04. **Статус: E1 реализован (`MOD-004`, 2026-09-05), E2–E9 — спека.**
 Проект бэкенда: `Education` (`C:\Users\vladislav.bokovoi\SQLTren\Education`).
 Контекст: подключение внешних модулей отработки навыков к платформе
 (`Frontend/platform-web`, `MOD-` в `docs/MIGRATION_KANBAN.md`, Phase 7).
@@ -212,9 +212,11 @@ var bestGrade = sessions
 
 ## Приёмка
 
-- [ ] `PracticalModule`, `PracticalModuleSession`, `PracticalTaskEvent` — EF-конфигурации, миграции/`EnsureCreated`.
+- [x] `PracticalModule` — EF-конфигурация, `EnsureCreated` (`MOD-004`, коммит `bc2e45d` в `Education`).
+- [ ] `PracticalModuleSession`, `PracticalTaskEvent` — EF-конфигурации, миграции/`EnsureCreated`.
 - [ ] `Practical.Kind`/`TriesCount`, `PracticalTask.PracticalModuleId`/`ExternalTaskRef` — расширения существующих агрегатов.
-- [ ] E1–E9 реализованы, под нужными политиками, с проверкой владения где применимо.
+- [x] E1 реализован (`MOD-004`): `GET/POST/PUT/DELETE /api/v1/admin/practical-modules`, `AdminOnly`, валидация slug/basePath, тесты в `PracticalModulesApiTests`.
+- [ ] E2–E9 реализованы, под нужными политиками, с проверкой владения где применимо.
 - [ ] Гейт попыток (`TriesExhausted`/`SessionActive`) покрыт интеграционными тестами (аналог `TeacherWriteEndpointsApiTests`).
 - [ ] Kafka consumer идемпотентен (переигрывание сообщения не дублирует события/не переоткрывает завершённую сессию).
 - [ ] `best-of-N` в `GET /practicals/{id}/grade` покрыт тестом (несколько `COMPLETED`-сессий → выбирается максимальная).

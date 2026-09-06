@@ -199,7 +199,7 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | MOD-014 | SqlModule: приём пуша сессии + publisher (события в Kafka + оценка по HTTP) | P0 | Backlog | MOD-003, MOD-007 | Спека §S2–S6. `POST /module-integration/sessions` (upsert `ModuleSession`, `X-Service-Key`); `GET /module-integration/sessions/current` (по claim `session_id`); привязка `SubmitAttempt` к сессии (owner/task/status); таблица `pending_publish` + фоновый publisher: события → `scoodle.practice.events` (`eventId`), оценка → `POST {education}/module-sessions/{id}/complete` (`grade=100` по первой верной попытке), retry после сбоя/рестарта. Обратного attach нет; standalone-flow не меняется |
 | MOD-014a | SqlModule: собственная `Audience` без поломки standalone | P0 | Backlog | MOD-002b, MOD-014 | Спека §S7. Профиль `platform` принимает `aud=sql-module-api`; обязательный профиль `standalone` сохраняет прямой Identity-логин и контуры teacher/admin/student, не зависит от Education/Kafka. Переключение конфигом, один билд. Общий инстанс на оба audience — позже |
 | MOD-015 | Инфраструктура: единый reverse-proxy | P1 | Конфиг готов | MOD-011, MOD-013 | `SQLTren/gateway/` (untracked, как `Backend/compose.yaml`): `default.conf.template` + `compose.yaml` + `gateway.env` + README. Один origin `:8090` — `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Host (префикс срезается), `/api/v1/` → Education. Заголовки: `Referrer-Policy: no-referrer`, `CSP … frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`. IdentityService за шлюз не заводится (вход остаётся кросс-origin). `nginx -t` проходит. Маршруты `/` и `/api/v1/` проверяемы; `/modules/sql/` + `/module-api/sql/` — вживую не проверены (ждут `MOD-013`/`MOD-014a`), полная проверка в `MOD-016` |
-| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Заблокирован | MOD-011…MOD-015 | запуск → решение в тренажёре → события в Kafka → возврат → оценка (от модуля) и протокол в платформе; повторная попытка после `EXPIRED`/неудачи → лучшая оценка засчитана. Прогон 2026-09-06 — см. `SMK-*` ниже |
+| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | API-путь пройден | MOD-011…MOD-015 | Прогон 2026-09-06: **весь цифровой путь замкнут по API** (реальные исходящие вызовы модуля). Осталось — браузерный `/launch`-handoff и воспроизводимость без ручных правок БД (`SMK-2/3/4/6/7`). См. ниже. |
 
 ### MOD-016 — прогон smoke 2026-09-06 (API-уровень)
 
@@ -238,35 +238,36 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | ID | Приоритет | Где | Что не так | Что делать |
 |---|---|---|---|---|
 | SMK-1 | P0 | Education (моя зона) | Дев-БД `EducationDb` не мигрируется: `EnsureCreatedAsync` на непустой БД молчит, Phase-7 таблиц/колонок нет → HTTP 500 `42P01`. Разблокировано пересозданием контейнера. | Скрипт `scripts/dev-reset-db` + строка в README, либо перейти на EF-миграции. |
-| SMK-8 | **P0** | **Education (моя зона)** | **Push C1 отдаёт не тот `userId`.** Education кладёт в тело пуша **legacy** id (`PracticalModuleSession.UserId` = `ResolveCurrentLegacyUserIdAsync`), а модуль в `SubmitAttemptCommand` сверяет `moduleSession.UserId` с `sub` **обменянного токена** = **identity** id. Всегда `403 ModuleSessionForbidden` → студент не может отправить ни одной попытки в тренажёре, публикация событий/оценки модулем не запускается. Спека C1 прямо требует `push.userId == token.sub`. | В `ModuleSessionsService.StartAsync`/`ToPush` брать identity-id (`ICurrentUser.UserId`) для тела пуша; `PracticalModuleSession.UserId` для внутренних джойнов Education может остаться legacy (тогда нужно хранить/пробрасывать оба). |
-| SMK-5 | P0 | Education (моя зона) | `BuildLaunchUrl` строит адрес модуля от `PlatformOrigin` → `http://localhost:5173/modules/sql/launch`. Работает только за шлюзом. Браузерный `/launch`-handoff в этом прогоне не проверялся. | Опция `ModuleIntegration:ModuleWebOrigin` (fallback на `PlatformOrigin`) для безшлюзовой разработки, либо смоук всегда за шлюзом. |
+| SMK-8 | ~~P0~~ **исправлено** `67f05cf` | Education (моя зона) | Push C1 отдавал **legacy** id, модуль сверяет владельца с `sub` обменянного токена (**identity** id) → всегда `403 ModuleSessionForbidden`, студент не мог отправить попытку. Теперь `ModuleSessionsService` берёт `ICurrentUser.UserId` и кладёт identity-id в тело пуша; `PracticalModuleSession.UserId` остаётся legacy для внутренних джойнов. **Проверено вживую:** `POST /api/v1/attempts` в SqlModule обменянным токеном → `201` (было `403`); модуль сам опубликовал событие в Kafka и сам вызвал `/complete` → сессия Education `COMPLETED grade=100`. | — |
+| SMK-5 | ~~P0~~ **исправлено** `67f05cf`/`00a2227` | Education (моя зона) | `BuildLaunchUrl` строил адрес модуля от `PlatformOrigin` (`:5173/modules/sql/launch`) → только за шлюзом. Новая опция `ModuleIntegration:ModuleWebOrigin` — при безшлюзовой разработке SPA модуля отдаётся с корня своего порта (`basePath` не добавляется); пусто → прежнее поведение за шлюзом. `appsettings.Development.json` → `http://localhost:5174`. **Проверено:** `launchUrl` origin стал `http://localhost:5174/launch`. | — |
 | SMK-9 | P1 | Education (моя зона) | На чистой БД нет ни одного `User`; `/auth/me` возвращает 200, но `IdentityUserLink` не создаёт. Любой вызов, где нужен legacy-id (`ResolveCurrentLegacyUserIdAsync`), падает 500 `EducationUserLinkNotFoundException`, пока admin вручную не создаст профили через `POST /admin/profiles`. | Явный шаг в runbook, либо авто-провижн профиля при первом `/auth/me`, либо dev-сидер профилей под `InitialUsers` Identity. |
 | SMK-10 | P2 | Education (моя зона) | `PUT /practicals/{id}/students` принимает **legacy** id и при неизвестном id отдаёт сырой 500 (FK `PracticalBindUsers_Users`), а не 400/404. Плюс `GET /practicals/{id}/assignable-students` не фильтрует по роли (возвращает и admin, и teacher). | Валидация входных id → 400/404; при необходимости — фильтр роли Студент в assignable-students. |
-| SMK-11 | P2 | Education (моя зона) | `POST /courses` с `date` без таймзоны/не-UTC → 500 `Cannot write DateTimeOffset with Offset=03:00:00`. platform-web шлёт `new Date().toISOString()` (UTC `Z`), поэтому UI не задет, но контракт хрупкий. | Нормализовать `date` к UTC в обработчике или принять `DateOnly`. |
+| SMK-11 | ~~P2~~ **исправлено** `67f05cf` | Education (моя зона) | `POST /courses` с `date` без таймзоны → 500 `Cannot write DateTimeOffset with Offset=03:00:00`. `Course.ctor` теперь нормализует `Date` к UTC. Проверено: курс с `"2026-09-06"` создаётся. | — |
 | SMK-3 | P0 | стык команд | `ServiceKey` в репозиториях разный: Education `dev-sql-module-service-key-change-me` ≠ SqlModule `sql-module-platform-dev-key`. В прогоне обойдено env-оверрайдом. | Согласовать один дев-ключ (или задать в compose smoke). |
 | SMK-4 | P0 | SqlModule (соседи) | `appsettings.Platform.json`: `EducationBaseUrl=http://localhost:5000` (Education на `:5135`). Обойдено env-оверрайдом. | Поправить на `:5135`/адрес шлюза. |
 | SMK-2 | P0 | SqlModule (соседи) | Профиль по умолчанию (`Isolated`) не мапит `IModuleIntegrationEndpoint` (`ModuleIntegration:Enabled=false`) и берёт `aud=scoodle-api`. Нужен профиль `Platform`. | Runbook/compose smoke явно поднимает `Platform`. |
 | SMK-6 | P1 | SqlModule (соседи) | Даже с `SeedDemoData=true` демо-`SqlTask` создаётся `Draft` → каталог пуст; плюс `Platform` идёт с `UseFakeSandbox=false` (нужен реальный Docker-сэндбокс + provisioning целевой БД, чтобы задание можно было решить). В прогоне: задание опубликовано вручную (`UPDATE SqlTasks`), golden result подменён на пустой под fake-sandbox. | Сид платформенного профиля: 1 **опубликованное** решаемое задание; либо отдельный smoke-seed. |
 | SMK-7 | P1 | инфра (моя зона) | Шлюз `MOD-015` не поднимался; `/modules/sql/*` и `/module-api/sql/*` вживую не проверены; `sql-module-web` для шлюза нужна с `base=/modules/sql/`. | Поднять `SQLTren/gateway/`, `sql-module-web --base=/modules/sql/`, прогнать браузерный путь. |
 
-**Не покрыто из-за SMK-8:** реальная отправка попытки студентом в SqlModule
-(`POST /api/v1/attempts` с обменянным токеном) → `pending_publish` → фоновый
-publisher → событие в Kafka **самим модулем** + `POST /complete` **самим
-модулем**. Приёмные концы этого (Kafka-consumer, `/complete`) проверены —
-не хватает исходящих вызовов модуля из-за `403 ModuleSessionForbidden`.
+**Покрыто после фикса SMK-8 (прогон 2):** студент отправляет решение в SqlModule
+обменянным токеном (`POST /api/v1/attempts`) → `201`; на верном ответе модуль
+переводит свою `ModuleSession` в `COMPLETED`, **сам** публикует `sql_submit` в
+Kafka (Education-consumer записал `PracticalTaskEvents`) и **сам** вызывает
+`POST /module-sessions/{sid}/complete` → сессия Education `COMPLETED grade=100`.
+Полный исходящий контур модуля (publisher + completion client) — живой.
 
-**Не покрыто вообще:** браузерный `/launch`-handoff (`#access_token` →
-`sessionStorage`, `history.replaceState`), навигация по `taskRef`, возврат по
-`returnUrl` из UI модуля (`MOD-013` / `SMK-5` / `SMK-7`).
+**Не покрыто:** браузерный `/launch`-handoff (`#access_token` → `sessionStorage`,
+`history.replaceState`), навигация по `taskRef`, возврат по `returnUrl` из UI
+модуля — нужен запущенный `sql-module-web` (`MOD-013`) + `SMK-5` (готово) либо
+шлюз `SMK-7`.
 
-**Вывод.** Платформенный контракт (Identity, Token Exchange + `session_id`,
+**Вывод.** Весь цифровой путь MOD-016 (Identity, Token Exchange + `session_id`,
 провижн, реестр, проксирование каталога, привязка, жизненный цикл сессии,
-пуш C1, приём Kafka-событий, приём оценки C3, best-of-N, гейт попыток,
-`abandon`, ленты MOD-012a/b) — **работает end-to-end на API**. Осталось:
-**SMK-8** (P0, моё — `userId` в пуше) разблокирует исходящие вызовы модуля;
-**SMK-5** (моё) + **SMK-2/3/4/6** (стык/соседи) — для браузерного пути и
-воспроизводимости без ручных правок БД; **SMK-7** (моё, шлюз) — финальный
-браузерный прогон.
+пуш C1 с identity-id, решение в тренажёре, событие в Kafka от модуля, приём
+оценки C3 от модуля, best-of-N, гейт попыток, `abandon`, ленты MOD-012a/b) —
+**замкнут и проверен на API**. Осталось: `SMK-2/3/4/6` (соседи/стык —
+воспроизводимость без ручных правок) и `SMK-7` (моё, шлюз) — для финального
+браузерного прогона.
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 

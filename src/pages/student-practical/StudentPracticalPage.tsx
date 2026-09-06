@@ -13,9 +13,10 @@ import {
 } from '@mantine/core';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useGetModulePracticals } from '../../api/education/practicals/practicals';
+import { useGetPracticalDetail } from '../../api/education/practicals/practicals';
 import { useGetPracticalTasks } from '../../api/education/practicals/practicals';
 import { useGetPracticalGrade } from '../../api/education/grades/grades';
+import { StudentExternalPractical } from '../../features/module-practice';
 import {
   useGetStudentTaskFile,
   useUploadStudentTaskFile,
@@ -48,13 +49,12 @@ export function StudentPracticalPage() {
   const { courseId = '', moduleId = '', practicalId = '' } = useParams();
   const backToModule = `/student/courses/${courseId}/modules/${moduleId}`;
 
-  const practicalsQuery = useGetModulePracticals(moduleId, {
-    query: { enabled: Boolean(moduleId), retry: false },
+  const detailQuery = useGetPracticalDetail(practicalId, {
+    query: { enabled: Boolean(practicalId), retry: false },
   });
-  const practicalName =
-    practicalsQuery.data?.status === 200
-      ? practicalsQuery.data.data.find((item) => item.id === practicalId)?.name
-      : undefined;
+  const detail = detailQuery.data?.status === 200 ? detailQuery.data.data : undefined;
+  const practicalName = detail?.name;
+  const isExternal = detail?.kind === 'external';
 
   return (
     <Page>
@@ -67,32 +67,55 @@ export function StudentPracticalPage() {
         ]}
       />
       <Group justify="space-between" align="flex-end" gap="md" wrap="wrap">
-        <PageHeader title={practicalName ?? 'Практика'} description="Тест, задания, протоколы и оценка." />
+        <PageHeader
+          title={practicalName ?? 'Практика'}
+          description={isExternal ? 'Практика в подключённом модуле.' : 'Тест, задания, протоколы и оценка.'}
+        />
         <Button component={Link} to={backToModule} size="sm" variant="outline">
           К модулю
         </Button>
       </Group>
 
-      <Tabs defaultValue="test">
-        <Tabs.List>
-          <Tabs.Tab value="test">Тест</Tabs.Tab>
-          <Tabs.Tab value="tasks">Задания</Tabs.Tab>
-          <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
-          <Tabs.Tab value="grade">Оценка</Tabs.Tab>
-        </Tabs.List>
-        <Tabs.Panel value="test" pt="md">
-          <TestTab practicalId={practicalId} />
-        </Tabs.Panel>
-        <Tabs.Panel value="tasks" pt="md">
-          <TasksTab practicalId={practicalId} />
-        </Tabs.Panel>
-        <Tabs.Panel value="protocols" pt="md">
-          <ProtocolsTab practicalId={practicalId} />
-        </Tabs.Panel>
-        <Tabs.Panel value="grade" pt="md">
-          <GradeTab practicalId={practicalId} />
-        </Tabs.Panel>
-      </Tabs>
+      <QueryBoundary
+        isPending={detailQuery.isPending}
+        isError={detailQuery.isError || detailQuery.data?.status !== 200}
+        data={detail}
+        errorTitle="Education API недоступен"
+      >
+        {(data) =>
+          data.kind === 'external' ? (
+            <StudentExternalPractical
+              practicalId={practicalId}
+              binding={data.moduleBinding}
+              triesCount={toNumber(data.triesCount)}
+              timeLimitMinutes={
+                data.timeLimitMinutes == null ? null : toNumber(data.timeLimitMinutes)
+              }
+            />
+          ) : (
+            <Tabs defaultValue="test">
+              <Tabs.List>
+                <Tabs.Tab value="test">Тест</Tabs.Tab>
+                <Tabs.Tab value="tasks">Задания</Tabs.Tab>
+                <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
+                <Tabs.Tab value="grade">Оценка</Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Panel value="test" pt="md">
+                <TestTab practicalId={practicalId} />
+              </Tabs.Panel>
+              <Tabs.Panel value="tasks" pt="md">
+                <TasksTab practicalId={practicalId} />
+              </Tabs.Panel>
+              <Tabs.Panel value="protocols" pt="md">
+                <ProtocolsTab practicalId={practicalId} />
+              </Tabs.Panel>
+              <Tabs.Panel value="grade" pt="md">
+                <GradeTab practicalId={practicalId} />
+              </Tabs.Panel>
+            </Tabs>
+          )
+        }
+      </QueryBoundary>
     </Page>
   );
 }

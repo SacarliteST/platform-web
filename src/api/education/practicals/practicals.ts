@@ -1111,10 +1111,15 @@ export type bindPracticalModuleResponse404 = {
   status: 404
 }
 
+export type bindPracticalModuleResponse409 = {
+  data: void
+  status: 409
+}
+
 export type bindPracticalModuleResponseSuccess = (bindPracticalModuleResponse204) & {
   headers: Headers;
 };
-export type bindPracticalModuleResponseError = (bindPracticalModuleResponse400 | bindPracticalModuleResponse401 | bindPracticalModuleResponse403 | bindPracticalModuleResponse404) & {
+export type bindPracticalModuleResponseError = (bindPracticalModuleResponse400 | bindPracticalModuleResponse401 | bindPracticalModuleResponse403 | bindPracticalModuleResponse404 | bindPracticalModuleResponse409) & {
   headers: Headers;
 };
 

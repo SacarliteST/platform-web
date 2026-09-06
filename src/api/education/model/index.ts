@@ -34,6 +34,7 @@ export * from './jsonElement';
 export * from './moduleResponse';
 export * from './moduleSessionEventResponse';
 export * from './moduleSessionResponse';
+export * from './moduleSessionSummaryResponse';
 export * from './moduleTaskResponse';
 export * from './practicalDetailResponse';
 export * from './practicalGradeResponse';

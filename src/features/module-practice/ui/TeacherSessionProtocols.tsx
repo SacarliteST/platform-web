@@ -1,7 +1,8 @@
 import { Badge, Button, Group, Stack, Table, Text } from '@mantine/core';
 import { useState } from 'react';
+import { useListPracticalModuleSessions } from '../../../api/education/module-sessions/module-sessions';
+import { toNumber } from '../../../shared/lib';
 import { AppCard, QueryBoundary } from '../../../shared/ui';
-import { useModuleSessionsList } from '../api/moduleSessionsList';
 import { SessionEventsFeed } from './SessionEventsFeed';
 
 type Props = {
@@ -22,8 +23,12 @@ const END_REASON_LABEL: Record<string, string> = {
 
 /** Преподаватель: список попыток внешнего модуля по практике + протокол выбранной. */
 export function TeacherSessionProtocols({ practicalId }: Props) {
-  const listQuery = useModuleSessionsList(practicalId);
+  const listQuery = useListPracticalModuleSessions(practicalId, {
+    query: { enabled: Boolean(practicalId), retry: false },
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const rows = listQuery.data?.status === 200 ? listQuery.data.data : undefined;
 
   return (
     <Stack gap="md">
@@ -31,13 +36,13 @@ export function TeacherSessionProtocols({ practicalId }: Props) {
         <QueryBoundary
           isPending={listQuery.isPending}
           isError={listQuery.isError || listQuery.data?.status !== 200}
-          data={listQuery.data?.status === 200 ? listQuery.data.rows : undefined}
+          data={rows}
           errorTitle="Education API недоступен"
           emptyTitle="Попыток нет"
           emptyDescription="Студенты ещё не запускали модуль по этой практике."
-          isEmpty={(rows) => rows.length === 0}
+          isEmpty={(items) => items.length === 0}
         >
-          {(rows) => (
+          {(items) => (
             <Table striped highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead>
                 <Table.Tr>
@@ -50,14 +55,14 @@ export function TeacherSessionProtocols({ practicalId }: Props) {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {rows.map((row) => {
+                {items.map((row) => {
                   const meta = STATUS_META[row.status] ?? { label: row.status, color: 'gray' };
                   return (
                     <Table.Tr key={row.sessionId}>
                       <Table.Td>
                         <Text size="sm">{row.studentName}</Text>
                       </Table.Td>
-                      <Table.Td>#{row.tryNumber}</Table.Td>
+                      <Table.Td>#{toNumber(row.tryNumber)}</Table.Td>
                       <Table.Td>
                         <Group gap={6} wrap="nowrap">
                           <Badge color={meta.color} radius="sm" variant="light">
@@ -70,7 +75,7 @@ export function TeacherSessionProtocols({ practicalId }: Props) {
                           ) : null}
                         </Group>
                       </Table.Td>
-                      <Table.Td>{row.grade == null ? '—' : row.grade}</Table.Td>
+                      <Table.Td>{row.grade == null ? '—' : toNumber(row.grade)}</Table.Td>
                       <Table.Td>
                         <Text size="xs" c="dimmed">
                           {formatTimestamp(row.startedAt)}

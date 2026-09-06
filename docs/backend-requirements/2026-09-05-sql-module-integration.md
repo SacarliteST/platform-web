@@ -140,8 +140,11 @@ POST {EducationBaseUrl}/api/v1/module-sessions/{sessionId}/complete
 
 **Реализовано в Education (`PracticeEventHandler`):** сверка `sessionKey` против
 сессии → `INSERT PracticalTaskEvent (id=eventId, kind, payload) ON CONFLICT (id)
-DO NOTHING`. События по **неизвестной / с чужим `sessionKey` / терминальной**
-сессии — молча отбрасываются. Никаких терминальных переходов через Kafka.
+DO NOTHING`. События по **неизвестной / с чужим `sessionKey`** сессии — молча
+отбрасываются. Статус сессии **не проверяется** (коммит `cdbde9b`): Kafka
+асинхронна, событие победной попытки приходит уже после HTTP-оценки, когда
+сессия `COMPLETED`, и обязано попасть в лог. Никаких терминальных переходов
+через Kafka.
 
 **Куда эти события попадают дальше (справочно, модуль не участвует).** Тот же
 `PracticalTaskEvent` платформа отдаёт своим UI двумя read-эндпоинтами:

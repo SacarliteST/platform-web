@@ -288,10 +288,12 @@ POST /api/v1/module-sessions/{sessionId}/complete                      [module �
   "kind": "sql_submit", "occurredAt": "…", "payload": { … } }
 ```
 
-Consumer: сверить `sessionKey` против сессии → `INSERT PracticalTaskEvent (id=eventId,
-session_id, kind, occurred_at, payload) ON CONFLICT (id) DO NOTHING`
-(идемпотентность при переигрывании). Событие по сессии в терминальном статусе —
-отбросить. `payload`/`kind` не интерпретировать.
+Consumer: проверить, что сессия существует и `sessionKey` совпадает → `INSERT
+PracticalTaskEvent (id=eventId, session_id, kind, occurred_at, payload) ON
+CONFLICT (id) DO NOTHING` (идемпотентность при переигрывании). Статус сессии
+**не проверять** (коммит `cdbde9b`): событие победной попытки приходит из Kafka
+уже после HTTP-оценки, когда сессия `COMPLETED`. `payload`/`kind` не
+интерпретировать.
 
 `Education.Contracts.Kafka` (`PracticeEventMessage`) нужно привести к этому
 формату: `eventId`/`kind`/`payload` вместо `moduleToken`/`moduleSlug`/`taskRef`/
@@ -347,9 +349,10 @@ var bestGrade = sessions
       `502`-не-жжёт-попытку — `ModuleSessionsApiTests` 12/12.
 - [x] E6/E7 (`MOD-007`): пуш в модуль и `/complete` (`X-Service-Key` + `sessionKey`,
       идемпотентно, `409` для не-`ACTIVE`).
-- [x] E8 (`MOD-008`): consumer идемпотентен по `eventId`, события после terminal
-      отброшены; `Education.Contracts.Kafka` под новый формат, `completion` удалён —
-      `PracticeEventHandlerTests` 5/5.
+- [x] E8 (`MOD-008`): consumer идемпотентен по `eventId`; события принимаются
+      при любом статусе сессии (в т.ч. `COMPLETED` — событие победной попытки),
+      границы — `sessionKey` + дедуп (`cdbde9b`); `completion` удалён —
+      `PracticeEventHandlerTests` 6/6.
 - [x] E9: `abandon` → `EXPIRED`/`abandoned`, `409` на терминальной.
 - [x] E10/E11 (`MOD-008a`): best-of-N по `COMPLETED`; ленивое истечение + потолок 24ч.
 - [ ] OpenAPI Education экспортирован владельцем; `platform-web` перегенерировал Orval.

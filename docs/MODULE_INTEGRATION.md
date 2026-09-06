@@ -405,8 +405,11 @@ POST /api/v1/module-sessions/{sessionId}/complete
   Education её не перечисляет и не интерпретирует.
 - `payload` — любой JSON, Education хранит как есть, показывает лентой на странице
   практики постфактум.
-- Consumer: сверяет `sessionKey`; `INSERT PracticalTaskEvent ON CONFLICT (id) DO
-  NOTHING`; события по сессии в терминальном статусе — отбрасывает.
+- Consumer: сверяет, что сессия существует и `sessionKey` совпадает; `INSERT
+  PracticalTaskEvent ON CONFLICT (id) DO NOTHING`. Статус сессии **не проверяет**:
+  Kafka асинхронна, и событие последней (победной) попытки почти всегда приходит
+  уже после HTTP-оценки, когда сессия `COMPLETED` — оно всё равно должно попасть
+  в лог. Границы задают проверка `sessionKey` + дедуп по `eventId`.
 
 ### 9. Прерывание попытки — студент (Education, `StudentOnly`)
 

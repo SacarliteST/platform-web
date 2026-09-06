@@ -185,7 +185,7 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | MOD-005 | Education: проксирование каталога заданий модуля | P0 | Done | MOD-004 | ✅ Коммит `7e79e46`. `GET /api/v1/practical-modules/{id}/tasks` (`TeacherOnly`) → `IModuleCatalogService` + `HttpModuleCatalogClient` (типизированный `HttpClient`, таймаут 3с, `X-Service-Key` из `PracticalModules:<slug>:ServiceKey`, парсинг `configuration.catalogEndpoint`); недоступность/ошибка/мусор → `502`. `ModuleCatalogApiTests` 5/5 |
 | MOD-006 | Education: `Practical.kind=external`, привязка модуля к практике (1:1) + `triesCount` + `timeLimitMinutes` | P0 | Done | MOD-005 | ✅ Коммит `4bae06f`. `PUT /api/v1/practicals/{id}/module` (`TeacherOnly`). Domain: `PracticalMaterial.Kind`/`TimeLimitMinutes` + `BindExternalModule`; `Case.PracticalModuleId`/`ExternalTaskRef` + `LinkExternalTask`. Пересоздаёт единственный `Case`. `PracticalModuleNotFoundException` → 404. `PracticalModuleBindingApiTests` 5/5 |
 | MOD-007 | Education: жизненный цикл сессии, гейт попыток, пуш в модуль, Token Exchange, приём оценки | P0 | Done | MOD-002c, MOD-006 | ✅ Коммит `094934f`. `PracticalModuleSession` (ACTIVE/COMPLETED/EXPIRED, `end_reason`, `session_key`, `return_url`, `expires_at`, потолок 24ч). `POST /practicals/{id}/module-sessions` — старт + продолжение живой ACTIVE (не 409) + гейт `attemptsCount>=triesCount`, **пуш ДО персиста** (502 не тратит попытку), Token Exchange с `sessionId`, `launchUrl` = `?session=` + `#access_token=`. `GET .../current`, `GET .../{sid}` (ленивое истечение), `POST .../{sid}/abandon`. `POST /module-sessions/{sid}/complete` (`X-Service-Key` + `session_key`, идемпотентно, 409 для не-ACTIVE). `ModuleSessionsApiTests` 12/12 |
-| MOD-008 | Education: Kafka-consumer (только события «цифрового следа») | P0 | Done | MOD-003, MOD-007 | ✅ Коммиты `3522126` (контракт) + `a4fd185` (консьюмер). `Education.Contracts.Kafka.PracticeEventMessage` под `{SessionId, SessionKey, EventId, Kind, OccurredAt, Payload}`, `completion` удалён. `PracticeEventConsumer : KafkaConsumerBackgroundService` + `PracticeEventHandler` (сверка `session_key`, отбрасывание событий неизвестной/терминальной сессии, `InsertIfNew` по `eventId`). `PracticeEventHandlerTests` 5/5 |
+| MOD-008 | Education: Kafka-consumer (только события «цифрового следа») | P0 | Done | MOD-003, MOD-007 | ✅ Коммиты `3522126` (контракт) + `a4fd185` (консьюмер). `Education.Contracts.Kafka.PracticeEventMessage` под `{SessionId, SessionKey, EventId, Kind, OccurredAt, Payload}`, `completion` удалён. `PracticeEventConsumer : KafkaConsumerBackgroundService` + `PracticeEventHandler` (сверка `session_key` + дедуп по `eventId`; статус сессии не проверяется — коммит `cdbde9b`). `PracticeEventHandlerTests` 6/6 |
 | MOD-008a | Education: best-of-N в оценке практики | P1 | Done | MOD-008 | ✅ Коммит `094934f`. `EfGradesRepository` для `kind=external` → `MAX(grade)` по `COMPLETED`-сессиям студента; нет `COMPLETED` → `grade:null` + «Пройдите практику». Покрыто `ModuleSessionsApiTests.ExternalGrade_BestOfN_ViaGradeEndpoint` |
 | MOD-006b | Education: чтение привязки практики для UI | P1 | Done | MOD-006 | ✅ Коммит `64c2d39`. `GET /api/v1/practicals/{practicalId}` (`AuthenticatedEducationUser`) → `PracticalDetailResponse { id, name, kind, isPublic, triesCount, timeLimitMinutes, moduleBinding? { practicalModuleId, practicalModuleSlug, practicalModuleName, taskId, externalTaskRef } }`. Тесты: external/internal/404 |
 | MOD-012a | Education: read-эндпоинт ленты событий | P1 | Done | MOD-008 | ✅ Коммит `64c2d39`. `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events` (`AuthenticatedEducationUser`) → `[{ eventId, kind, occurredAt, payload }]`. Доступ: владелец сессии ИЛИ преподаватель курса практики; чужая/несуществующая → `404`. Тест: owner+teacher видят, чужая сессия 404 |
@@ -199,7 +199,7 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | MOD-014 | SqlModule: приём пуша сессии + publisher (события в Kafka + оценка по HTTP) | P0 | Backlog | MOD-003, MOD-007 | Спека §S2–S6. `POST /module-integration/sessions` (upsert `ModuleSession`, `X-Service-Key`); `GET /module-integration/sessions/current` (по claim `session_id`); привязка `SubmitAttempt` к сессии (owner/task/status); таблица `pending_publish` + фоновый publisher: события → `scoodle.practice.events` (`eventId`), оценка → `POST {education}/module-sessions/{id}/complete` (`grade=100` по первой верной попытке), retry после сбоя/рестарта. Обратного attach нет; standalone-flow не меняется |
 | MOD-014a | SqlModule: собственная `Audience` без поломки standalone | P0 | Backlog | MOD-002b, MOD-014 | Спека §S7. Профиль `platform` принимает `aud=sql-module-api`; обязательный профиль `standalone` сохраняет прямой Identity-логин и контуры teacher/admin/student, не зависит от Education/Kafka. Переключение конфигом, один билд. Общий инстанс на оба audience — позже |
 | MOD-015 | Инфраструктура: единый reverse-proxy | P1 | Конфиг готов | MOD-011, MOD-013 | `SQLTren/gateway/` (untracked, как `Backend/compose.yaml`): `default.conf.template` + `compose.yaml` + `gateway.env` + README. Один origin `:8090` — `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Host (префикс срезается), `/api/v1/` → Education. Заголовки: `Referrer-Policy: no-referrer`, `CSP … frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`. IdentityService за шлюз не заводится (вход остаётся кросс-origin). `nginx -t` проходит. Маршруты `/` и `/api/v1/` проверяемы; `/modules/sql/` + `/module-api/sql/` — вживую не проверены (ждут `MOD-013`/`MOD-014a`), полная проверка в `MOD-016` |
-| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | API-путь пройден | MOD-011…MOD-015 | Прогон 2026-09-06: **весь цифровой путь замкнут по API** (реальные исходящие вызовы модуля). Осталось — браузерный `/launch`-handoff и воспроизводимость без ручных правок БД (`SMK-2/3/4/6/7`). См. ниже. |
+| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | ✅ API-путь пройден (`18/18`) | MOD-011…MOD-015 | Прогон 3, 2026-09-07: **весь цифровой путь замкнут по API на чистых контейнерах, без ручных правок** — соседи закрыли `SMK-2/3/4/6` (штатный `Platform`-профиль + `SmokeDataSeeder` + согласованный ключ/URL). Реальный SQL-sandbox модуля. Найден и исправлен `SMK-12` (потеря события победной попытки). Осталось только `SMK-7` (браузерный путь через шлюз). См. ниже. |
 
 ### MOD-016 — прогон smoke 2026-09-06 (API-уровень)
 
@@ -243,7 +243,8 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | SMK-9 | P1 | Education (моя зона) | На чистой БД нет ни одного `User`; `/auth/me` возвращает 200, но `IdentityUserLink` не создаёт. Любой вызов, где нужен legacy-id (`ResolveCurrentLegacyUserIdAsync`), падает 500 `EducationUserLinkNotFoundException`, пока admin вручную не создаст профили через `POST /admin/profiles`. | Явный шаг в runbook, либо авто-провижн профиля при первом `/auth/me`, либо dev-сидер профилей под `InitialUsers` Identity. |
 | SMK-10 | P2 | Education (моя зона) | `PUT /practicals/{id}/students` принимает **legacy** id и при неизвестном id отдаёт сырой 500 (FK `PracticalBindUsers_Users`), а не 400/404. Плюс `GET /practicals/{id}/assignable-students` не фильтрует по роли (возвращает и admin, и teacher). | Валидация входных id → 400/404; при необходимости — фильтр роли Студент в assignable-students. |
 | SMK-11 | ~~P2~~ **исправлено** `67f05cf` | Education (моя зона) | `POST /courses` с `date` без таймзоны → 500 `Cannot write DateTimeOffset with Offset=03:00:00`. `Course.ctor` теперь нормализует `Date` к UTC. Проверено: курс с `"2026-09-06"` создаётся. | — |
-| SMK-2/3/4/6 | P0/P1 | SqlModule (соседи) | Профиль `Isolated` по умолчанию не мапит `IModuleIntegrationEndpoint` + `aud=scoodle-api`; `ServiceKey` в репо разный (`sql-module-platform-dev-key` ≠ `dev-sql-module-service-key-change-me`); `EducationBaseUrl=http://localhost:5000` (нужен `:5135`); демо-`SqlTask` сидится `Draft` + `Platform` с `UseFakeSandbox=false` → решаемого задания нет. В прогоне обойдено env-оверрайдами + ручными `UPDATE`. | **ТЗ:** [`2026-09-06-smoke-blockers-sqlmodule.md`](./backend-requirements/2026-09-06-smoke-blockers-sqlmodule.md) — профиль `Platform` в runbook, единый dev-`ServiceKey`, `EducationBaseUrl=:5135`, smoke-seed одного `Published` решаемого задания. |
+| SMK-2/3/4/6 | ~~P0/P1~~ **закрыто соседями** (SqlModule `26040274`…`e8633f6`) | SqlModule | Штатный launch-профиль `Platform` (`SeedSmokeData=true`, `Enabled=true`, `aud=sql-module-api`, реальный sandbox); `appsettings.Platform.json` → `ServiceKey=dev-sql-module-service-key-change-me`, `EducationBaseUrl=http://localhost:5135`; `SmokeDataSeeder` создаёт `Published`-задание `80000000-…-002` + таблицу `users(id=1)` + эталон; `docs/PLATFORM_SMOKE_RUNBOOK.md`. **Проверено прогоном 3** — `dotnet run --launch-profile Platform` без правок. | — |
+| SMK-12 | ~~P0~~ **исправлено** `cdbde9b` | Education (моя зона) | `PracticeEventHandler` отбрасывал события неактивной сессии (`session.Status != Active → return`). Kafka асинхронна: `GRADE` из outbox модуля приходит на `/complete` за ~130 мс до `EVENT` в Kafka → к моменту обработки события сессия уже `COMPLETED` → событие **победной** попытки терялось (в прогоне 3: сообщение в топике есть, `PracticalTaskEvents` пуст). Убрал проверку статуса — журнал append-only, границы = `sessionKey` + дедуп по `eventId`. Тесты: `TerminalSession_Ignored` → `CompletedSession_ValidKey_EventStored` + `ExpiredSession_…`; `PracticeEventHandlerTests` 6/6. **Проверено:** прогон 3 → `events=1`. | — |
 | SMK-7 | P1 | инфра (моя зона) | Шлюз `MOD-015` не поднимался; `/modules/sql/*` и `/module-api/sql/*` вживую не проверены; `sql-module-web` для шлюза нужна с `base=/modules/sql/`. | Поднять `SQLTren/gateway/`, `sql-module-web --base=/modules/sql/`, прогнать браузерный путь. |
 
 **Покрыто после фикса SMK-8 (прогон 2):** студент отправляет решение в SqlModule
@@ -258,13 +259,32 @@ Kafka (Education-consumer записал `PracticalTaskEvents`) и **сам** в
 модуля — нужен запущенный `sql-module-web` (`MOD-013`) + `SMK-5` (готово) либо
 шлюз `SMK-7`.
 
+### MOD-016 — прогон 3, 2026-09-07 (соседи закрыли `SMK-2/3/4/6`)
+
+Чистые контейнеры (`down -v && up -d`). IdentityService `:5101`, Education `:5135`
+(с `ModuleWebOrigin=:5174` из `appsettings.Development.json`), SqlModule `:5202`
+**`dotnet run --launch-profile Platform`** — без единого env-оверрайда и без ручных
+`UPDATE` в БД. Реальный Docker-sandbox модуля. Скрипт — `SQLTren/gateway/smoke_full.sh`.
+
+**Результат: 18/18.** Шаги: login → провижн профилей → реестр модуля →
+Education проксирует каталог (`ref=80000000-…-002`) → course/module/practical +
+bind → назначение студента → гейт → старт (**push C1 с identity-id долетел** в
+`ModuleSessions` модуля + Token Exchange, `launchUrl` → `http://localhost:5174/launch`)
+→ **студент решает `SELECT id FROM users ORDER BY id` в реальном sandbox модуля**
+(`201`, `isCorrect=true`) → модуль **сам** перевёл свою сессию в `COMPLETED`,
+**сам** опубликовал `sql_submit` в Kafka (Education-consumer записал в
+`PracticalTaskEvents` — после фикса `SMK-12`) и **сам** вызвал `/complete` →
+сессия Education `COMPLETED grade=100` → best-of-N `=100` → `GET .../module-sessions`
+(MOD-012b) отдаёт `COMPLETED` со `studentName` → повторная отправка `409`, сессия
+не меняется.
+
 **Вывод.** Весь цифровой путь MOD-016 (Identity, Token Exchange + `session_id`,
 провижн, реестр, проксирование каталога, привязка, жизненный цикл сессии,
-пуш C1 с identity-id, решение в тренажёре, событие в Kafka от модуля, приём
-оценки C3 от модуля, best-of-N, гейт попыток, `abandon`, ленты MOD-012a/b) —
-**замкнут и проверен на API**. Осталось: `SMK-2/3/4/6` (соседи/стык —
-воспроизводимость без ручных правок) и `SMK-7` (моё, шлюз) — для финального
-браузерного прогона.
+пуш C1 с identity-id, **решение в реальном SQL-тренажёре**, событие в Kafka от
+модуля → журнал Education, приём оценки C3 от модуля, best-of-N, гейт попыток,
+`abandon`, ленты MOD-012a/b) — **замкнут и проверен на API, воспроизводимо, без
+ручных правок**. Осталось только `SMK-7` (моё, шлюз) — браузерный `/launch` +
+возврат по `returnUrl`.
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 

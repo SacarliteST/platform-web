@@ -1,6 +1,7 @@
 # ТЗ — интеграция SQL-модуля с платформой (as-built)
 
-Дата: 2026-09-05, обновлено 2026-09-06 под реализованные контракты.
+Дата: 2026-09-05, обновлено 2026-09-06 под реализованные контракты
+(+ read-эндпоинты `MOD-006b`/`MOD-012a`/`MOD-012b`, вариант B `return_url`).
 **Статус: контракты со стороны платформы (Education + IdentityService) реализованы
 и покрыты тестами. Ниже — что модуль обязан реализовать в ответ.**
 
@@ -21,8 +22,12 @@
 | best-of-N в оценке практики | Education `MOD-008a` | `094934f` |
 
 Kafka-инфраструктура (`MOD-003`) и реестр модулей (`MOD-004`) — тоже готовы.
-**Не готово (не блокирует backend модуля):** UI platform-web (`MOD-009…012`),
-единый reverse-proxy (`MOD-015`).
+Read-доработки Education под UI — тоже готовы: `MOD-006b` (`GET /practicals/{id}`,
+`64c2d39`), `MOD-012a` (лента событий сессии, `64c2d39`), `MOD-012b`
+(список попыток по практике для преподавателя, `3d7b688`). UI platform-web
+`MOD-009…012` реализован.
+**Не готово (не блокирует backend модуля):** единый reverse-proxy (`MOD-015` —
+конфиг готов, вживую не прогнан).
 
 ---
 
@@ -137,6 +142,21 @@ POST {EducationBaseUrl}/api/v1/module-sessions/{sessionId}/complete
 сессии → `INSERT PracticalTaskEvent (id=eventId, kind, payload) ON CONFLICT (id)
 DO NOTHING`. События по **неизвестной / с чужим `sessionKey` / терминальной**
 сессии — молча отбрасываются. Никаких терминальных переходов через Kafka.
+
+**Куда эти события попадают дальше (справочно, модуль не участвует).** Тот же
+`PracticalTaskEvent` платформа отдаёт своим UI двумя read-эндпоинтами:
+- `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events`
+  (`MOD-012a`, `64c2d39`) — лента одной попытки; доступ: владелец сессии ИЛИ
+  преподаватель курса; `[{ eventId, kind, occurredAt, payload }]`.
+- `GET /api/v1/practicals/{practicalId}/module-sessions` (`MOD-012b`, `3d7b688`,
+  `TeacherOnly`) — список всех попыток по практике для преподавателя:
+  `[{ sessionId, userId, studentName, tryNumber, status, endReason, grade,
+  startedAt, endedAt }]`, новые первыми; чужой преподаватель → `404`. Оттуда
+  преподаватель выбирает `sessionId` для ленты `MOD-012a`.
+
+`payload`, который модуль кладёт в событие, платформа не разбирает, но **целиком
+показывает** в этих UI. Поэтому в `payload` не должно быть секретов (`sessionKey`,
+токенов) и внутренних идентификаторов, которые не предназначены преподавателю.
 
 **Требования к модулю (`SQLI-013/014`):** событие пишется в `pending_publish` в
 **одной транзакции** с `Attempt`; фоновый publisher ack-ит брокер **до** `sentAt`;
@@ -308,8 +328,10 @@ standalone, чистится при завершении/ошибке. Биты�
 | OpenAPI/Orval | SQLI-020 | Backlog |
 | Тесты/smoke | SQLI-021, SQLI-022, SQLI-023 | Backlog / Blocked |
 
-`SQLI-023` (E2E) больше **не** блокируется Education/Identity — эта часть готова;
-остаётся ждать platform-web `MOD-010…012` и reverse-proxy `MOD-015`.
+`SQLI-023` (E2E) больше **не** блокируется Education/Identity/platform-web — эти
+части готовы (`MOD-009…012`, `MOD-006b`, `MOD-012a/b`). Остаётся: `F1/F2/F3`
+модуля (`SQLI-010/011/018`) и единый reverse-proxy `MOD-015` (конфиг готов —
+`SQLTren/gateway/`).
 
 ---
 
@@ -332,16 +354,19 @@ standalone, чистится при завершении/ошибке. Биты�
 - Шифрование `sessionKey` at rest в БД модуля — техдолг `SQLI-TD-001`; redaction
   в логах обязательна уже сейчас.
 
-## Известные несостыковки на стороне платформы (не блокируют backend модуля)
+## Доработки платформы под UI — закрыто (не касается backend модуля)
 
-- **`return_url` vs маршрут студента.** Education строит `returnUrl` по шаблону
-  `{origin}/student/practicals/{practicalId}?session=…`, а страница практики
-  platform-web вложена в `/student/courses/:courseId/modules/:moduleId/practicals/:practicalId`.
-  Решается на стороне platform-web (плоский redirect-маршрут) либо в Education
-  (шаблон с `courseId/moduleId`). Модуль просто делает `assign(returnUrl)` — его это
-  не касается.
+- **`return_url` vs маршрут студента — решено (вариант B, `784a9e7`).** Education
+  строит полный вложенный `returnUrl`
+  `{origin}/student/courses/{courseId}/modules/{moduleId}/practicals/{practicalId}?session={sessionId}`
+  (`courseId`/`moduleId` — из связи `Case → PracticalMaterial → Module`). Плоский
+  redirect-маршрут platform-web не нужен. Модуль по-прежнему просто делает
+  `assign(returnUrl)`.
 - Чтение текущей привязки практики (`kind`, модуль, `externalTaskRef`,
-  `timeLimitMinutes`) для UI преподавателя — отдельная доработка Education
-  (`MOD-006b`, в бэклоге).
-- Read-эндпоинт ленты `PracticalTaskEvent` для UI протокола — доработка Education
-  (`MOD-012a`, в бэклоге).
+  `timeLimitMinutes`) для UI преподавателя — `MOD-006b`, реализовано (`64c2d39`),
+  `GET /api/v1/practicals/{practicalId}`.
+- Read-эндпоинт ленты `PracticalTaskEvent` для UI протокола — `MOD-012a`,
+  реализовано (`64c2d39`).
+- Список попыток модуля по практике для UI преподавателя — `MOD-012b`,
+  реализовано (`3d7b688`), `GET /api/v1/practicals/{practicalId}/module-sessions`
+  (`TeacherOnly`). Детали — в разделе C4.

@@ -22,11 +22,13 @@ import {
   useConfigurePracticalQuestions,
   useCreatePracticalTask,
   useDeletePracticalTask,
+  useGetPracticalDetail,
   useGetPracticalQuestionsSetup,
   useGetPracticalTasks,
   usePublishPractical,
   useUpdatePracticalTaskText,
 } from '../../api/education/practicals/practicals';
+import { TeacherExternalPractical } from '../../features/module-practice';
 import {
   useAcceptTaskFile,
   useAddTaskFileComment,
@@ -52,6 +54,12 @@ export function TeacherPracticalPage() {
   const { courseId = '', moduleId = '', practicalId = '' } = useParams();
   const backToModule = `/teacher/courses/${courseId}/modules/${moduleId}`;
 
+  const detailQuery = useGetPracticalDetail(practicalId, {
+    query: { enabled: Boolean(practicalId), retry: false },
+  });
+  const detail = detailQuery.data?.status === 200 ? detailQuery.data.data : undefined;
+  const isExternal = detail?.kind === 'external';
+
   return (
     <Page>
       <PageBreadcrumbs
@@ -59,37 +67,82 @@ export function TeacherPracticalPage() {
           { label: 'Главная', to: '/' },
           { label: 'Преподаватель', to: '/teacher/courses' },
           { label: 'Модуль', to: backToModule },
-          { label: 'Практика' },
+          { label: detail?.name ?? 'Практика' },
         ]}
       />
       <Group justify="space-between" align="flex-end" gap="md" wrap="wrap">
-        <PageHeader title="Практика" description="Настройка теста, задания, сдачи и протоколы." />
+        <PageHeader
+          title={detail?.name ?? 'Практика'}
+          description={
+            isExternal
+              ? 'Практика проходится во внешнем модуле.'
+              : 'Настройка теста, задания, сдачи и протоколы.'
+          }
+        />
         <Button component={Link} to={backToModule} size="sm" variant="outline">
           К модулю
         </Button>
       </Group>
 
-      <Tabs defaultValue="setup">
-        <Tabs.List>
-          <Tabs.Tab value="setup">Настройка</Tabs.Tab>
-          <Tabs.Tab value="tasks">Задания</Tabs.Tab>
-          <Tabs.Tab value="submissions">Сдачи</Tabs.Tab>
-          <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
-        </Tabs.List>
-        <Tabs.Panel value="setup" pt="md">
-          <SetupTab practicalId={practicalId} />
-        </Tabs.Panel>
-        <Tabs.Panel value="tasks" pt="md">
-          <TasksTab practicalId={practicalId} />
-        </Tabs.Panel>
-        <Tabs.Panel value="submissions" pt="md">
-          <SubmissionsTab practicalId={practicalId} />
-        </Tabs.Panel>
-        <Tabs.Panel value="protocols" pt="md">
-          <ProtocolsTab practicalId={practicalId} />
-        </Tabs.Panel>
-      </Tabs>
+      <QueryBoundary
+        isPending={detailQuery.isPending}
+        isError={detailQuery.isError || detailQuery.data?.status !== 200}
+        data={detail}
+        errorTitle="Education API недоступен"
+      >
+        {(data) => (
+          <Stack gap="md">
+            <TeacherExternalPractical
+              practicalId={practicalId}
+              detail={data}
+              onChanged={() => void detailQuery.refetch()}
+            />
+
+            {data.kind === 'external' ? (
+              <TeacherExternalProtocolsTab practicalId={practicalId} taskId={data.moduleBinding?.taskId} />
+            ) : (
+              <Tabs defaultValue="setup">
+                <Tabs.List>
+                  <Tabs.Tab value="setup">Настройка</Tabs.Tab>
+                  <Tabs.Tab value="tasks">Задания</Tabs.Tab>
+                  <Tabs.Tab value="submissions">Сдачи</Tabs.Tab>
+                  <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
+                </Tabs.List>
+                <Tabs.Panel value="setup" pt="md">
+                  <SetupTab practicalId={practicalId} />
+                </Tabs.Panel>
+                <Tabs.Panel value="tasks" pt="md">
+                  <TasksTab practicalId={practicalId} />
+                </Tabs.Panel>
+                <Tabs.Panel value="submissions" pt="md">
+                  <SubmissionsTab practicalId={practicalId} />
+                </Tabs.Panel>
+                <Tabs.Panel value="protocols" pt="md">
+                  <ProtocolsTab practicalId={practicalId} />
+                </Tabs.Panel>
+              </Tabs>
+            )}
+          </Stack>
+        )}
+      </QueryBoundary>
     </Page>
+  );
+}
+
+function TeacherExternalProtocolsTab({
+  practicalId: _practicalId,
+  taskId: _taskId,
+}: {
+  practicalId: string;
+  taskId?: string;
+}) {
+  // Лента событий по попыткам — MOD-012.
+  return (
+    <AppCard p="md">
+      <Text size="sm" c="dimmed">
+        Протоколы попыток студентов появятся здесь (MOD-012).
+      </Text>
+    </AppCard>
   );
 }
 

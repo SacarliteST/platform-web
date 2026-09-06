@@ -363,8 +363,13 @@ var bestGrade = sessions
 - **E13 (`MOD-012a`)** — `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events`
   (`AuthenticatedEducationUser`) → `[{ eventId, kind, occurredAt, payload }]`.
   Доступ: владелец сессии ИЛИ преподаватель курса практики; иначе/несуществующая → `404`.
+- **E14 (`MOD-012b`)** — `GET /api/v1/practicals/{practicalId}/module-sessions`
+  (`TeacherOnly`) → `[{ sessionId, userId, studentName, tryNumber, status, endReason,
+  grade, startedAt, endedAt }]`, новые первыми. Доступ: преподаватель — владелец
+  курса практики; иначе → `404`. Питает таблицу попыток в UI преподавателя, откуда
+  выбирается `sessionId` для E13. Коммит `3d7b688`, `ModuleSessionsApiTests` 14/14.
 
-Коммит `64c2d39`, покрыто тестами.
+E12/E13 — коммит `64c2d39`, покрыто тестами.
 
 ## Закрыто дополнительно (коммит `784a9e7`)
 

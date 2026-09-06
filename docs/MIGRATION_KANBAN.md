@@ -199,7 +199,36 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | MOD-014 | SqlModule: приём пуша сессии + publisher (события в Kafka + оценка по HTTP) | P0 | Backlog | MOD-003, MOD-007 | Спека §S2–S6. `POST /module-integration/sessions` (upsert `ModuleSession`, `X-Service-Key`); `GET /module-integration/sessions/current` (по claim `session_id`); привязка `SubmitAttempt` к сессии (owner/task/status); таблица `pending_publish` + фоновый publisher: события → `scoodle.practice.events` (`eventId`), оценка → `POST {education}/module-sessions/{id}/complete` (`grade=100` по первой верной попытке), retry после сбоя/рестарта. Обратного attach нет; standalone-flow не меняется |
 | MOD-014a | SqlModule: собственная `Audience` без поломки standalone | P0 | Backlog | MOD-002b, MOD-014 | Спека §S7. Профиль `platform` принимает `aud=sql-module-api`; обязательный профиль `standalone` сохраняет прямой Identity-логин и контуры teacher/admin/student, не зависит от Education/Kafka. Переключение конфигом, один билд. Общий инстанс на оба audience — позже |
 | MOD-015 | Инфраструктура: единый reverse-proxy | P1 | Конфиг готов | MOD-011, MOD-013 | `SQLTren/gateway/` (untracked, как `Backend/compose.yaml`): `default.conf.template` + `compose.yaml` + `gateway.env` + README. Один origin `:8090` — `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Host (префикс срезается), `/api/v1/` → Education. Заголовки: `Referrer-Policy: no-referrer`, `CSP … frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`. IdentityService за шлюз не заводится (вход остаётся кросс-origin). `nginx -t` проходит. Маршруты `/` и `/api/v1/` проверяемы; `/modules/sql/` + `/module-api/sql/` — вживую не проверены (ждут `MOD-013`/`MOD-014a`), полная проверка в `MOD-016` |
-| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Backlog | MOD-011…MOD-015 | запуск → решение в тренажёре → события в Kafka → возврат → оценка (от модуля) и протокол в платформе; повторная попытка после `EXPIRED`/неудачи → лучшая оценка засчитана |
+| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | Заблокирован | MOD-011…MOD-015 | запуск → решение в тренажёре → события в Kafka → возврат → оценка (от модуля) и протокол в платформе; повторная попытка после `EXPIRED`/неудачи → лучшая оценка засчитана. Прогон 2026-09-06 — см. `SMK-*` ниже |
+
+### MOD-016 — прогон smoke 2026-09-06 (что не заработало)
+
+Все сервисы подняты на дефолтных портах (Education `:5135`, Identity `:5101`,
+SqlModule `:5202`, platform-web `:5173`, sql-module-web `:5174`, Kafka `:9092`,
+Postgres `:5432/5433/5434`). Шлюз `:8090` не поднят.
+
+**Зелёное (проверено вживую):** Identity `login` для admin/student/teacher;
+Education `GET /auth/me` (провижн `IdentityUserLink`) для всех трёх ролей;
+Token Exchange `education-core` → `aud=sql-module-api` c claim `session_id`,
+ролью `Student`, `sub=<userId>`; Kafka поднята, топики
+`scoodle.practice.events` / `.completion` на месте.
+
+| ID | Приоритет | Где | Что не так | Что делать |
+|---|---|---|---|---|
+| SMK-1 | P0 | Education (моя зона) | **БД `EducationDb` устаревшая** — 19 таблиц pre-Phase-7, нет `PracticalModules` / `PracticalModuleSessions` / `PracticalTaskEvents` и новых колонок `PracticalMaterials.Kind/TimeLimitMinutes`, `Cases.PracticalModuleId/ExternalTaskRef`. `EnsureCreatedAsync` при непустой БД молчит → любой запрос к реестру модулей падает `42P01 relation "PracticalModules" does not exist` (HTTP 500). Смоук встаёт на шаге «admin регистрирует модуль». | Дев-сброс: остановить Education → `DROP DATABASE "EducationDb"` → поднять Education (пересоздаст полную схему). Долгосрочно — либо EF-миграции вместо `EnsureCreated`, либо скрипт `scripts/dev-reset-db` + строка в README. |
+| SMK-2 | P0 | SqlModule (соседи) | **Запущен не в platform-профиле.** `dotnet run` по умолчанию берёт профиль `Isolated` (`ASPNETCORE_ENVIRONMENT=Development`, `appsettings.Development.json` у модуля нет) → `ModuleIntegration:Enabled=false`. `EndpointExtensions` при `Enabled=false` **не мапит** `IModuleIntegrationEndpoint` → `/api/v1/module-integration/{sessions,current,tasks-catalog}` отсутствуют; `Auth:Audience=scoodle-api` вместо `sql-module-api` → обменянный токен не примут. | Поднимать модуль профилем `Platform` (`ASPNETCORE_ENVIRONMENT=Platform`). Зафиксировать в runbook/compose smoke. |
+| SMK-3 | P0 | конфиг обеих команд | **`ServiceKey` не совпадает.** Education: `PracticalModules:sql:ServiceKey = dev-sql-module-service-key-change-me`. SqlModule `appsettings.Platform.json`: `ModuleIntegration:ServiceKey = sql-module-platform-dev-key`. Пуш C1 и приём оценки C3 отвалятся с `401`. | Согласовать один дев-ключ в обоих репозиториях (или через env в compose smoke). |
+| SMK-4 | P0 | SqlModule (соседи) | **`ModuleIntegration:EducationBaseUrl = http://localhost:5000`** в `appsettings.Platform.json` — Education слушает `:5135`. Колбэк `/complete` уйдёт в никуда. | Поправить на `http://localhost:5135` (или адрес шлюза `http://localhost:8090`). |
+| SMK-5 | P0 | Education (моя зона) | **`BuildLaunchUrl` строит адрес модуля от `PlatformOrigin`** → `http://localhost:5173/modules/sql/launch?...`. Работает только за шлюзом (`/modules/sql/` → sql-module-web). При прямом прогоне без шлюза модуль на `http://localhost:5174/launch`, и `launchUrl` ведёт в 404 platform-web. Отдельного «origin веб-морды модуля» в конфиге нет. | Либо смоук всегда за шлюзом (поднять `SQLTren/gateway/`, `MOD-015`), либо добавить в `ModuleIntegration` опцию `ModuleWebOrigin` для безшлюзовой разработки. |
+| SMK-6 | P1 | SqlModule (соседи) | **Профиль `Platform` идёт с `SeedDemoData=false`** — в БД модуля нет опубликованных заданий, каталог `tasks-catalog` пуст, привязывать в практике нечего. | Для смоука нужен сид: 1 опубликованное задание с известным `ref` + решаемым упражнением. Добавить seed в platform-профиль или отдельный шаг runbook. |
+| SMK-7 | P1 | инфра (моя зона) | Шлюз `MOD-015` для смоука обязателен (см. SMK-5), но не поднят и вживую не прогонялся. `sql-module-web` при этом должна быть собрана/запущена с `base=/modules/sql/`, иначе ассеты за шлюзом не отдаются. | Поднять `SQLTren/gateway/`, запустить `sql-module-web` с `--base=/modules/sql/`, повторить смоук через `:8090`. |
+
+**Вывод:** платформенная часть контракта (Identity, Token Exchange, провижн,
+Kafka) живая; сам сквозной прогон блокирован SMK-1 (моё, дев-сброс БД) и
+SMK-2…SMK-6 (конфиг/сид/топология развёртывания на стыке команд). Полный
+прогон возможен только после дев-сброса `EducationDb` + подъёма SqlModule в
+`Platform` с согласованным ключом/URL + подъёма шлюза (или опции
+`ModuleWebOrigin`).
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 

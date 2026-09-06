@@ -170,13 +170,17 @@ GET /api/v1/practical-modules/{practicalModuleId}/tasks                  Teacher
 PUT /api/v1/practicals/{practicalId}/module                             TeacherOnly
   { practicalModuleId, externalTaskRef, triesCount, timeLimitMinutes }
  → 204
+ → 404  practicalModuleId не найден / отключён
+ → 409  практика уже используется (по ней есть CaseFile или TestResult) —
+        «привяжите модуль к новой практике». Перепривязка уже внешней практики
+        (смена модуля/задания) разрешена
 ```
 
 Переводит `Practical.kind` в `external`, создаёт единственный `PracticalTask`
-(1:1) со ссылкой на модуль и `externalTaskRef` (из ответа E2, валидировать
-принадлежность модулю). `triesCount` — тот же диапазон/валидация, что у
-внутреннего теста. `timeLimitMinutes` — положительное целое или `null` (без
-лимита). Смена значений при живых сессиях на них не влияет.
+(1:1) со ссылкой на модуль и `externalTaskRef`. `triesCount` — тот же диапазон,
+что у внутреннего теста. `timeLimitMinutes` — положительное целое или `null`.
+Смена значений при живых сессиях на них не влияет. **UI (`MOD-010`)** должен
+предлагать привязку только для пустой практики.
 
 ### E4 — старт / продолжение сессии (студент)
 
@@ -362,12 +366,23 @@ var bestGrade = sessions
 
 Коммит `64c2d39`, покрыто тестами.
 
+## Закрыто дополнительно (коммит `784a9e7`)
+
+- **`return_url` — вариант B.** Education строит полный вложенный адрес
+  `{origin}/student/courses/{courseId}/modules/{moduleId}/practicals/{practicalId}?session={sessionId}`
+  (`ExternalTaskBinding` подтягивает `courseId`/`moduleId`). `platform-web` ничего
+  не добавляет — возврат попадает прямо на существующую страницу практики.
+- **Защита привязки** — E3 отдаёт `409`, если по практике уже есть работа
+  студентов (см. выше).
+- **Enum-дискриминаторы** внутри Education (`PracticalKind`, `ModuleSessionState`,
+  `ModuleSessionEndReason`). Wire-формат не изменился: `kind` по-прежнему
+  `"internal"`/`"external"`, `status` — `"ACTIVE"`/`"COMPLETED"`/`"EXPIRED"`,
+  `endReason` — `"completed"`/`"timeout"`/`"abandoned"`. Orval не требует регена.
+
 ## Остаётся
 
-- `ReturnUrlTemplate` по умолчанию использует плоский `/student/practicals/{practicalId}` —
-  согласовать с фактическим вложенным маршрутом platform-web
-  (`/student/courses/:c/modules/:m/practicals/:p`).
-- Экспорт OpenAPI Education владельцем; регенерация Orval в `platform-web`.
+- Экспорт OpenAPI Education владельцем сделан; Orval `platform-web` перегенерирован
+  (`359c517`). Изменения `784a9e7` контракт не трогают.
 
 ## Не входит в эту итерацию
 

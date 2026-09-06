@@ -29,6 +29,7 @@ import type {
   GetCurrentModuleSessionParams,
   ModuleSessionEventResponse,
   ModuleSessionResponse,
+  ModuleSessionSummaryResponse,
   StartModuleSessionRequest,
   StartModuleSessionResponse
 } from '../model';
@@ -174,7 +175,137 @@ export const useStartModuleSession = <TError = void,
       > => {
       return useMutation(getStartModuleSessionMutationOptions(options), queryClient);
     }
-    export type getCurrentModuleSessionResponse200 = {
+    export type listPracticalModuleSessionsResponse200 = {
+  data: ModuleSessionSummaryResponse[]
+  status: 200
+}
+
+export type listPracticalModuleSessionsResponse401 = {
+  data: void
+  status: 401
+}
+
+export type listPracticalModuleSessionsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type listPracticalModuleSessionsResponse404 = {
+  data: void
+  status: 404
+}
+
+export type listPracticalModuleSessionsResponseSuccess = (listPracticalModuleSessionsResponse200) & {
+  headers: Headers;
+};
+export type listPracticalModuleSessionsResponseError = (listPracticalModuleSessionsResponse401 | listPracticalModuleSessionsResponse403 | listPracticalModuleSessionsResponse404) & {
+  headers: Headers;
+};
+
+export type listPracticalModuleSessionsResponse = (listPracticalModuleSessionsResponseSuccess | listPracticalModuleSessionsResponseError)
+
+export const getListPracticalModuleSessionsUrl = (practicalId: string,) => {
+
+
+
+
+  return `/api/v1/practicals/${practicalId}/module-sessions`
+}
+
+/**
+ * Все попытки студентов по практике. Доступ: преподаватель — владелец курса практики.
+ * @summary Список попыток внешнего модуля по практике (преподаватель)
+ */
+export const listPracticalModuleSessions = async (practicalId: string, options?: Parameters<typeof educationFetch>[1]): Promise<listPracticalModuleSessionsResponse> => {
+
+  return educationFetch<listPracticalModuleSessionsResponse>(getListPracticalModuleSessionsUrl(practicalId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPracticalModuleSessionsQueryKey = (practicalId: string,) => {
+    return [
+    `/api/v1/practicals/${practicalId}/module-sessions`
+    ] as const;
+    }
+
+
+export const getListPracticalModuleSessionsQueryOptions = <TData = Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError = void>(practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPracticalModuleSessionsQueryKey(practicalId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPracticalModuleSessions>>> = ({ signal }) => listPracticalModuleSessions(practicalId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: practicalId !== null && practicalId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPracticalModuleSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listPracticalModuleSessions>>>
+export type ListPracticalModuleSessionsQueryError = void
+
+
+export function useListPracticalModuleSessions<TData = Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError = void>(
+ practicalId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPracticalModuleSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listPracticalModuleSessions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPracticalModuleSessions<TData = Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPracticalModuleSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listPracticalModuleSessions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPracticalModuleSessions<TData = Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Список попыток внешнего модуля по практике (преподаватель)
+ */
+
+export function useListPracticalModuleSessions<TData = Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPracticalModuleSessions>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPracticalModuleSessionsQueryOptions(practicalId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getCurrentModuleSessionResponse200 = {
   data: CurrentModuleSessionResponse
   status: 200
 }

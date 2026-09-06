@@ -153,9 +153,7 @@ function BindModal({
       onDone();
       return;
     }
-    // 409 (по практике есть работа студентов) добавлен в Education после экспорта
-    // OpenAPI — в сгенерированном union'е его пока нет.
-    if ((response.status as number) === 409) {
+    if (response.status === 409) {
       setError('По практике уже есть работа студентов — создайте новую практику для модуля.');
       return;
     }

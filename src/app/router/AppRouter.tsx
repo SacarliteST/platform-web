@@ -18,6 +18,9 @@ const AdminProfilesPage = lazy(() =>
 const AdminSettingsPage = lazy(() =>
   import('../../pages/admin-settings').then((m) => ({ default: m.AdminSettingsPage })),
 );
+const AdminModulesPage = lazy(() =>
+  import('../../pages/admin-modules').then((m) => ({ default: m.AdminModulesPage })),
+);
 
 const TeacherCoursesPage = lazy(() =>
   import('../../pages/teacher-courses').then((m) => ({ default: m.TeacherCoursesPage })),
@@ -117,6 +120,7 @@ export function AppRouter() {
         <Route path="admin/users/:userId" element={<AdminRoute><AdminUserDetailsPage /></AdminRoute>} />
         <Route path="admin/events" element={<AdminRoute><AdminEventsPage /></AdminRoute>} />
         <Route path="admin/profiles" element={<AdminRoute><AdminProfilesPage /></AdminRoute>} />
+        <Route path="admin/modules" element={<AdminRoute><AdminModulesPage /></AdminRoute>} />
         <Route path="admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 
         <Route

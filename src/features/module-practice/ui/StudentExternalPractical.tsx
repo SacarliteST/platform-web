@@ -15,6 +15,7 @@ import type {
 import { toNumber } from '../../../shared/lib';
 import { AppCard, ConfirmModal, QueryBoundary } from '../../../shared/ui';
 import { useQueryClient } from '@tanstack/react-query';
+import { SessionEventsFeed } from './SessionEventsFeed';
 
 /** ~40 с ожидания оценки после возврата, дальше — ручное обновление. */
 const RETURN_POLL_TIMEOUT_MS = 40_000;
@@ -55,6 +56,7 @@ export function StudentExternalPractical({
         moduleName={binding.practicalModuleName}
         triesCount={triesCount}
         timeLimitMinutes={timeLimitMinutes}
+        showFeed={!returnSessionId}
       />
     </Stack>
   );
@@ -76,12 +78,14 @@ function Gate({
   moduleName,
   triesCount,
   timeLimitMinutes,
+  showFeed,
 }: {
   practicalId: string;
   taskId: string;
   moduleName: string;
   triesCount: number;
   timeLimitMinutes: number | null;
+  showFeed: boolean;
 }) {
   const queryClient = useQueryClient();
   const currentQuery = useGetCurrentModuleSession(
@@ -143,7 +147,7 @@ function Gate({
     });
   };
 
-  return (
+  const card = (
     <QueryBoundary
       isPending={currentQuery.isPending}
       isError={currentQuery.isError || currentQuery.data?.status !== 200}
@@ -211,6 +215,15 @@ function Gate({
       )}
     </QueryBoundary>
   );
+
+  return (
+    <Stack gap="md">
+      {card}
+      {showFeed && session ? (
+        <SessionEventsFeed practicalId={practicalId} sessionId={session.sessionId} />
+      ) : null}
+    </Stack>
+  );
 }
 
 function ReturnStatus({ practicalId, sessionId }: { practicalId: string; sessionId: string }) {
@@ -259,7 +272,10 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
     return null;
   }
 
+  const terminal = status === 'COMPLETED' || status === 'EXPIRED';
+
   return (
+    <Stack gap="md">
     <AppCard p="md">
       <Stack gap="sm">
         {status === 'COMPLETED' ? (
@@ -271,7 +287,7 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
               </Badge>
             </Group>
             <Text size="sm" c="dimmed">
-              Разбор действий — на вкладке «Протокол».
+              Разбор ваших действий — ниже.
             </Text>
           </>
         ) : status === 'EXPIRED' ? (
@@ -307,5 +323,9 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
         )}
       </Stack>
     </AppCard>
+      {terminal ? (
+        <SessionEventsFeed practicalId={practicalId} sessionId={sessionId} />
+      ) : null}
+    </Stack>
   );
 }

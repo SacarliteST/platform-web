@@ -28,7 +28,7 @@ import {
   usePublishPractical,
   useUpdatePracticalTaskText,
 } from '../../api/education/practicals/practicals';
-import { TeacherExternalPractical } from '../../features/module-practice';
+import { TeacherExternalPractical, TeacherSessionProtocols } from '../../features/module-practice';
 import {
   useAcceptTaskFile,
   useAddTaskFileComment,
@@ -99,7 +99,7 @@ export function TeacherPracticalPage() {
             />
 
             {data.kind === 'external' ? (
-              <TeacherExternalProtocolsTab practicalId={practicalId} taskId={data.moduleBinding?.taskId} />
+              <TeacherSessionProtocols practicalId={practicalId} />
             ) : (
               <Tabs defaultValue="setup">
                 <Tabs.List>
@@ -126,23 +126,6 @@ export function TeacherPracticalPage() {
         )}
       </QueryBoundary>
     </Page>
-  );
-}
-
-function TeacherExternalProtocolsTab({
-  practicalId: _practicalId,
-  taskId: _taskId,
-}: {
-  practicalId: string;
-  taskId?: string;
-}) {
-  // Лента событий по попыткам — MOD-012.
-  return (
-    <AppCard p="md">
-      <Text size="sm" c="dimmed">
-        Протоколы попыток студентов появятся здесь (MOD-012).
-      </Text>
-    </AppCard>
   );
 }
 

@@ -29,6 +29,7 @@ import {
   useUpdatePracticalTaskText,
 } from '../../api/education/practicals/practicals';
 import { TeacherExternalPractical, TeacherSessionProtocols } from '../../features/module-practice';
+import { StudentAssignmentCard } from '../../features/student-assignment';
 import {
   useAcceptTaskFile,
   useAddTaskFileComment,
@@ -99,12 +100,16 @@ export function TeacherPracticalPage() {
             />
 
             {data.kind === 'external' ? (
-              <TeacherSessionProtocols practicalId={practicalId} />
+              <>
+                <StudentAssignmentCard kind="practical" id={practicalId} />
+                <TeacherSessionProtocols practicalId={practicalId} />
+              </>
             ) : (
               <Tabs defaultValue="setup">
                 <Tabs.List>
                   <Tabs.Tab value="setup">Настройка</Tabs.Tab>
                   <Tabs.Tab value="tasks">Задания</Tabs.Tab>
+                  <Tabs.Tab value="students">Студенты</Tabs.Tab>
                   <Tabs.Tab value="submissions">Сдачи</Tabs.Tab>
                   <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
                 </Tabs.List>
@@ -113,6 +118,9 @@ export function TeacherPracticalPage() {
                 </Tabs.Panel>
                 <Tabs.Panel value="tasks" pt="md">
                   <TasksTab practicalId={practicalId} />
+                </Tabs.Panel>
+                <Tabs.Panel value="students" pt="md">
+                  <StudentAssignmentCard kind="practical" id={practicalId} />
                 </Tabs.Panel>
                 <Tabs.Panel value="submissions" pt="md">
                   <SubmissionsTab practicalId={practicalId} />

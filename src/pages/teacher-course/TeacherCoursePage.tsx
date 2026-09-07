@@ -20,6 +20,7 @@ import {
   useGetTeacherCourses,
 } from '../../api/education/courses/courses';
 import { getEducationProblemMessage } from '../../shared/lib';
+import { StudentAssignmentCard } from '../../features/student-assignment';
 import {
   AppCard,
   ConfirmModal,
@@ -168,6 +169,8 @@ export function TeacherCoursePage() {
           )}
         </QueryBoundary>
       </AppCard>
+
+      {courseId ? <StudentAssignmentCard kind="course" id={courseId} /> : null}
 
       <Modal opened={createOpened} onClose={createModal.close} title="Создать модуль" centered>
         <form

@@ -268,7 +268,7 @@
           "AdminProfiles"
         ],
         "summary": "Получение студентов для назначения на курс",
-        "description": "Возвращает студентов с признаком назначения на выбранный курс.",
+        "description": "Студенты с признаком назначения на выбранный курс. Только для преподавателя-владельца курса.",
         "operationId": "GetCourseAssignableStudents",
         "parameters": [
           {
@@ -310,7 +310,7 @@
           "AdminProfiles"
         ],
         "summary": "Получение студентов для назначения на практику",
-        "description": "Возвращает студентов с признаком назначения на выбранную практику.",
+        "description": "Студенты с признаком назначения на выбранную практику. Только для преподавателя-владельца практики.",
         "operationId": "GetPracticalAssignableStudents",
         "parameters": [
           {
@@ -352,7 +352,7 @@
           "AdminProfiles"
         ],
         "summary": "Назначение студентов на курс",
-        "description": "Заменяет набор студентов, назначенных на выбранный курс.",
+        "description": "Заменяет набор студентов курса. Только для преподавателя-владельца; неизвестные / не привязанные id → 400.",
         "operationId": "SetCourseStudents",
         "parameters": [
           {
@@ -384,7 +384,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -394,9 +394,6 @@
           },
           "403": {
             "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }
@@ -407,7 +404,7 @@
           "AdminProfiles"
         ],
         "summary": "Назначение студентов на практику",
-        "description": "Заменяет набор студентов, назначенных на выбранный практический материал.",
+        "description": "Заменяет набор студентов практики. Только для преподавателя-владельца; неизвестные / не привязанные id → 400.",
         "operationId": "SetPracticalStudents",
         "parameters": [
           {
@@ -439,7 +436,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -449,9 +446,6 @@
           },
           "403": {
             "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }

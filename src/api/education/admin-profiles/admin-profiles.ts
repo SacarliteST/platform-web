@@ -28,6 +28,7 @@ import type {
   AssignableStudentResponse,
   CreateAdminProfileRequest,
   HttpValidationProblemDetails,
+  ProblemDetails,
   UpdateAdminProfileRequest,
   UpdateCourseStudentsRequest,
   UpdatePracticalStudentsRequest
@@ -545,7 +546,7 @@ export const getGetCourseAssignableStudentsUrl = (courseId: string,) => {
 }
 
 /**
- * Возвращает студентов с признаком назначения на выбранный курс.
+ * Студенты с признаком назначения на выбранный курс. Только для преподавателя-владельца курса.
  * @summary Получение студентов для назначения на курс
  */
 export const getCourseAssignableStudents = async (courseId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getCourseAssignableStudentsResponse> => {
@@ -670,7 +671,7 @@ export const getGetPracticalAssignableStudentsUrl = (practicalId: string,) => {
 }
 
 /**
- * Возвращает студентов с признаком назначения на выбранную практику.
+ * Студенты с признаком назначения на выбранную практику. Только для преподавателя-владельца практики.
  * @summary Получение студентов для назначения на практику
  */
 export const getPracticalAssignableStudents = async (practicalId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getPracticalAssignableStudentsResponse> => {
@@ -768,7 +769,7 @@ export type setCourseStudentsResponse204 = {
 }
 
 export type setCourseStudentsResponse400 = {
-  data: HttpValidationProblemDetails
+  data: ProblemDetails
   status: 400
 }
 
@@ -782,15 +783,10 @@ export type setCourseStudentsResponse403 = {
   status: 403
 }
 
-export type setCourseStudentsResponse404 = {
-  data: void
-  status: 404
-}
-
 export type setCourseStudentsResponseSuccess = (setCourseStudentsResponse204) & {
   headers: Headers;
 };
-export type setCourseStudentsResponseError = (setCourseStudentsResponse400 | setCourseStudentsResponse401 | setCourseStudentsResponse403 | setCourseStudentsResponse404) & {
+export type setCourseStudentsResponseError = (setCourseStudentsResponse400 | setCourseStudentsResponse401 | setCourseStudentsResponse403) & {
   headers: Headers;
 };
 
@@ -805,7 +801,7 @@ export const getSetCourseStudentsUrl = (courseId: string,) => {
 }
 
 /**
- * Заменяет набор студентов, назначенных на выбранный курс.
+ * Заменяет набор студентов курса. Только для преподавателя-владельца; неизвестные / не привязанные id → 400.
  * @summary Назначение студентов на курс
  */
 export const setCourseStudents = async (courseId: string,
@@ -832,7 +828,7 @@ return educationFetch<setCourseStudentsResponse>(getSetCourseStudentsUrl(courseI
 
 export const getSetCourseStudentsMutationKey = () => ['setCourseStudents'] as const;
 
-export const getSetCourseStudentsMutationOptions = <TError = HttpValidationProblemDetails | void,
+export const getSetCourseStudentsMutationOptions = <TError = ProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCourseStudents>>, TError,SetCourseStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof setCourseStudents>>, TError,SetCourseStudentsMutationVariables, TContext> => {
 
@@ -861,13 +857,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SetCourseStudentsMutationResult = NonNullable<Awaited<ReturnType<typeof setCourseStudents>>>
     export type SetCourseStudentsMutationBody = UpdateCourseStudentsRequest
-    export type SetCourseStudentsMutationError = HttpValidationProblemDetails | void
+    export type SetCourseStudentsMutationError = ProblemDetails | void
     export type SetCourseStudentsMutationVariables = {courseId: string;data: UpdateCourseStudentsRequest}
 
     /**
  * @summary Назначение студентов на курс
  */
-export const useSetCourseStudents = <TError = HttpValidationProblemDetails | void,
+export const useSetCourseStudents = <TError = ProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCourseStudents>>, TError,SetCourseStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setCourseStudents>>,
@@ -883,7 +879,7 @@ export const useSetCourseStudents = <TError = HttpValidationProblemDetails | voi
 }
 
 export type setPracticalStudentsResponse400 = {
-  data: HttpValidationProblemDetails
+  data: ProblemDetails
   status: 400
 }
 
@@ -897,15 +893,10 @@ export type setPracticalStudentsResponse403 = {
   status: 403
 }
 
-export type setPracticalStudentsResponse404 = {
-  data: void
-  status: 404
-}
-
 export type setPracticalStudentsResponseSuccess = (setPracticalStudentsResponse204) & {
   headers: Headers;
 };
-export type setPracticalStudentsResponseError = (setPracticalStudentsResponse400 | setPracticalStudentsResponse401 | setPracticalStudentsResponse403 | setPracticalStudentsResponse404) & {
+export type setPracticalStudentsResponseError = (setPracticalStudentsResponse400 | setPracticalStudentsResponse401 | setPracticalStudentsResponse403) & {
   headers: Headers;
 };
 
@@ -920,7 +911,7 @@ export const getSetPracticalStudentsUrl = (practicalId: string,) => {
 }
 
 /**
- * Заменяет набор студентов, назначенных на выбранный практический материал.
+ * Заменяет набор студентов практики. Только для преподавателя-владельца; неизвестные / не привязанные id → 400.
  * @summary Назначение студентов на практику
  */
 export const setPracticalStudents = async (practicalId: string,
@@ -947,7 +938,7 @@ return educationFetch<setPracticalStudentsResponse>(getSetPracticalStudentsUrl(p
 
 export const getSetPracticalStudentsMutationKey = () => ['setPracticalStudents'] as const;
 
-export const getSetPracticalStudentsMutationOptions = <TError = HttpValidationProblemDetails | void,
+export const getSetPracticalStudentsMutationOptions = <TError = ProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPracticalStudents>>, TError,SetPracticalStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof setPracticalStudents>>, TError,SetPracticalStudentsMutationVariables, TContext> => {
 
@@ -976,13 +967,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SetPracticalStudentsMutationResult = NonNullable<Awaited<ReturnType<typeof setPracticalStudents>>>
     export type SetPracticalStudentsMutationBody = UpdatePracticalStudentsRequest
-    export type SetPracticalStudentsMutationError = HttpValidationProblemDetails | void
+    export type SetPracticalStudentsMutationError = ProblemDetails | void
     export type SetPracticalStudentsMutationVariables = {practicalId: string;data: UpdatePracticalStudentsRequest}
 
     /**
  * @summary Назначение студентов на практику
  */
-export const useSetPracticalStudents = <TError = HttpValidationProblemDetails | void,
+export const useSetPracticalStudents = <TError = ProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPracticalStudents>>, TError,SetPracticalStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setPracticalStudents>>,

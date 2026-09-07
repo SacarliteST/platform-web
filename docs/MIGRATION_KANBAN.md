@@ -200,7 +200,7 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | MOD-014 | SqlModule: приём пуша сессии + publisher (события в Kafka + оценка по HTTP) | P0 | Backlog | MOD-003, MOD-007 | Спека §S2–S6. `POST /module-integration/sessions` (upsert `ModuleSession`, `X-Service-Key`); `GET /module-integration/sessions/current` (по claim `session_id`); привязка `SubmitAttempt` к сессии (owner/task/status); таблица `pending_publish` + фоновый publisher: события → `scoodle.practice.events` (`eventId`), оценка → `POST {education}/module-sessions/{id}/complete` (`grade=100` по первой верной попытке), retry после сбоя/рестарта. Обратного attach нет; standalone-flow не меняется |
 | MOD-014a | SqlModule: собственная `Audience` без поломки standalone | P0 | Backlog | MOD-002b, MOD-014 | Спека §S7. Профиль `platform` принимает `aud=sql-module-api`; обязательный профиль `standalone` сохраняет прямой Identity-логин и контуры teacher/admin/student, не зависит от Education/Kafka. Переключение конфигом, один билд. Общий инстанс на оба audience — позже |
 | MOD-015 | Инфраструктура: единый reverse-proxy | P1 | Конфиг готов | MOD-011, MOD-013 | `SQLTren/gateway/` (untracked, как `Backend/compose.yaml`): `default.conf.template` + `compose.yaml` + `gateway.env` + README. Один origin `:8090` — `/` → platform-web, `/modules/sql/` → sql-module-web, `/module-api/sql/` → SqlModule.Host (префикс срезается), `/api/v1/` → Education. Заголовки: `Referrer-Policy: no-referrer`, `CSP … frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`. IdentityService за шлюз не заводится (вход остаётся кросс-origin). `nginx -t` проходит. Маршруты `/` и `/api/v1/` проверяемы; `/modules/sql/` + `/module-api/sql/` — вживую не проверены (ждут `MOD-013`/`MOD-014a`), полная проверка в `MOD-016` |
-| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | ✅ API-путь пройден (`18/18`) | MOD-011…MOD-015 | Прогон 3, 2026-09-07: **весь цифровой путь замкнут по API на чистых контейнерах, без ручных правок** — соседи закрыли `SMK-2/3/4/6` (штатный `Platform`-профиль + `SmokeDataSeeder` + согласованный ключ/URL). Реальный SQL-sandbox модуля. Найден и исправлен `SMK-12` (потеря события победной попытки). Осталось только `SMK-7` (браузерный путь через шлюз). См. ниже. |
+| MOD-016 | Сквозной smoke: студент проходит SQL-задание через модуль | P0 | ✅ **Пройден** (API `18/18` + браузер) | MOD-011…MOD-015 | Прогон 3 (2026-09-07): API-путь `18/18` на чистых контейнерах без ручных правок (соседи закрыли `SMK-2/3/4/6`). Прогон 4 (2026-09-07): **браузерный путь** (`SMK-7`) — студент в platform-web жмёт «Начать» → редирект в `/launch` модуля → `#access_token` в `sessionStorage` + `history.replaceState` (URL чист) → решение в реальном SQL-sandbox → `assign(returnUrl)` назад в platform-web → «Попытка засчитана, ОЦЕНКА 100» + протокол события (`SessionEventsFeed`). Прогонялся безшлюзово (`ModuleWebOrigin` `SMK-5`); nginx-шлюз собран и `nginx -t` проходит, но live через `:8090` не гонялся (осталось как отдельная проверка). |
 
 ### MOD-016 — прогон smoke 2026-09-06 (API-уровень)
 
@@ -246,7 +246,7 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | SMK-11 | ~~P2~~ **исправлено** `67f05cf` | Education (моя зона) | `POST /courses` с `date` без таймзоны → 500 `Cannot write DateTimeOffset with Offset=03:00:00`. `Course.ctor` теперь нормализует `Date` к UTC. Проверено: курс с `"2026-09-06"` создаётся. | — |
 | SMK-2/3/4/6 | ~~P0/P1~~ **закрыто соседями** (SqlModule `26040274`…`e8633f6`) | SqlModule | Штатный launch-профиль `Platform` (`SeedSmokeData=true`, `Enabled=true`, `aud=sql-module-api`, реальный sandbox); `appsettings.Platform.json` → `ServiceKey=dev-sql-module-service-key-change-me`, `EducationBaseUrl=http://localhost:5135`; `SmokeDataSeeder` создаёт `Published`-задание `80000000-…-002` + таблицу `users(id=1)` + эталон; `docs/PLATFORM_SMOKE_RUNBOOK.md`. **Проверено прогоном 3** — `dotnet run --launch-profile Platform` без правок. | — |
 | SMK-12 | ~~P0~~ **исправлено** `cdbde9b` | Education (моя зона) | `PracticeEventHandler` отбрасывал события неактивной сессии (`session.Status != Active → return`). Kafka асинхронна: `GRADE` из outbox модуля приходит на `/complete` за ~130 мс до `EVENT` в Kafka → к моменту обработки события сессия уже `COMPLETED` → событие **победной** попытки терялось (в прогоне 3: сообщение в топике есть, `PracticalTaskEvents` пуст). Убрал проверку статуса — журнал append-only, границы = `sessionKey` + дедуп по `eventId`. Тесты: `TerminalSession_Ignored` → `CompletedSession_ValidKey_EventStored` + `ExpiredSession_…`; `PracticeEventHandlerTests` 6/6. **Проверено:** прогон 3 → `events=1`. | — |
-| SMK-7 | P1 | инфра (моя зона) | Шлюз `MOD-015` не поднимался; `/modules/sql/*` и `/module-api/sql/*` вживую не проверены; `sql-module-web` для шлюза нужна с `base=/modules/sql/`. | Поднять `SQLTren/gateway/`, `sql-module-web --base=/modules/sql/`, прогнать браузерный путь. |
+| SMK-7 | ~~P1~~ **браузерный путь пройден** (2026-09-07) | инфра (моя зона) | Прогон 4: реальный клик в браузере, безшлюзово (platform-web `:5173`, sql-module-web `:5174`, `ModuleIntegration:ModuleWebOrigin` = `SMK-5`). «Начать» → `assign(launchUrl)` → `LaunchPage` модуля: `#access_token` из фрагмента → `sessionStorage` (`sql-module-handoff-token`) + `history.replaceState` (URL стал `/student/tasks/{taskId}` без токена) → `GET /module-integration/sessions/current` → решение `SELECT id FROM users ORDER BY id` в реальном sandbox → `assign(returnUrl)` назад в platform-web (`?session=`) → `ReturnStatus`: «Попытка засчитана, ОЦЕНКА 100» + `SessionEventsFeed` с `sql_submit`. Teacher `GET .../module-sessions` (MOD-012b) видит сессию `COMPLETED grade=100`. Заодно проверена вкладка «Студенты» (`TEA-004`) — назначение на курс из UI (204). | Остаётся один прогон через nginx-шлюз `:8090` (конфиг готов, `nginx -t` проходит) — чтобы проверить `/modules/sql/*` + `base=/modules/sql/`. Не блокирует. |
 
 **Покрыто после фикса SMK-8 (прогон 2):** студент отправляет решение в SqlModule
 обменянным токеном (`POST /api/v1/attempts`) → `201`; на верном ответе модуль
@@ -284,8 +284,38 @@ bind → назначение студента → гейт → старт (**pu
 пуш C1 с identity-id, **решение в реальном SQL-тренажёре**, событие в Kafka от
 модуля → журнал Education, приём оценки C3 от модуля, best-of-N, гейт попыток,
 `abandon`, ленты MOD-012a/b) — **замкнут и проверен на API, воспроизводимо, без
-ручных правок**. Осталось только `SMK-7` (моё, шлюз) — браузерный `/launch` +
-возврат по `returnUrl`.
+ручных правок**.
+
+### MOD-016 — прогон 4, 2026-09-07 (браузерный путь, `SMK-7`)
+
+Безшлюзово: platform-web `:5173`, sql-module-web `:5174` (`base=/`), Education
+`:5135` (`ModuleWebOrigin=:5174`, `SMK-5`), SqlModule `:5202` (`--launch-profile
+Platform`), Identity `:5101`. Реальный клик в браузере как студент:
+
+1. Практика platform-web → «Начать» → `window.location.assign(launchUrl)`.
+2. `http://localhost:5174/launch?session=…#access_token=…` → `LaunchPage` модуля:
+   фрагмент прочитан, токен в `sessionStorage` (`sql-module-handoff-token`),
+   `history.replaceState` → URL `= /student/tasks/{taskId}` **без токена и без
+   фрагмента** (проверено `location.href`).
+3. `GET /module-integration/sessions/current` (обменянным токеном) → страница
+   задания. Решение `SELECT id FROM users ORDER BY id` в **реальном** Docker-
+   sandbox → «Верно».
+4. `window.location.assign(returnUrl)` → назад в platform-web на страницу
+   практики с `?session=…`.
+5. `ReturnStatus`: **«Попытка засчитана, ОЦЕНКА: 100»** + `SessionEventsFeed`
+   показывает `sql_submit` (`{isCorrect:true, rowCount:1, submittedSql:…}`).
+   Гейт: «Попытка 2 из 3 · ЛУЧШАЯ ОЦЕНКА 100».
+6. Преподаватель: `GET /practicals/{id}/module-sessions` (MOD-012b) →
+   `COMPLETED grade=100 studentName="Student Test"`.
+
+Заодно (браузером) проверена вкладка **«Студенты»** (`TEA-004`) на странице
+курса: чекбокс студента → «Сохранить» → 204 → «Список студентов сохранён»,
+`isAssigned=true` персистится.
+
+**Не покрыто:** один прогон через nginx-шлюз `:8090` (`SQLTren/gateway/`) —
+`/` / `/api/v1/` / `/modules/sql/` / `/module-api/sql/` за общим origin,
+`sql-module-web` собрана с `base=/modules/sql/`. Конфиг готов, `nginx -t`
+проходит; не блокирует.
 
 ### Бэкенд-блокеры `Education` (владелец: backend) — **готово**
 

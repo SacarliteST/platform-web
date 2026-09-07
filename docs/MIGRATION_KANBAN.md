@@ -192,7 +192,7 @@ OpenAPI ре-экспортирован, Orval перегенерирован (�
 | MOD-012a | Education: read-эндпоинт ленты событий | P1 | Done | MOD-008 | ✅ Коммит `64c2d39`. `GET /api/v1/practicals/{practicalId}/module-sessions/{sessionId}/events` (`AuthenticatedEducationUser`) → `[{ eventId, kind, occurredAt, payload }]`. Доступ: владелец сессии ИЛИ преподаватель курса практики; чужая/несуществующая → `404`. Тест: owner+teacher видят, чужая сессия 404 |
 | MOD-012b | Education: список попыток модуля по практике (преподаватель) | P1 | Done | MOD-012a | ✅ Коммит `3d7b688`. `GET /api/v1/practicals/{practicalId}/module-sessions` (`TeacherOnly`) → `[{ sessionId, userId, studentName, tryNumber, status, endReason, grade, startedAt, endedAt }]`, новые первыми. Доступ: преподаватель — владелец курса практики, иначе `404`. Нужно для ленты MOD-012 у преподавателя. `ModuleSessionsApiTests` +1 (14/14). OpenAPI/Orval — коммит `465af1d` |
 | MOD-009 | platform-web: реестр модулей (экран администратора) | P1 | Done | MOD-004 | ✅ Коммит `540f579`. `AdminModulesPage` (`/admin/modules`, вкладка «Модули»): CRUD `PracticalModule`, slug read-only при редактировании, `isEnabled` Switch только в edit, клиентская валидация `configuration` JSON, БЕЗ поля serviceKey, 409/404/422 через `getEducationProblemMessage`, удаление через `ConfirmModal` |
-| MOD-010 | platform-web: привязка модуля к практике (преподаватель) | P0 | Done | MOD-006, MOD-006b | ✅ Коммит `0f6e19b`. `TeacherExternalPractical` (`features/module-practice`): показ текущей привязки / форма привязки (`Select` модуль → `Select` задание из каталога, попытки, лимит времени + «Без лимита»). `useGetPracticalDetail` ветвит `TeacherPracticalPage`. `204` → refetch, `409` → «по практике есть работа студентов» (каст, т.к. 409 ещё не в сгенерированном union), `404` → «модуль не найден» |
+| MOD-010 | platform-web: привязка модуля к практике (преподаватель) | P0 | Done | MOD-006, MOD-006b | ✅ Коммиты `0f6e19b` + `ad7c3aa`/(platform-web hook swap). `TeacherExternalPractical` (`features/module-practice`): показ текущей привязки / форма `BindModal` (`Select` модуль → `Select` задание из каталога, попытки, лимит времени + «Без лимита»). `useGetPracticalDetail` ветвит `TeacherPracticalPage`. `204` → refetch, `409` → «по практике есть работа студентов», `404` → «модуль не найден». **`SMK-13` (найдено прокликиванием формами, исправлено):** `BindModal` дёргал `GET /admin/practical-modules` (`AdminOnly`) → у препода `403` → пустой `Select` модулей. Новый эндпоинт `GET /api/v1/practical-modules` (`TeacherOnly`, только `isEnabled`); `BindModal` → `useGetEnabledPracticalModules`. **Проверено формами (прогон 5):** привязка через `BindModal` до `204`, каталог заданий подтянулся. |
 | MOD-011 | platform-web: запуск внешней практики + гейт попыток + возврат (студент) | P0 | Done | MOD-007 | ✅ Коммит `76de53e`. `StudentExternalPractical`: гейт `GET .../current?taskId=` → «Начать»/«Продолжить»/«Прервать попытку» (`ConfirmModal`), `POST .../module-sessions` → `200` `window.location=launchUrl` / `409` / `502`. Возврат `?session=` → `ReturnStatus`: поллинг ~2с, `slow` после 40с + «Обновить», `COMPLETED` → оценка, `EXPIRED` → текст по `endReason` |
 | MOD-012 | platform-web: просмотр протокола модульной сессии (события) | P1 | Done | MOD-008, MOD-012a, MOD-012b | ✅ Коммит `aa918bb`. `SessionEventsFeed` — общий таймлайн (`kind` + время + `payload` в `Spoiler`), 404 скрыт. Студент: под гейтом (последняя сессия) и под статусом возврата (завершённая/прерванная). Преподаватель: `TeacherSessionProtocols` — таблица попыток (студент/№/статус/оценка/начата, `useListPracticalModuleSessions`) → выбор строки открывает ленту. Костыли убраны в `465af1d` |
 | MOD-013 | sql-module-web: маршрут `/launch` + `TokenProvider: handoff` | P0 | Backlog | MOD-007, MOD-014 | Спека [`2026-09-05-sql-module-integration.md`](./backend-requirements/2026-09-05-sql-module-integration.md) §F1–F4. Читает `?session=` из query и `#access_token` из фрагмента (→ `sessionStorage` через новый `handoff-token-provider`, `history.replaceState`); `GET /module-integration/sessions/current` → навигация по каноническому `taskId`; контекст запуска в `sessionStorage`; по верному submit в контексте запуска → `window.location.assign(returnUrl)`. Ни `launch_token`, ни attach |
@@ -311,6 +311,32 @@ Platform`), Identity `:5101`. Реальный клик в браузере ка
 Заодно (браузером) проверена вкладка **«Студенты»** (`TEA-004`) на странице
 курса: чекбокс студента → «Сохранить» → 204 → «Список студентов сохранён»,
 `isAssigned=true` персистится.
+
+### MOD-016 — прогон 5, 2026-09-07 (весь teacher-flow формами, чистая БД)
+
+`down -v && up -d`. **Ничего через API — все шаги кликами:**
+
+1. **Админ** (`AdminProfilesPage`): «Связать пользователя» → teacher + student
+   (Identity User ID вводится вручную — пикера нет, это отдельный UX-долг).
+2. **Админ** (`AdminModulesPage`, `MOD-009`): «Зарегистрировать модуль» — slug
+   `sql`, тип `SQL_SIMULATOR`, `basePath`, `identityAudience`, `configuration`
+   JSON (`catalog`/`sessionsEndpoint`). Клиентская валидация «невалидный JSON»
+   отработала на кривой вставке.
+3. **Препод** (`TeacherCoursesPage`): «Создать курс».
+4. **Препод** (`TeacherCoursePage`): «Создать модуль».
+5. **Препод** (`TeacherModulePage` → вкладка «Практики»): «Создать практику».
+6. **Препод** (`TeacherPracticalPage` → `BindModal`, `MOD-010`): «Привязать
+   внешний модуль» → `Select` модуль (после `SMK-13` показывает «SQL тренажёр
+   (sql)») → `Select` задание (каталог подтянулся: «Smoke: выбрать
+   идентификаторы…») → попыток 3 → «Привязать» → `204`, карточка привязки
+   отрисовалась.
+7. **Препод**: вкладка/секция **«Студенты»** (`TEA-004`/`004a`) на курсе и на
+   практике — чекбокс студента → «Сохранить» → `204`.
+8. **Студент**: открыл практику → «Начать» → редирект в `/launch` модуля →
+   `#access_token` в `sessionStorage`, URL чист → страница задания модуля.
+
+Все экраны (`MOD-009/010`, `TEA-002/003/009/004/004a`) отработали формами
+на чистой БД без обходных API-вызовов.
 
 **Не покрыто:** один прогон через nginx-шлюз `:8090` (`SQLTren/gateway/`) —
 `/` / `/api/v1/` / `/modules/sql/` / `/module-api/sql/` за общим origin,

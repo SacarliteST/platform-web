@@ -510,7 +510,132 @@ export const useDeletePracticalModule = <TError = void,
       > => {
       return useMutation(getDeletePracticalModuleMutationOptions(options), queryClient);
     }
-    export type getPracticalModuleTasksResponse200 = {
+    export type getEnabledPracticalModulesResponse200 = {
+  data: PracticalModuleResponse[]
+  status: 200
+}
+
+export type getEnabledPracticalModulesResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getEnabledPracticalModulesResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getEnabledPracticalModulesResponseSuccess = (getEnabledPracticalModulesResponse200) & {
+  headers: Headers;
+};
+export type getEnabledPracticalModulesResponseError = (getEnabledPracticalModulesResponse401 | getEnabledPracticalModulesResponse403) & {
+  headers: Headers;
+};
+
+export type getEnabledPracticalModulesResponse = (getEnabledPracticalModulesResponseSuccess | getEnabledPracticalModulesResponseError)
+
+export const getGetEnabledPracticalModulesUrl = () => {
+
+
+
+
+  return `/api/v1/practical-modules`
+}
+
+/**
+ * Только включённые модули. Для пикера привязки внешнего модуля к практике.
+ * @summary Список включённых модулей (для привязки преподавателем)
+ */
+export const getEnabledPracticalModules = async ( options?: Parameters<typeof educationFetch>[1]): Promise<getEnabledPracticalModulesResponse> => {
+
+  return educationFetch<getEnabledPracticalModulesResponse>(getGetEnabledPracticalModulesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEnabledPracticalModulesQueryKey = () => {
+    return [
+    `/api/v1/practical-modules`
+    ] as const;
+    }
+
+
+export const getGetEnabledPracticalModulesQueryOptions = <TData = Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEnabledPracticalModulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEnabledPracticalModules>>> = ({ signal }) => getEnabledPracticalModules({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEnabledPracticalModulesQueryResult = NonNullable<Awaited<ReturnType<typeof getEnabledPracticalModules>>>
+export type GetEnabledPracticalModulesQueryError = void
+
+
+export function useGetEnabledPracticalModules<TData = Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEnabledPracticalModules>>,
+          TError,
+          Awaited<ReturnType<typeof getEnabledPracticalModules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEnabledPracticalModules<TData = Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEnabledPracticalModules>>,
+          TError,
+          Awaited<ReturnType<typeof getEnabledPracticalModules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEnabledPracticalModules<TData = Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Список включённых модулей (для привязки преподавателем)
+ */
+
+export function useGetEnabledPracticalModules<TData = Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEnabledPracticalModules>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEnabledPracticalModulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getPracticalModuleTasksResponse200 = {
   data: ModuleTaskResponse[]
   status: 200
 }

@@ -12,8 +12,8 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useBindPracticalModule } from '../../../api/education/practicals/practicals';
 import {
+  useGetEnabledPracticalModules,
   useGetPracticalModuleTasks,
-  useGetPracticalModules,
 } from '../../../api/education/practical-modules/practical-modules';
 import type { PracticalDetailResponse } from '../../../api/education/model';
 import { getEducationProblemMessage, toNumber } from '../../../shared/lib';
@@ -90,7 +90,7 @@ function BindModal({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const modulesQuery = useGetPracticalModules({ query: { enabled: opened, retry: false } });
+  const modulesQuery = useGetEnabledPracticalModules({ query: { enabled: opened, retry: false } });
   const bindMutation = useBindPracticalModule();
 
   const [moduleId, setModuleId] = useState<string | null>(null);

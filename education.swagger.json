@@ -625,6 +625,37 @@
         }
       }
     },
+    "/api/v1/practical-modules": {
+      "get": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Список включённых модулей (для привязки преподавателем)",
+        "description": "Только включённые модули. Для пикера привязки внешнего модуля к практике.",
+        "operationId": "GetEnabledPracticalModules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PracticalModuleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/v1/practical-modules/{practicalModuleId}/tasks": {
       "get": {
         "tags": [

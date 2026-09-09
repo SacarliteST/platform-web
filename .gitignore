@@ -10,3 +10,16 @@ node_modules/.tmp/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local documentation and agent artifacts
+*.[mM][dD]
+/docs/
+/[Pp]romts/
+/[Pp]rompts/
+.codex/
+.agents/
+.claude/
+.cursor/
+.aider*
+*.log
+/tmp/

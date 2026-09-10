@@ -24,7 +24,7 @@ import {
   useUpdateTheoryText,
   useUpdateTheoryTitle,
 } from '../../api/education/theories/theories';
-import { RichTextField } from '../../features/rich-text';
+import { RichTextField } from '../../features/rich-text/RichTextField';
 import { downloadEducationFile } from '../../shared/http';
 import {
   AppCard,

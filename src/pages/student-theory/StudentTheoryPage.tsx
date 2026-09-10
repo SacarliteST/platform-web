@@ -5,7 +5,7 @@ import {
   useGetTheoryDocuments,
   useGetTheoryLinks,
 } from '../../api/education/theories/theories';
-import { RichTextViewer } from '../../features/rich-text';
+import { RichTextViewer } from '../../features/rich-text/RichTextViewer';
 import { downloadEducationFile } from '../../shared/http';
 import {
   AppCard,

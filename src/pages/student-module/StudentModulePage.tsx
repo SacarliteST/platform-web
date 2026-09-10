@@ -1,7 +1,7 @@
 import { Badge, Button, Group, Table, Tabs, Text } from '@mantine/core';
 import { Link, useParams } from 'react-router-dom';
-import { useGetStudentCourses, useGetCourseModules } from '../../api/education/courses/courses';
-import { useGetModuleTheories } from '../../api/education/modules/modules';
+import { useGetStudentCourses } from '../../api/education/courses/courses';
+import { useGetModule, useGetModuleTheories } from '../../api/education/modules/modules';
 import { useGetModulePracticals } from '../../api/education/practicals/practicals';
 import { useGetPracticalGrade } from '../../api/education/grades/grades';
 import { formatGrade, normalizePracticalGrade } from '../../entities';
@@ -17,8 +17,8 @@ export function StudentModulePage() {
   const { courseId = '', moduleId = '' } = useParams();
 
   const coursesQuery = useGetStudentCourses({ query: { retry: false } });
-  const modulesQuery = useGetCourseModules(courseId, {
-    query: { enabled: Boolean(courseId), retry: false },
+  const moduleQuery = useGetModule(moduleId, {
+    query: { enabled: Boolean(moduleId), retry: false },
   });
   const theoriesQuery = useGetModuleTheories(moduleId, {
     query: { enabled: Boolean(moduleId), retry: false },
@@ -31,10 +31,7 @@ export function StudentModulePage() {
     coursesQuery.data?.status === 200
       ? coursesQuery.data.data.find((item) => item.id === courseId)?.name
       : undefined;
-  const module =
-    modulesQuery.data?.status === 200
-      ? modulesQuery.data.data.find((item) => item.id === moduleId)
-      : undefined;
+  const module = moduleQuery.data?.status === 200 ? moduleQuery.data.data : undefined;
 
   const base = `/student/courses/${courseId}/modules/${moduleId}`;
 

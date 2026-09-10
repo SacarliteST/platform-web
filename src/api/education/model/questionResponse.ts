@@ -12,7 +12,6 @@ export interface QuestionResponse {
   id: string;
   text: string;
   type: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  weight: number | string;
+  weight: number;
   answer: string;
 }

@@ -31,6 +31,7 @@ import {
 } from '../../api/education/test-results/test-results';
 import {
   formatGrade,
+  formatProtocolAnswer,
   normalizePracticalGrade,
   normalizeTestStatus,
   questionKindFromTypeId,
@@ -468,7 +469,7 @@ function ProtocolsTab({ practicalId }: { practicalId: string }) {
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm" lineClamp={2}>
-                          {answer.userAnswer || '—'}
+                          {formatProtocolAnswer(answer.userAnswer) || '—'}
                         </Text>
                       </Table.Td>
                       <Table.Td>

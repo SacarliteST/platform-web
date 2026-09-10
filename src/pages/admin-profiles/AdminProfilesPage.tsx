@@ -4,6 +4,7 @@ import {
   Button,
   Group,
   Modal,
+  Select,
   Stack,
   Table,
   Text,
@@ -18,6 +19,7 @@ import {
   useGetAdminProfiles,
 } from '../../api/education/admin-profiles/admin-profiles';
 import type { CreateAdminProfileRequest } from '../../api/education/model';
+import { ProfileRole } from '../../api/education/model';
 import { getEducationProblemMessage } from '../../shared/lib';
 import { AdminContourTabs } from '../../features/admin-contour';
 import {
@@ -36,7 +38,14 @@ const emptyForm: CreateAdminProfileRequest = {
   firstName: '',
   lastName: '',
   middleName: '',
+  role: ProfileRole.Student,
 };
+
+const roleOptions = [
+  { value: ProfileRole.Student, label: 'Студент' },
+  { value: ProfileRole.Teacher, label: 'Преподаватель' },
+  { value: ProfileRole.Admin, label: 'Администратор' },
+];
 
 export function AdminProfilesPage() {
   const queryClient = useQueryClient();
@@ -231,6 +240,17 @@ export function AdminProfilesPage() {
               label="Отчество"
               value={form.middleName}
               onChange={(event) => setForm({ ...form, middleName: event.currentTarget.value })}
+            />
+            <Select
+              label="Роль"
+              description="Только профили с ролью «Студент» доступны для назначения на курсы и практики"
+              data={roleOptions}
+              value={form.role ?? ProfileRole.Student}
+              onChange={(value) =>
+                setForm({ ...form, role: (value as ProfileRole | null) ?? ProfileRole.Student })
+              }
+              allowDeselect={false}
+              withAsterisk
             />
             <FormActions
               submitLabel="Связать"

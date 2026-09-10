@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5135/"
+      "url": "http://localhost:5137/"
     }
   ],
   "paths": {
@@ -3726,6 +3726,10 @@
           "middleName": {
             "type": "string",
             "description": "Отчество пользователя."
+          },
+          "role": {
+            "description": "Роль профиля (по умолчанию — студент).",
+            "$ref": "#/components/schemas/ProfileRole"
           }
         },
         "description": "Запрос на создание локального учебного профиля и связи с identity-пользователем."
@@ -4051,7 +4055,7 @@
         "type": "string",
         "format": "binary"
       },
-      "JsonElement": { },
+      "JsonElement": {},
       "ModuleResponse": {
         "required": [
           "id",
@@ -4478,6 +4482,15 @@
             ]
           }
         }
+      },
+      "ProfileRole": {
+        "enum": [
+          "Student",
+          "Teacher",
+          "Admin"
+        ],
+        "description": "Роль, назначаемая учебному профилю при связывании с identity-пользователем.",
+        "default": "Student"
       },
       "QuestionResponse": {
         "required": [

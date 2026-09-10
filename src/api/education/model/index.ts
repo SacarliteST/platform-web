@@ -42,6 +42,7 @@ export * from './practicalModuleResponse';
 export * from './practicalQuestionsSetupResponse';
 export * from './practicalResponse';
 export * from './problemDetails';
+export * from './profileRole';
 export * from './questionResponse';
 export * from './selectableQuestionResponse';
 export * from './startModuleSessionRequest';

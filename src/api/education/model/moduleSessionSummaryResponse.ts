@@ -12,16 +12,12 @@ export interface ModuleSessionSummaryResponse {
   sessionId: string;
   userId: string;
   studentName: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  tryNumber: number | string;
+  tryNumber: number;
   status: string;
   /** @nullable */
   endReason: string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  grade: number | string | null;
+  /** @nullable */
+  grade: number | null;
   startedAt: string;
   /** @nullable */
   endedAt: string | null;

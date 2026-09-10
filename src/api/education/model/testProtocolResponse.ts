@@ -11,18 +11,10 @@ import type { TestProtocolAnswerResponse } from './testProtocolAnswerResponse';
  */
 export interface TestProtocolResponse {
   answers: TestProtocolAnswerResponse[];
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  tryNumber: number | string;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$
-     */
-  score: number | string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$
-     */
-  maxScore: number | string | null;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  grade: number | string;
+  tryNumber: number;
+  /** @nullable */
+  score: number | null;
+  /** @nullable */
+  maxScore: number | null;
+  grade: number;
 }

@@ -11,10 +11,8 @@
 export interface TestProtocolAnswerResponse {
   questionId: string;
   questionText: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  questionWeight: number | string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  questionScore: number | string;
+  questionWeight: number;
+  questionScore: number;
   userAnswer: string;
   isCorrect: boolean;
 }

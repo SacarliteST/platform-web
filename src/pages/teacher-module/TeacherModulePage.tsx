@@ -2,8 +2,7 @@ import { Badge, Button, Group, Modal, Select, Stack, Table, Tabs, Text } from '@
 import { useDisclosure } from '@mantine/hooks';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useGetCourseModules } from '../../api/education/courses/courses';
-import { useGetModuleTheories } from '../../api/education/modules/modules';
+import { useGetModule, useGetModuleTheories } from '../../api/education/modules/modules';
 import {
   useCreateTheory,
   useDeleteTheory,
@@ -47,13 +46,10 @@ function problemText(data: unknown, status: number, fallback: string): string {
 export function TeacherModulePage() {
   const { courseId = '', moduleId = '' } = useParams();
 
-  const modulesQuery = useGetCourseModules(courseId, {
-    query: { enabled: Boolean(courseId), retry: false },
+  const moduleQuery = useGetModule(moduleId, {
+    query: { enabled: Boolean(moduleId), retry: false },
   });
-  const module =
-    modulesQuery.data?.status === 200
-      ? modulesQuery.data.data.find((item) => item.id === moduleId)
-      : undefined;
+  const module = moduleQuery.data?.status === 200 ? moduleQuery.data.data : undefined;
 
   const theoriesQuery = useGetModuleTheories(moduleId, {
     query: { enabled: Boolean(moduleId), retry: false },

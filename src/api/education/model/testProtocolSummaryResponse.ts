@@ -11,18 +11,10 @@
 export interface TestProtocolSummaryResponse {
   id: string;
   userId: string;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$
-     */
-  score: number | string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$
-     */
-  maxScore: number | string | null;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  tryNumber: number | string;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  grade: number | string;
+  /** @nullable */
+  score: number | null;
+  /** @nullable */
+  maxScore: number | null;
+  tryNumber: number;
+  grade: number;
 }

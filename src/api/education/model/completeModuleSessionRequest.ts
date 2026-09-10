@@ -11,8 +11,7 @@ import type { JsonElement } from './jsonElement';
  */
 export interface CompleteModuleSessionRequest {
   sessionKey: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  grade: number | string;
+  grade: number;
   completionData: null | JsonElement;
   completedAt: string;
 }

@@ -31,6 +31,7 @@ export * from './httpValidationProblemDetails';
 export * from './httpValidationProblemDetailsErrors';
 export * from './iFormFile';
 export * from './jsonElement';
+export * from './moduleAuthoringLinkResponse';
 export * from './moduleResponse';
 export * from './moduleSessionEventResponse';
 export * from './moduleSessionResponse';

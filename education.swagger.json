@@ -4750,7 +4750,9 @@
           "questionWeight",
           "questionScore",
           "userAnswer",
-          "isCorrect"
+          "isCorrect",
+          "questionType",
+          "questionBody"
         ],
         "type": "object",
         "properties": {
@@ -4774,6 +4776,15 @@
           },
           "isCorrect": {
             "type": "boolean"
+          },
+          "questionType": {
+            "type": "string",
+            "description": "Идентификатор типа вопроса (как в `TestQuestionResponse.Type`).",
+            "format": "uuid"
+          },
+          "questionBody": {
+            "type": "string",
+            "description": "Варианты ответа / доп. данные вопроса — для расшифровки `UserAnswer`."
           }
         },
         "description": "Детализация ответа в протоколе попытки тестирования."

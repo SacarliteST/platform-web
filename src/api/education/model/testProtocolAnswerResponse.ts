@@ -15,4 +15,8 @@ export interface TestProtocolAnswerResponse {
   questionScore: number;
   userAnswer: string;
   isCorrect: boolean;
+  /** Идентификатор типа вопроса (как в `TestQuestionResponse.Type`). */
+  questionType: string;
+  /** Варианты ответа / доп. данные вопроса — для расшифровки `UserAnswer`. */
+  questionBody: string;
 }

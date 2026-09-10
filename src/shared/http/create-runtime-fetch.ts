@@ -1,10 +1,14 @@
 import { buildApiUrl } from './build-api-url';
+import { isAccessTokenActive } from '../../session/lib';
 import { useSessionStore } from '../../session/store';
 
 function handleUnauthorizedResponse() {
-  const { status, clearSession } = useSessionStore.getState();
+  const { status, accessToken, clearSession } = useSessionStore.getState();
 
-  if (status === 'authenticated') {
+  // TD-009: сбрасываем сессию только если основной токен действительно истёк/невалиден.
+  // Единичный 401 от прикладного эндпоинта (misconfig сервиса, запрет доступа) —
+  // обычная ошибка запроса, валидную сессию не трогаем.
+  if (status === 'authenticated' && !isAccessTokenActive(accessToken)) {
     clearSession();
   }
 }

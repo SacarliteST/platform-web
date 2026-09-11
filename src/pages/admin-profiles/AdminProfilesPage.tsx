@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useCreateAdminProfile,
   useDeactivateAdminProfile,
@@ -20,6 +20,8 @@ import {
 } from '../../api/education/admin-profiles/admin-profiles';
 import type { CreateAdminProfileRequest } from '../../api/education/model';
 import { ProfileRole } from '../../api/education/model';
+import { useGetUserDetails } from '../../api/identity/users/users';
+import { UserRole } from '../../api/identity/model';
 import { getEducationProblemMessage } from '../../shared/lib';
 import { AdminContourTabs } from '../../features/admin-contour';
 import {
@@ -47,6 +49,18 @@ const roleOptions = [
   { value: ProfileRole.Admin, label: 'Администратор' },
 ];
 
+const roleLabel = (role: ProfileRole) =>
+  roleOptions.find((option) => option.value === role)?.label ?? role;
+
+const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Старшая роль identity-пользователя → роль профиля Education. Admin и Teacher — приоритетнее Student. */
+function pickProfileRole(identityRoles: string[]): ProfileRole {
+  if (identityRoles.includes(UserRole.Admin)) return ProfileRole.Admin;
+  if (identityRoles.includes(UserRole.Teacher)) return ProfileRole.Teacher;
+  return ProfileRole.Student;
+}
+
 export function AdminProfilesPage() {
   const queryClient = useQueryClient();
   const profilesQuery = useGetAdminProfiles({ query: { retry: false } });
@@ -57,6 +71,25 @@ export function AdminProfilesPage() {
   const [form, setForm] = useState<CreateAdminProfileRequest>(emptyForm);
   const [createError, setCreateError] = useState<string | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<string | null>(null);
+
+  // Роль берём из IdentityService по Identity User ID — чтобы нельзя было случайно
+  // связать профиль с ролью, не совпадающей с ролью в токене этого пользователя.
+  const trimmedIdentityId = form.identityUserId.trim();
+  const identityIdIsGuid = GUID_RE.test(trimmedIdentityId);
+  const identityLookup = useGetUserDetails(trimmedIdentityId, {
+    query: { enabled: createOpened && identityIdIsGuid, retry: false },
+  });
+  const identityUser =
+    identityIdIsGuid && identityLookup.data?.status === 200 ? identityLookup.data.data : null;
+  const identityLookupFailed =
+    identityIdIsGuid && !identityLookup.isFetching && identityLookup.data?.status !== 200;
+  const detectedRole = identityUser ? pickProfileRole(identityUser.roles) : null;
+
+  useEffect(() => {
+    if (detectedRole) {
+      setForm((previous) => (previous.role === detectedRole ? previous : { ...previous, role: detectedRole }));
+    }
+  }, [detectedRole]);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/profiles'] });
@@ -211,9 +244,10 @@ export function AdminProfilesPage() {
             ) : null}
             <TextInput
               label="Identity User ID"
-              description="GUID пользователя из IdentityService"
+              description="GUID пользователя из IdentityService — по нему определяем роль автоматически"
               value={form.identityUserId}
               onChange={(event) => setForm({ ...form, identityUserId: event.currentTarget.value })}
+              error={identityLookupFailed ? 'Пользователь с таким ID не найден в IdentityService' : undefined}
               withAsterisk
             />
             <TextInput
@@ -241,20 +275,42 @@ export function AdminProfilesPage() {
               value={form.middleName}
               onChange={(event) => setForm({ ...form, middleName: event.currentTarget.value })}
             />
-            <Select
-              label="Роль"
-              description="Только профили с ролью «Студент» доступны для назначения на курсы и практики"
-              data={roleOptions}
-              value={form.role ?? ProfileRole.Student}
-              onChange={(value) =>
-                setForm({ ...form, role: (value as ProfileRole | null) ?? ProfileRole.Student })
-              }
-              allowDeselect={false}
-              withAsterisk
-            />
+            {identityIdIsGuid && identityLookup.isFetching ? (
+              <Text size="sm" c="dimmed">
+                Определяем роль по IdentityService…
+              </Text>
+            ) : detectedRole ? (
+              <Stack gap={4}>
+                <Text size="sm" fw={500}>
+                  Роль
+                </Text>
+                <Group gap="xs">
+                  <Badge radius="sm">{roleLabel(detectedRole)}</Badge>
+                  <Text size="xs" c="dimmed">
+                    определена автоматически по роли в IdentityService, вручную не меняется
+                  </Text>
+                </Group>
+              </Stack>
+            ) : (
+              <Select
+                label="Роль"
+                description={
+                  identityLookupFailed
+                    ? 'Не удалось определить автоматически — укажите вручную. Только профили с ролью «Студент» доступны для назначения на курсы и практики'
+                    : 'Укажите Identity User ID, чтобы роль определилась автоматически. Только профили с ролью «Студент» доступны для назначения на курсы и практики'
+                }
+                data={roleOptions}
+                value={form.role ?? ProfileRole.Student}
+                onChange={(value) =>
+                  setForm({ ...form, role: (value as ProfileRole | null) ?? ProfileRole.Student })
+                }
+                allowDeselect={false}
+                withAsterisk
+              />
+            )}
             <FormActions
               submitLabel="Связать"
-              loading={createMutation.isPending}
+              loading={createMutation.isPending || (identityIdIsGuid && identityLookup.isFetching)}
               onCancel={createModal.close}
             />
           </Stack>

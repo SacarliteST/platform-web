@@ -1,5 +1,5 @@
 import { Button, SimpleGrid, Text } from '@mantine/core';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useSessionStore, type UserRole } from '../../session';
 import { AppCard, EmptyState, Page, PageHeader } from '../../shared/ui';
 
@@ -43,25 +43,8 @@ export function HomePage() {
   );
 
   if (status !== 'authenticated') {
-    return (
-      <Page>
-        <PageHeader
-          title="Scoodle"
-          description="Войдите в систему, чтобы открыть доступные вашей роли контуры."
-        />
-        <AppCard>
-          <EmptyState
-            title="Нужно войти в систему"
-            description="После входа приложение покажет контуры, доступные вашей роли."
-            actions={
-              <Button component={Link} to="/login">
-                Войти
-              </Button>
-            }
-          />
-        </AppCard>
-      </Page>
-    );
+    // Неавторизованный визит на / — сразу форма входа, без промежуточной карточки.
+    return <Navigate to="/login" replace />;
   }
 
   return (

@@ -1,80 +1,115 @@
 import { Badge, Button, Code, Group, Stack, Table, Text, TextInput, Title } from '@mantine/core';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRuntimeConfig } from '../../app/providers/runtime-config-store';
 import { buildApiUrl } from '../../shared/http';
 import { AdminContourTabs } from '../../features/admin-contour';
 import { AppCard, Page, PageBreadcrumbs, PageHeader } from '../../shared/ui';
+import {
+  getPracticalModuleTasks,
+  useGetPracticalModules,
+} from '../../api/education/practical-modules/practical-modules';
 
-type CheckState = 'idle' | 'checking' | 'ok' | 'fail';
+type CheckState = 'idle' | 'checking' | 'ok' | 'fail' | 'forbidden';
 
-type ServiceCheck = {
-  id: string;
-  name: string;
-  probe: string;
-  state: CheckState;
-  latencyMs: number | null;
-  detail: string;
-};
+type CheckResult = { state: CheckState; latencyMs: number | null; detail: string };
 
-async function probeService(url: string): Promise<{ ok: boolean; latencyMs: number; detail: string }> {
+// Статические проверки (URL, доступный прямо из браузера) и проверки внешних
+// модулей (через прокси-каталог Education — сам модуль браузеру не виден).
+type CheckDef =
+  | { id: string; name: string; kind: 'url'; probe: string }
+  | { id: string; name: string; kind: 'module'; moduleId: string; probe: string };
+
+const idleResult: CheckResult = { state: 'idle', latencyMs: null, detail: '—' };
+
+async function probeUrl(url: string): Promise<CheckResult> {
   const startedAt = performance.now();
   try {
     const response = await fetch(url, { cache: 'no-store' });
     const latencyMs = Math.round(performance.now() - startedAt);
     return {
-      ok: response.ok || response.status === 401,
+      state: response.ok || response.status === 401 ? 'ok' : 'fail',
       latencyMs,
       detail: `HTTP ${response.status}`,
     };
   } catch {
-    return { ok: false, latencyMs: Math.round(performance.now() - startedAt), detail: 'нет ответа' };
+    return { state: 'fail', latencyMs: Math.round(performance.now() - startedAt), detail: 'нет ответа' };
   }
+}
+
+// Модуль недоступен браузеру напрямую (внутренний Docker-адрес в configuration),
+// поэтому проверяем через тот же прокси каталога, которым реально пользуется
+// привязка задания: GET /practical-modules/{id}/tasks (TeacherOnly на Education).
+async function probeModule(moduleId: string): Promise<CheckResult> {
+  const startedAt = performance.now();
+  const response = await getPracticalModuleTasks(moduleId).catch(() => null);
+  const latencyMs = Math.round(performance.now() - startedAt);
+
+  if (!response) {
+    return { state: 'fail', latencyMs, detail: 'нет ответа' };
+  }
+  if (response.status === 200) {
+    return { state: 'ok', latencyMs, detail: `каталог: ${response.data.length} заданий` };
+  }
+  if (response.status === 403) {
+    return { state: 'forbidden', latencyMs, detail: 'нет прав — нужна роль «Преподаватель»' };
+  }
+  if (response.status === 502) {
+    return { state: 'fail', latencyMs, detail: 'модуль не отвечает (502)' };
+  }
+  return { state: 'fail', latencyMs, detail: `HTTP ${response.status}` };
 }
 
 export function AdminSettingsPage() {
   const config = useRuntimeConfig();
-  const [checks, setChecks] = useState<ServiceCheck[]>(() => [
-    {
-      id: 'education',
-      name: 'Education API',
-      probe: buildApiUrl(config.educationApiUrl, '/health'),
-      state: 'idle',
-      latencyMs: null,
-      detail: '—',
-    },
-    {
-      id: 'identity',
-      name: 'IdentityService',
-      probe: config.identityApiUrl
-        ? buildApiUrl(config.identityApiUrl, '/.well-known/openid-configuration')
-        : '',
-      state: 'idle',
-      latencyMs: null,
-      detail: config.identityApiUrl ? '—' : 'не настроен',
-    },
-  ]);
+  const modulesQuery = useGetPracticalModules({ query: { retry: false } });
+  const modules = modulesQuery.data?.status === 200 ? modulesQuery.data.data : [];
+
+  const checkDefs = useMemo<CheckDef[]>(
+    () => [
+      { id: 'education', name: 'Education API', kind: 'url', probe: buildApiUrl(config.educationApiUrl, '/health') },
+      {
+        id: 'identity',
+        name: 'IdentityService',
+        kind: 'url',
+        probe: config.identityApiUrl
+          ? buildApiUrl(config.identityApiUrl, '/.well-known/openid-configuration')
+          : '',
+      },
+      ...modules.map(
+        (module): CheckDef => ({
+          id: `module:${module.id}`,
+          name: `Модуль: ${module.name} (${module.slug})`,
+          kind: 'module',
+          moduleId: module.id,
+          probe: `GET /practical-modules/${module.id}/tasks`,
+        }),
+      ),
+    ],
+    [config.educationApiUrl, config.identityApiUrl, modules],
+  );
+
+  const [results, setResults] = useState<Record<string, CheckResult>>({});
   const [running, setRunning] = useState(false);
 
   const runChecks = async () => {
     setRunning(true);
-    setChecks((current) => current.map((check) => ({ ...check, state: 'checking' as CheckState })));
+    setResults((current) =>
+      Object.fromEntries(checkDefs.map((check) => [check.id, { ...(current[check.id] ?? idleResult), state: 'checking' as CheckState }])),
+    );
 
-    const results = await Promise.all(
-      checks.map(async (check) => {
-        if (!check.probe) {
-          return { ...check, state: 'fail' as CheckState, detail: 'адрес не настроен' };
+    const entries = await Promise.all(
+      checkDefs.map(async (check): Promise<[string, CheckResult]> => {
+        if (check.kind === 'url') {
+          if (!check.probe) {
+            return [check.id, { state: 'fail', latencyMs: null, detail: 'адрес не настроен' }];
+          }
+          return [check.id, await probeUrl(check.probe)];
         }
-        const result = await probeService(check.probe);
-        return {
-          ...check,
-          state: (result.ok ? 'ok' : 'fail') as CheckState,
-          latencyMs: result.latencyMs,
-          detail: result.detail,
-        };
+        return [check.id, await probeModule(check.moduleId)];
       }),
     );
 
-    setChecks(results);
+    setResults(Object.fromEntries(entries));
     setRunning(false);
   };
 
@@ -144,49 +179,56 @@ export function AdminSettingsPage() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {checks.map((check) => (
-              <Table.Tr key={check.id}>
-                <Table.Td>
-                  <Text fw={600} size="sm">
-                    {check.name}
-                  </Text>
-                  <Code>{check.probe || '—'}</Code>
-                </Table.Td>
-                <Table.Td>
-                  <Badge
-                    color={
-                      check.state === 'ok'
-                        ? 'green'
-                        : check.state === 'fail'
-                          ? 'red'
-                          : check.state === 'checking'
-                            ? 'yellow'
-                            : 'gray'
-                    }
-                    radius="sm"
-                    variant="light"
-                  >
-                    {check.state === 'ok'
-                      ? 'Доступен'
-                      : check.state === 'fail'
-                        ? 'Недоступен'
-                        : check.state === 'checking'
-                          ? 'Проверяется'
-                          : 'Не проверялся'}
-                  </Badge>
-                </Table.Td>
-                <Table.Td>
-                  <Text c="dimmed" size="sm">
-                    {check.latencyMs === null ? '—' : `${check.latencyMs} мс`}
-                  </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text c="dimmed" size="sm">
-                    {check.detail}
-                  </Text>
-                </Table.Td>
-              </Table.Tr>
-            ))}
+            {checkDefs.map((check) => {
+              const result = results[check.id] ?? idleResult;
+              return (
+                <Table.Tr key={check.id}>
+                  <Table.Td>
+                    <Text fw={600} size="sm">
+                      {check.name}
+                    </Text>
+                    <Code>{check.probe || '—'}</Code>
+                  </Table.Td>
+                  <Table.Td>
+                    <Badge
+                      color={
+                        result.state === 'ok'
+                          ? 'green'
+                          : result.state === 'fail'
+                            ? 'red'
+                            : result.state === 'forbidden'
+                              ? 'orange'
+                              : result.state === 'checking'
+                                ? 'yellow'
+                                : 'gray'
+                      }
+                      radius="sm"
+                      variant="light"
+                    >
+                      {result.state === 'ok'
+                        ? 'Доступен'
+                        : result.state === 'fail'
+                          ? 'Недоступен'
+                          : result.state === 'forbidden'
+                            ? 'Нет доступа'
+                            : result.state === 'checking'
+                              ? 'Проверяется'
+                              : 'Не проверялся'}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text c="dimmed" size="sm">
+                      {result.latencyMs === null ? '—' : `${result.latencyMs} мс`}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text c="dimmed" size="sm">
+                      {result.detail}
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              );
+            })}
           </Table.Tbody>
         </Table>
       </AppCard>

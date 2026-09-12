@@ -40,6 +40,9 @@ const TeacherTheoryPage = lazy(() =>
 const TeacherPracticalPage = lazy(() =>
   import('../../pages/teacher-practical').then((m) => ({ default: m.TeacherPracticalPage })),
 );
+const TeacherModulesPage = lazy(() =>
+  import('../../pages/teacher-modules').then((m) => ({ default: m.TeacherModulesPage })),
+);
 
 const StudentCoursesPage = lazy(() =>
   import('../../pages/student-courses').then((m) => ({ default: m.StudentCoursesPage })),
@@ -137,6 +140,7 @@ export function AppRouter() {
           }
         />
         <Route path="teacher/courses" element={<TeacherRoute><TeacherCoursesPage /></TeacherRoute>} />
+        <Route path="teacher/modules" element={<TeacherRoute><TeacherModulesPage /></TeacherRoute>} />
         <Route
           path="teacher/courses/:courseId"
           element={<TeacherRoute><TeacherCoursePage /></TeacherRoute>}

@@ -16,7 +16,7 @@ import {
   Title,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   useConfigurePracticalQuestions,
@@ -152,6 +152,15 @@ function SetupTab({ practicalId }: { practicalId: string }) {
   const [p3, setP3] = useState<number | string>(60);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const selectedWeightSum = useMemo(
+    () =>
+      (setup?.questions ?? [])
+        .filter((question) => selected.includes(question.id))
+        .reduce((sum, question) => sum + question.weight, 0),
+    [setup, selected],
+  );
+  const weightSumExceeded = selectedWeightSum > 100;
+
   useEffect(() => {
     if (setup) {
       setSelected(setup.questions.filter((q) => q.isSelected).map((q) => q.id));
@@ -238,10 +247,26 @@ function SetupTab({ practicalId }: { practicalId: string }) {
                 <Title order={3} size="h5">
                   Вопросы теста
                 </Title>
-                <Button size="xs" loading={configure.isPending} onClick={save}>
-                  Сохранить настройку
-                </Button>
+                <Group gap="sm">
+                  <Badge color={weightSumExceeded ? 'red' : 'gray'} variant="light" radius="sm">
+                    Сумма весов: {selectedWeightSum} / 100
+                  </Badge>
+                  <Button
+                    size="xs"
+                    loading={configure.isPending}
+                    disabled={weightSumExceeded}
+                    onClick={save}
+                  >
+                    Сохранить настройку
+                  </Button>
+                </Group>
               </Group>
+              {weightSumExceeded ? (
+                <Alert color="red" variant="light">
+                  Сумма весов выбранных вопросов не должна превышать 100 — снимите часть вопросов
+                  или уменьшите их вес.
+                </Alert>
+              ) : null}
               {data.questions.length === 0 ? (
                 <Text c="dimmed" size="sm">
                   В модуле нет вопросов. Создайте их на странице модуля.
@@ -259,6 +284,9 @@ function SetupTab({ practicalId }: { practicalId: string }) {
                               {questionKindFromTypeId(question.type)
                                 ? QUESTION_KIND_LABELS[questionKindFromTypeId(question.type)!]
                                 : 'Тип'}
+                            </Badge>
+                            <Badge color="gray" radius="sm" variant="outline">
+                              вес {question.weight}
                             </Badge>
                             <Text size="sm" lineClamp={1}>
                               {question.text}

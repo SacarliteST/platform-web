@@ -264,7 +264,9 @@ export function TeacherTheoryPage() {
                         {rows.map((row) => (
                           <Table.Tr key={row.id}>
                             <Table.Td>
-                              <Text size="sm">{row.description || row.name}</Text>
+                              <Text size="sm" lineClamp={2}>
+                                {row.description || row.name}
+                              </Text>
                             </Table.Td>
                             <Table.Td w={200}>
                               <Group gap="xs" wrap="nowrap">

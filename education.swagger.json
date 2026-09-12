@@ -4582,6 +4582,7 @@
           "text",
           "type",
           "body",
+          "weight",
           "isSelected"
         ],
         "type": "object",
@@ -4599,6 +4600,10 @@
           },
           "body": {
             "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "format": "double"
           },
           "isSelected": {
             "type": "boolean"

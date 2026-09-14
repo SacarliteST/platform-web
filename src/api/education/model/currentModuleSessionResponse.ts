@@ -11,18 +11,10 @@ import type { ModuleSessionResponse } from './moduleSessionResponse';
  */
 export interface CurrentModuleSessionResponse {
   session: null | ModuleSessionResponse;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  attemptsCount: number | string;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  triesCount: number | string;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  timeLimitMinutes: number | string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  bestGrade: number | string | null;
+  attemptsCount: number;
+  triesCount: number;
+  /** @nullable */
+  timeLimitMinutes: number | null;
+  /** @nullable */
+  bestGrade: number | null;
 }

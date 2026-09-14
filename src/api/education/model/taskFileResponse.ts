@@ -24,11 +24,8 @@ export interface TaskFileResponse {
   isAccepted: boolean;
   /** Признак последнего системного обновления файла. */
   isUpdated: boolean;
-  /**
-     * Оценка за сдачу.
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  grade: number | string;
+  /** Оценка за сдачу. */
+  grade: number;
   /** Комментарии к файлу сдачи. */
   comments: TaskFileCommentResponse[];
 }

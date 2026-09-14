@@ -868,6 +868,234 @@ export const useCreatePracticalTask = <TError = HttpValidationProblemDetails | v
       > => {
       return useMutation(getCreatePracticalTaskMutationOptions(options), queryClient);
     }
+    export type getTaskResponse200 = {
+  data: TaskResponse
+  status: 200
+}
+
+export type getTaskResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getTaskResponse404 = {
+  data: void
+  status: 404
+}
+
+export type getTaskResponseSuccess = (getTaskResponse200) & {
+  headers: Headers;
+};
+export type getTaskResponseError = (getTaskResponse401 | getTaskResponse404) & {
+  headers: Headers;
+};
+
+export type getTaskResponse = (getTaskResponseSuccess | getTaskResponseError)
+
+export const getGetTaskUrl = (taskId: string,) => {
+
+
+
+
+  return `/api/v1/tasks/${taskId}`
+}
+
+/**
+ * Название и текст задания. Доступно преподавателю и студенту.
+ * @summary Задание по идентификатору
+ */
+export const getTask = async (taskId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getTaskResponse> => {
+
+  return educationFetch<getTaskResponse>(getGetTaskUrl(taskId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTaskQueryKey = (taskId: string,) => {
+    return [
+    `/api/v1/tasks/${taskId}`
+    ] as const;
+    }
+
+
+export const getGetTaskQueryOptions = <TData = Awaited<ReturnType<typeof getTask>>, TError = void>(taskId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTask>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTaskQueryKey(taskId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTask>>> = ({ signal }) => getTask(taskId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTask>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTaskQueryResult = NonNullable<Awaited<ReturnType<typeof getTask>>>
+export type GetTaskQueryError = void
+
+
+export function useGetTask<TData = Awaited<ReturnType<typeof getTask>>, TError = void>(
+ taskId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTask>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTask>>,
+          TError,
+          Awaited<ReturnType<typeof getTask>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTask<TData = Awaited<ReturnType<typeof getTask>>, TError = void>(
+ taskId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTask>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTask>>,
+          TError,
+          Awaited<ReturnType<typeof getTask>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTask<TData = Awaited<ReturnType<typeof getTask>>, TError = void>(
+ taskId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTask>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Задание по идентификатору
+ */
+
+export function useGetTask<TData = Awaited<ReturnType<typeof getTask>>, TError = void>(
+ taskId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTask>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTaskQueryOptions(taskId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type deletePracticalTaskResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deletePracticalTaskResponse401 = {
+  data: void
+  status: 401
+}
+
+export type deletePracticalTaskResponse403 = {
+  data: void
+  status: 403
+}
+
+export type deletePracticalTaskResponse404 = {
+  data: void
+  status: 404
+}
+
+export type deletePracticalTaskResponseSuccess = (deletePracticalTaskResponse204) & {
+  headers: Headers;
+};
+export type deletePracticalTaskResponseError = (deletePracticalTaskResponse401 | deletePracticalTaskResponse403 | deletePracticalTaskResponse404) & {
+  headers: Headers;
+};
+
+export type deletePracticalTaskResponse = (deletePracticalTaskResponseSuccess | deletePracticalTaskResponseError)
+
+export const getDeletePracticalTaskUrl = (taskId: string,) => {
+
+
+
+
+  return `/api/v1/tasks/${taskId}`
+}
+
+/**
+ * Удаляет задание практического материала текущего преподавателя.
+ * @summary Удаление задания практики
+ */
+export const deletePracticalTask = async (taskId: string, options?: Parameters<typeof educationFetch>[1]): Promise<deletePracticalTaskResponse> => {
+
+  return educationFetch<deletePracticalTaskResponse>(getDeletePracticalTaskUrl(taskId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeletePracticalTaskMutationKey = () => ['deletePracticalTask'] as const;
+
+export const getDeletePracticalTaskMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePracticalTask>>, TError,DeletePracticalTaskMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePracticalTask>>, TError,DeletePracticalTaskMutationVariables, TContext> => {
+
+const mutationKey = getDeletePracticalTaskMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePracticalTask>>, DeletePracticalTaskMutationVariables> = (props) => {
+          const {taskId} = props ?? {};
+
+          return  deletePracticalTask(taskId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePracticalTaskMutationResult = NonNullable<Awaited<ReturnType<typeof deletePracticalTask>>>
+
+    export type DeletePracticalTaskMutationError = void
+    export type DeletePracticalTaskMutationVariables = {taskId: string}
+
+    /**
+ * @summary Удаление задания практики
+ */
+export const useDeletePracticalTask = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePracticalTask>>, TError,DeletePracticalTaskMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePracticalTask>>,
+        TError,
+        DeletePracticalTaskMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeletePracticalTaskMutationOptions(options), queryClient);
+    }
     export type updatePracticalTaskTextResponse204 = {
   data: void
   status: 204
@@ -982,109 +1210,6 @@ export const useUpdatePracticalTaskText = <TError = HttpValidationProblemDetails
         TContext
       > => {
       return useMutation(getUpdatePracticalTaskTextMutationOptions(options), queryClient);
-    }
-    export type deletePracticalTaskResponse204 = {
-  data: void
-  status: 204
-}
-
-export type deletePracticalTaskResponse401 = {
-  data: void
-  status: 401
-}
-
-export type deletePracticalTaskResponse403 = {
-  data: void
-  status: 403
-}
-
-export type deletePracticalTaskResponse404 = {
-  data: void
-  status: 404
-}
-
-export type deletePracticalTaskResponseSuccess = (deletePracticalTaskResponse204) & {
-  headers: Headers;
-};
-export type deletePracticalTaskResponseError = (deletePracticalTaskResponse401 | deletePracticalTaskResponse403 | deletePracticalTaskResponse404) & {
-  headers: Headers;
-};
-
-export type deletePracticalTaskResponse = (deletePracticalTaskResponseSuccess | deletePracticalTaskResponseError)
-
-export const getDeletePracticalTaskUrl = (taskId: string,) => {
-
-
-
-
-  return `/api/v1/tasks/${taskId}`
-}
-
-/**
- * Удаляет задание практического материала текущего преподавателя.
- * @summary Удаление задания практики
- */
-export const deletePracticalTask = async (taskId: string, options?: Parameters<typeof educationFetch>[1]): Promise<deletePracticalTaskResponse> => {
-
-  return educationFetch<deletePracticalTaskResponse>(getDeletePracticalTaskUrl(taskId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-
-export const getDeletePracticalTaskMutationKey = () => ['deletePracticalTask'] as const;
-
-export const getDeletePracticalTaskMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePracticalTask>>, TError,DeletePracticalTaskMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deletePracticalTask>>, TError,DeletePracticalTaskMutationVariables, TContext> => {
-
-const mutationKey = getDeletePracticalTaskMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePracticalTask>>, DeletePracticalTaskMutationVariables> = (props) => {
-          const {taskId} = props ?? {};
-
-          return  deletePracticalTask(taskId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeletePracticalTaskMutationResult = NonNullable<Awaited<ReturnType<typeof deletePracticalTask>>>
-
-    export type DeletePracticalTaskMutationError = void
-    export type DeletePracticalTaskMutationVariables = {taskId: string}
-
-    /**
- * @summary Удаление задания практики
- */
-export const useDeletePracticalTask = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePracticalTask>>, TError,DeletePracticalTaskMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deletePracticalTask>>,
-        TError,
-        DeletePracticalTaskMutationVariables,
-        TContext
-      > => {
-      return useMutation(getDeletePracticalTaskMutationOptions(options), queryClient);
     }
     export type bindPracticalModuleResponse204 = {
   data: void

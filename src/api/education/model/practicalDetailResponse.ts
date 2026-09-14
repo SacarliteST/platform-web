@@ -14,12 +14,8 @@ export interface PracticalDetailResponse {
   name: string;
   kind: string;
   isPublic: boolean;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  triesCount: number | string;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  timeLimitMinutes: number | string | null;
+  triesCount: number;
+  /** @nullable */
+  timeLimitMinutes: number | null;
   moduleBinding: null | ExternalModuleBindingResponse;
 }

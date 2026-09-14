@@ -9,10 +9,7 @@
  * Итоговая оценка за практический материал или список условий для её получения.
  */
 export interface PracticalGradeResponse {
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  grade: number | string | null;
+  /** @nullable */
+  grade: number | null;
   messages: string[];
 }

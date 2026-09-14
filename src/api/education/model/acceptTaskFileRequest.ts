@@ -9,9 +9,6 @@
  * Запрос на принятие файла сдачи и выставление оценки.
  */
 export interface AcceptTaskFileRequest {
-  /**
-     * Оценка за сдачу.
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  grade: number | string;
+  /** Оценка за сдачу. */
+  grade: number;
 }

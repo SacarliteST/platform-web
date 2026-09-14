@@ -269,7 +269,132 @@ export const useDeleteModule = <TError = void,
       > => {
       return useMutation(getDeleteModuleMutationOptions(options), queryClient);
     }
-    export type getModuleTheoriesResponse200 = {
+    export type getModuleResponse200 = {
+  data: ModuleResponse
+  status: 200
+}
+
+export type getModuleResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getModuleResponse404 = {
+  data: void
+  status: 404
+}
+
+export type getModuleResponseSuccess = (getModuleResponse200) & {
+  headers: Headers;
+};
+export type getModuleResponseError = (getModuleResponse401 | getModuleResponse404) & {
+  headers: Headers;
+};
+
+export type getModuleResponse = (getModuleResponseSuccess | getModuleResponseError)
+
+export const getGetModuleUrl = (moduleId: string,) => {
+
+
+
+
+  return `/api/v1/modules/${moduleId}`
+}
+
+/**
+ * Название модуля. Доступно преподавателю и студенту.
+ * @summary Модуль по идентификатору
+ */
+export const getModule = async (moduleId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getModuleResponse> => {
+
+  return educationFetch<getModuleResponse>(getGetModuleUrl(moduleId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetModuleQueryKey = (moduleId: string,) => {
+    return [
+    `/api/v1/modules/${moduleId}`
+    ] as const;
+    }
+
+
+export const getGetModuleQueryOptions = <TData = Awaited<ReturnType<typeof getModule>>, TError = void>(moduleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getModule>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetModuleQueryKey(moduleId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getModule>>> = ({ signal }) => getModule(moduleId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: moduleId !== null && moduleId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getModule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetModuleQueryResult = NonNullable<Awaited<ReturnType<typeof getModule>>>
+export type GetModuleQueryError = void
+
+
+export function useGetModule<TData = Awaited<ReturnType<typeof getModule>>, TError = void>(
+ moduleId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getModule>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModule>>,
+          TError,
+          Awaited<ReturnType<typeof getModule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetModule<TData = Awaited<ReturnType<typeof getModule>>, TError = void>(
+ moduleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getModule>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getModule>>,
+          TError,
+          Awaited<ReturnType<typeof getModule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetModule<TData = Awaited<ReturnType<typeof getModule>>, TError = void>(
+ moduleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getModule>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Модуль по идентификатору
+ */
+
+export function useGetModule<TData = Awaited<ReturnType<typeof getModule>>, TError = void>(
+ moduleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getModule>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetModuleQueryOptions(moduleId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getModuleTheoriesResponse200 = {
   data: TheoryListItemResponse[]
   status: 200
 }

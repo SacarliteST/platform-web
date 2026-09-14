@@ -2,7 +2,10 @@ import { Loader } from '@mantine/core';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { LoginPage, RequireAuth, RequireRole } from '../../session';
-import { HomePage, NotFoundPage, StudentHomePage, TeacherHomePage } from '../../pages';
+import { HomePage } from '../../pages/home';
+import { NotFoundPage } from '../../pages/not-found';
+import { StudentHomePage } from '../../pages/student-home';
+import { TeacherHomePage } from '../../pages/teacher-home';
 import { HelpPage } from '../../pages/help';
 import { AdminHomePage } from '../../pages/admin-home';
 import { AppLayout } from '../layout/AppLayout';
@@ -36,6 +39,9 @@ const TeacherTheoryPage = lazy(() =>
 );
 const TeacherPracticalPage = lazy(() =>
   import('../../pages/teacher-practical').then((m) => ({ default: m.TeacherPracticalPage })),
+);
+const TeacherModulesPage = lazy(() =>
+  import('../../pages/teacher-modules').then((m) => ({ default: m.TeacherModulesPage })),
 );
 
 const StudentCoursesPage = lazy(() =>
@@ -134,6 +140,7 @@ export function AppRouter() {
           }
         />
         <Route path="teacher/courses" element={<TeacherRoute><TeacherCoursesPage /></TeacherRoute>} />
+        <Route path="teacher/modules" element={<TeacherRoute><TeacherModulesPage /></TeacherRoute>} />
         <Route
           path="teacher/courses/:courseId"
           element={<TeacherRoute><TeacherCoursePage /></TeacherRoute>}

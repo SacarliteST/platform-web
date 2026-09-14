@@ -10,9 +10,6 @@
  */
 export interface TestStatusResponse {
   isStarted: boolean;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  tryNumber: number | string | null;
+  /** @nullable */
+  tryNumber: number | null;
 }

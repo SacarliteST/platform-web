@@ -2,6 +2,7 @@ import '@mantine/tiptap/styles.css';
 import { RichTextEditor, Link } from '@mantine/tiptap';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
 import { useEffect } from 'react';
 
 type RichTextFieldProps = {
@@ -14,7 +15,7 @@ type RichTextFieldProps = {
 /** Редактор форматированного текста (замена legacy react-quill). HTML-совместим. */
 export function RichTextField({ editable = true, onChange, value }: RichTextFieldProps) {
   const editor = useEditor({
-    extensions: [StarterKit, Link],
+    extensions: [StarterKit, Underline, Link],
     content: value,
     editable,
     onUpdate: ({ editor: instance }) => onChange(instance.getHTML()),

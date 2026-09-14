@@ -704,6 +704,54 @@
         }
       }
     },
+    "/api/v1/practical-modules/{practicalModuleId}/authoring-link": {
+      "post": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "SSO-ссылка преподавателя в контур авторинга модуля",
+        "description": "Обменивает токен преподавателя на токен под audience модуля без сессии и возвращает URL перехода в /teacher-контур модуля. Открывать новой вкладкой.",
+        "operationId": "CreatePracticalModuleAuthoringLink",
+        "parameters": [
+          {
+            "name": "practicalModuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleAuthoringLinkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "502": {
+            "description": "Bad Gateway"
+          }
+        }
+      }
+    },
     "/api/v1/practicals/{practicalId}/module-sessions": {
       "post": {
         "tags": [
@@ -1274,6 +1322,43 @@
             "description": "Not Found"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Модуль по идентификатору",
+        "description": "Название модуля. Доступно преподавателю и студенту.",
+        "operationId": "GetModule",
+        "parameters": [
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
       }
     },
     "/api/v1/modules/{moduleId}/theories": {
@@ -1662,6 +1747,78 @@
         }
       }
     },
+    "/api/v1/tasks/{taskId}": {
+      "get": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Задание по идентификатору",
+        "description": "Название и текст задания. Доступно преподавателю и студенту.",
+        "operationId": "GetTask",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Practicals"
+        ],
+        "summary": "Удаление задания практики",
+        "description": "Удаляет задание практического материала текущего преподавателя.",
+        "operationId": "DeletePracticalTask",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/v1/tasks/{taskId}/text": {
       "put": {
         "tags": [
@@ -1704,41 +1861,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/api/v1/tasks/{taskId}": {
-      "delete": {
-        "tags": [
-          "Practicals"
-        ],
-        "summary": "Удаление задания практики",
-        "description": "Удаляет задание практического материала текущего преподавателя.",
-        "operationId": "DeletePracticalTask",
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
           },
           "401": {
             "description": "Unauthorized"
@@ -3406,11 +3528,7 @@
         "type": "object",
         "properties": {
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Оценка за сдачу.",
             "format": "int32"
           }
@@ -3562,19 +3680,13 @@
             "type": "string"
           },
           "triesCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "timeLimitMinutes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           }
@@ -3594,11 +3706,7 @@
             "type": "string"
           },
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "completionData": {
@@ -3636,35 +3744,19 @@
             }
           },
           "triesCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "percentForFive": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "percentForFour": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "percentForThree": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
         },
@@ -3726,6 +3818,10 @@
           "middleName": {
             "type": "string",
             "description": "Отчество пользователя."
+          },
+          "role": {
+            "description": "Роль профиля (по умолчанию — студент).",
+            "$ref": "#/components/schemas/ProfileRole"
           }
         },
         "description": "Запрос на создание локального учебного профиля и связи с identity-пользователем."
@@ -3853,11 +3949,7 @@
             "type": "string"
           },
           "weight": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
         },
@@ -3934,36 +4026,24 @@
             ]
           },
           "attemptsCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "triesCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "timeLimitMinutes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
           "bestGrade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           }
@@ -4016,11 +4096,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -4052,6 +4130,23 @@
         "format": "binary"
       },
       "JsonElement": { },
+      "ModuleAuthoringLinkResponse": {
+        "required": [
+          "url",
+          "expiresInSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "Ссылка для SSO-перехода преподавателя в контур авторинга внешнего модуля.\r\nstring ModuleAuthoringLinkResponse.Url открывается новой вкладкой; int ModuleAuthoringLinkResponse.ExpiresInSeconds —\r\nсколько ещё живёт вложенный в него токен."
+      },
       "ModuleResponse": {
         "required": [
           "id",
@@ -4116,11 +4211,7 @@
             "type": "string"
           },
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "startedAt": {
@@ -4141,11 +4232,9 @@
             ]
           },
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -4185,11 +4274,7 @@
             "type": "string"
           },
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "status": {
@@ -4202,11 +4287,9 @@
             ]
           },
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -4270,19 +4353,13 @@
             "type": "boolean"
           },
           "triesCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "timeLimitMinutes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -4307,11 +4384,9 @@
         "type": "object",
         "properties": {
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -4390,35 +4465,19 @@
             "type": "boolean"
           },
           "triesCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "percentForFive": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "percentForFour": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "percentForThree": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
         },
@@ -4457,11 +4516,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -4478,6 +4535,15 @@
             ]
           }
         }
+      },
+      "ProfileRole": {
+        "enum": [
+          "Student",
+          "Teacher",
+          "Admin"
+        ],
+        "description": "Роль, назначаемая учебному профилю при связывании с identity-пользователем.",
+        "default": "Student"
       },
       "QuestionResponse": {
         "required": [
@@ -4501,11 +4567,7 @@
             "format": "uuid"
           },
           "weight": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "answer": {
@@ -4520,6 +4582,7 @@
           "text",
           "type",
           "body",
+          "weight",
           "isSelected"
         ],
         "type": "object",
@@ -4537,6 +4600,10 @@
           },
           "body": {
             "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "format": "double"
           },
           "isSelected": {
             "type": "boolean"
@@ -4582,11 +4649,7 @@
             "format": "date-time"
           },
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "resumed": {
@@ -4602,11 +4665,7 @@
         "type": "object",
         "properties": {
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         },
@@ -4719,11 +4778,7 @@
             "description": "Признак последнего системного обновления файла."
           },
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "description": "Оценка за сдачу.",
             "format": "int32"
           },
@@ -4765,7 +4820,9 @@
           "questionWeight",
           "questionScore",
           "userAnswer",
-          "isCorrect"
+          "isCorrect",
+          "questionType",
+          "questionBody"
         ],
         "type": "object",
         "properties": {
@@ -4777,19 +4834,11 @@
             "type": "string"
           },
           "questionWeight": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "questionScore": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "userAnswer": {
@@ -4797,6 +4846,15 @@
           },
           "isCorrect": {
             "type": "boolean"
+          },
+          "questionType": {
+            "type": "string",
+            "description": "Идентификатор типа вопроса (как в `TestQuestionResponse.Type`).",
+            "format": "uuid"
+          },
+          "questionBody": {
+            "type": "string",
+            "description": "Варианты ответа / доп. данные вопроса — для расшифровки `UserAnswer`."
           }
         },
         "description": "Детализация ответа в протоколе попытки тестирования."
@@ -4818,37 +4876,25 @@
             }
           },
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "score": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "maxScore": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         },
@@ -4874,37 +4920,25 @@
             "format": "uuid"
           },
           "score": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "maxScore": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "grade": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         },
@@ -4966,11 +5000,9 @@
             "type": "boolean"
           },
           "tryNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           }
@@ -5177,11 +5209,7 @@
             "type": "string"
           },
           "weight": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "type": {

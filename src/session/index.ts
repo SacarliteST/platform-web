@@ -9,6 +9,7 @@ export {
   createSessionUserFromTokenResponse,
   decodeSessionUser,
   getDefaultSessionRoute,
+  isAccessTokenActive,
 } from './lib';
 export { createMemoryTokenProvider } from './providers';
 export { AccessDeniedPage, RequireAuth, RequireRole } from './guards';

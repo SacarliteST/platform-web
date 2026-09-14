@@ -13,7 +13,6 @@ export interface StartModuleSessionResponse {
   launchUrl: string;
   /** @nullable */
   expiresAt: string | null;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  tryNumber: number | string;
+  tryNumber: number;
   resumed: boolean;
 }

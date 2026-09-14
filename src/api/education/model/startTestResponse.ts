@@ -9,6 +9,5 @@
  * Данные начатой или продолженной попытки тестирования.
  */
 export interface StartTestResponse {
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  tryNumber: number | string;
+  tryNumber: number;
 }

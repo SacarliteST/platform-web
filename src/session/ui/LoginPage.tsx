@@ -1,9 +1,6 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Button, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
 import { useLogin } from '../../api/identity/auth/auth';
 import type { ProblemDetails } from '../../api/identity/model';
 import {
@@ -19,12 +16,22 @@ import {
 } from '../index';
 import './LoginPage.css';
 
-const loginSchema = z.object({
-  email: z.string().email('Введите корректный email'),
-  password: z.string().min(1, 'Введите пароль'),
-});
+// Простая клиентская проверка формы из двух полей — без react-hook-form/zod,
+// чтобы `forms`-чанк (rhf + zod + resolvers) не попадал в начальный бандл (TD-002).
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type FieldErrors = { email?: string; password?: string };
+
+function validate(email: string, password: string): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!emailPattern.test(email.trim())) {
+    errors.email = 'Введите корректный email';
+  }
+  if (password.length < 1) {
+    errors.password = 'Введите пароль';
+  }
+  return errors;
+}
 
 const blockedAccountMessage =
   'Учётная запись заблокирована. Обратитесь к администратору системы.';
@@ -46,28 +53,25 @@ const isBlockedAccountProblem = (problem: ProblemDetails): boolean => {
 export function LoginPage() {
   const navigate = useNavigate();
   const setSession = useSessionStore((state) => state.setSession);
-  const [formError, setFormError] = useState<IdentityApiProblemPresentation | null>(null);
   const loginMutation = useLogin();
 
-  const {
-    formState: { errors },
-    handleSubmit,
-    register,
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<IdentityApiProblemPresentation | null>(null);
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setFormError(null);
 
+    const errors = validate(email, password);
+    setFieldErrors(errors);
+    if (errors.email || errors.password) {
+      return;
+    }
+
     const response = await loginMutation
-      .mutateAsync({
-        data: values,
-      })
+      .mutateAsync({ data: { email: email.trim(), password } })
       .catch(() => null);
 
     if (!response) {
@@ -122,7 +126,7 @@ export function LoginPage() {
       user,
     });
     navigate(getDefaultSessionRoute(user), { replace: true });
-  });
+  };
 
   return (
     <section className="login-page">
@@ -132,7 +136,7 @@ export function LoginPage() {
             Вход в систему
           </Title>
 
-          <form onSubmit={onSubmit}>
+          <form onSubmit={onSubmit} noValidate>
             <Stack gap="md" mt="lg">
               {formError ? (
                 <Alert color="red" title={formError.title} variant="light">
@@ -144,16 +148,21 @@ export function LoginPage() {
                 label="Email"
                 placeholder="admin@scoodle.local"
                 size="md"
-                error={errors.email?.message}
-                {...register('email')}
+                type="email"
+                autoComplete="username"
+                value={email}
+                error={fieldErrors.email}
+                onChange={(event) => setEmail(event.currentTarget.value)}
               />
 
               <PasswordInput
                 label="Пароль"
                 placeholder="Введите пароль"
                 size="md"
-                error={errors.password?.message}
-                {...register('password')}
+                autoComplete="current-password"
+                value={password}
+                error={fieldErrors.password}
+                onChange={(event) => setPassword(event.currentTarget.value)}
               />
 
               <Button fullWidth type="submit" size="md" loading={loginMutation.isPending}>

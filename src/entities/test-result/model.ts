@@ -36,6 +36,36 @@ export function normalizeTestProtocol(dto: TestProtocolResponse): TestProtocol {
   };
 }
 
+/**
+ * TD-010 (временная мера, без бэкенда): `TestProtocolAnswerResponse.userAnswer`
+ * приходит сериализованной строкой (`["opt-…"]`, `opt-…`, JSON-пары Match).
+ * Пока бэкенд не отдаёт `body`/`type` вопроса — снимаем хотя бы JSON-обёртку,
+ * чтобы SingleChoice/ShortAnswer читались, а MultipleChoice был списком, а не `[".."]`.
+ * Сопоставление id варианта → текст остаётся за бэкендом.
+ */
+export function formatProtocolAnswer(raw: string): string {
+  const value = raw?.trim() ?? '';
+  if (!value) {
+    return '';
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => String(item)).join(', ');
+    }
+    if (parsed !== null && typeof parsed === 'object') {
+      return Object.entries(parsed)
+        .map(([key, item]) => `${key} → ${String(item)}`)
+        .join('; ');
+    }
+    return String(parsed);
+  } catch {
+    return value;
+  }
+}
+
 const GRADE_LABELS: Record<number, string> = {
   0: 'Не оценено',
   2: 'Неудовлетворительно',

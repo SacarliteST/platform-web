@@ -26,6 +26,7 @@ import type {
 import type {
   CreatePracticalModuleRequest,
   HttpValidationProblemDetails,
+  ModuleAuthoringLinkResponse,
   ModuleTaskResponse,
   PracticalModuleResponse,
   UpdatePracticalModuleRequest
@@ -770,3 +771,116 @@ export function useGetPracticalModuleTasks<TData = Awaited<ReturnType<typeof get
 
 
 
+export type createPracticalModuleAuthoringLinkResponse200 = {
+  data: ModuleAuthoringLinkResponse
+  status: 200
+}
+
+export type createPracticalModuleAuthoringLinkResponse401 = {
+  data: void
+  status: 401
+}
+
+export type createPracticalModuleAuthoringLinkResponse403 = {
+  data: void
+  status: 403
+}
+
+export type createPracticalModuleAuthoringLinkResponse404 = {
+  data: void
+  status: 404
+}
+
+export type createPracticalModuleAuthoringLinkResponse409 = {
+  data: void
+  status: 409
+}
+
+export type createPracticalModuleAuthoringLinkResponse502 = {
+  data: void
+  status: 502
+}
+
+export type createPracticalModuleAuthoringLinkResponseSuccess = (createPracticalModuleAuthoringLinkResponse200) & {
+  headers: Headers;
+};
+export type createPracticalModuleAuthoringLinkResponseError = (createPracticalModuleAuthoringLinkResponse401 | createPracticalModuleAuthoringLinkResponse403 | createPracticalModuleAuthoringLinkResponse404 | createPracticalModuleAuthoringLinkResponse409 | createPracticalModuleAuthoringLinkResponse502) & {
+  headers: Headers;
+};
+
+export type createPracticalModuleAuthoringLinkResponse = (createPracticalModuleAuthoringLinkResponseSuccess | createPracticalModuleAuthoringLinkResponseError)
+
+export const getCreatePracticalModuleAuthoringLinkUrl = (practicalModuleId: string,) => {
+
+
+
+
+  return `/api/v1/practical-modules/${practicalModuleId}/authoring-link`
+}
+
+/**
+ * Обменивает токен преподавателя на токен под audience модуля без сессии и возвращает URL перехода в /teacher-контур модуля. Открывать новой вкладкой.
+ * @summary SSO-ссылка преподавателя в контур авторинга модуля
+ */
+export const createPracticalModuleAuthoringLink = async (practicalModuleId: string, options?: Parameters<typeof educationFetch>[1]): Promise<createPracticalModuleAuthoringLinkResponse> => {
+
+  return educationFetch<createPracticalModuleAuthoringLinkResponse>(getCreatePracticalModuleAuthoringLinkUrl(practicalModuleId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCreatePracticalModuleAuthoringLinkMutationKey = () => ['createPracticalModuleAuthoringLink'] as const;
+
+export const getCreatePracticalModuleAuthoringLinkMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, TError,CreatePracticalModuleAuthoringLinkMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, TError,CreatePracticalModuleAuthoringLinkMutationVariables, TContext> => {
+
+const mutationKey = getCreatePracticalModuleAuthoringLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, CreatePracticalModuleAuthoringLinkMutationVariables> = (props) => {
+          const {practicalModuleId} = props ?? {};
+
+          return  createPracticalModuleAuthoringLink(practicalModuleId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePracticalModuleAuthoringLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>>
+
+    export type CreatePracticalModuleAuthoringLinkMutationError = void
+    export type CreatePracticalModuleAuthoringLinkMutationVariables = {practicalModuleId: string}
+
+    /**
+ * @summary SSO-ссылка преподавателя в контур авторинга модуля
+ */
+export const useCreatePracticalModuleAuthoringLink = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, TError,CreatePracticalModuleAuthoringLinkMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>,
+        TError,
+        CreatePracticalModuleAuthoringLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreatePracticalModuleAuthoringLinkMutationOptions(options), queryClient);
+    }

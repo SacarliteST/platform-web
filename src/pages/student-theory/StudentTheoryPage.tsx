@@ -5,7 +5,7 @@ import {
   useGetTheoryDocuments,
   useGetTheoryLinks,
 } from '../../api/education/theories/theories';
-import { RichTextViewer } from '../../features/rich-text';
+import { RichTextViewer } from '../../features/rich-text/RichTextViewer';
 import { downloadEducationFile } from '../../shared/http';
 import {
   AppCard,
@@ -109,7 +109,9 @@ export function StudentTheoryPage() {
                         {rows.map((row) => (
                           <Table.Tr key={row.id}>
                             <Table.Td>
-                              <Text size="sm">{row.description || row.name}</Text>
+                              <Text size="sm" lineClamp={2}>
+                                {row.description || row.name}
+                              </Text>
                             </Table.Td>
                             <Table.Td w={140}>
                               <Button

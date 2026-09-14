@@ -142,11 +142,13 @@ export function QuestionEditor({
       />
       <NumberInput
         label="Вес вопроса"
+        description="Сумма весов вопросов, выбранных для одного теста, не должна превышать 100"
         min={0}
+        max={100}
         step={0.5}
         value={weight}
         onChange={setWeight}
-        w={200}
+        w={280}
       />
 
       {kind === 'ShortAnswer' ? (

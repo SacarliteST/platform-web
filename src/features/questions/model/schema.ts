@@ -8,7 +8,10 @@ const optionSchema = z.object({
 
 const questionBaseSchema = z.object({
   text: z.string().trim().min(1, 'Заполните текст вопроса'),
-  weight: z.number({ message: 'Укажите вес' }).positive('Вес должен быть больше 0'),
+  weight: z
+    .number({ message: 'Укажите вес' })
+    .positive('Вес должен быть больше 0')
+    .max(100, 'Вес не должен превышать 100'),
 });
 
 export const singleChoiceFormSchema = questionBaseSchema.extend({

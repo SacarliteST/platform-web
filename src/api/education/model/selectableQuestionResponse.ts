@@ -13,5 +13,6 @@ export interface SelectableQuestionResponse {
   text: string;
   type: string;
   body: string;
+  weight: number;
   isSelected: boolean;
 }

@@ -1,4 +1,5 @@
 import { getRuntimeConfig } from '../../app/config/runtime-config-registry';
+import { isAccessTokenActive } from '../../session/lib';
 import { useSessionStore } from '../../session/store';
 import { buildApiUrl } from './build-api-url';
 import { createAuthorizationHeader } from './auth-header';
@@ -18,7 +19,8 @@ export async function downloadEducationFile(path: string, fallbackFileName = 'fi
   });
 
   if (response.status === 401) {
-    if (status === 'authenticated') {
+    // TD-009: разлогиниваем только при действительно истёкшем токене.
+    if (status === 'authenticated' && !isAccessTokenActive(accessToken)) {
       clearSession();
     }
     throw new Error('Требуется вход в систему.');

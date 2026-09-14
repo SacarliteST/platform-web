@@ -205,7 +205,9 @@ export function AdminEventsPage() {
                       </Badge>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm">{event.description}</Text>
+                      <Text size="sm" lineClamp={2}>
+                        {event.description}
+                      </Text>
                     </Table.Td>
                     <Table.Td>
                       {event.actorUserId ? (

@@ -4,6 +4,7 @@
  * Education.Web | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { ProfileRole } from './profileRole';
 
 /**
  * Запрос на создание локального учебного профиля и связи с identity-пользователем.
@@ -19,4 +20,6 @@ export interface CreateAdminProfileRequest {
   lastName: string;
   /** Отчество пользователя. */
   middleName: string;
+  /** Роль профиля (по умолчанию — студент). */
+  role?: ProfileRole;
 }

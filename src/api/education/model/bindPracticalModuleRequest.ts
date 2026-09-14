@@ -11,11 +11,7 @@
 export interface BindPracticalModuleRequest {
   practicalModuleId: string;
   externalTaskRef: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  triesCount: number | string;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  timeLimitMinutes: number | string | null;
+  triesCount: number;
+  /** @nullable */
+  timeLimitMinutes: number | null;
 }

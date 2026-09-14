@@ -20,6 +20,17 @@ export function TeacherHomePage() {
           }
         />
       </AppCard>
+      <AppCard>
+        <EmptyState
+          title="Практические модули"
+          description="Наполнение внешних модулей темами, базами и заданиями — напрямую, без привязки к практике."
+          actions={
+            <Button component={Link} to="/teacher/modules">
+              Открыть модули
+            </Button>
+          }
+        />
+      </AppCard>
     </Page>
   );
 }

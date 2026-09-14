@@ -14,6 +14,5 @@ export interface CreateQuestionRequest {
   text: string;
   body: string;
   answer: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  weight: number | string;
+  weight: number;
 }

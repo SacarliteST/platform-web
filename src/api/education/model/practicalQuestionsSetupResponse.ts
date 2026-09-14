@@ -12,12 +12,8 @@ import type { SelectableQuestionResponse } from './selectableQuestionResponse';
 export interface PracticalQuestionsSetupResponse {
   questions: SelectableQuestionResponse[];
   isPublic: boolean;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  triesCount: number | string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  percentForFive: number | string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  percentForFour: number | string;
-  /** @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$ */
-  percentForThree: number | string;
+  triesCount: number;
+  percentForFive: number;
+  percentForFour: number;
+  percentForThree: number;
 }

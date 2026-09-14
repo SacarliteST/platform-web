@@ -11,18 +11,14 @@
 export interface ModuleSessionResponse {
   sessionId: string;
   status: string;
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  tryNumber: number | string;
+  tryNumber: number;
   startedAt: string;
   /** @nullable */
   expiresAt: string | null;
   /** @nullable */
   endReason: string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  grade: number | string | null;
+  /** @nullable */
+  grade: number | null;
   /** @nullable */
   endedAt: string | null;
 }

@@ -31,11 +31,12 @@ import {
 } from '../../api/education/test-results/test-results';
 import {
   formatGrade,
+  formatProtocolAnswer,
   normalizePracticalGrade,
   normalizeTestStatus,
   questionKindFromTypeId,
 } from '../../entities';
-import { QuestionAnswerInput } from '../../features/questions';
+import { QuestionAnswerInput, QuestionAnswerView } from '../../features/questions';
 import { toNumber } from '../../shared/lib';
 import {
   AppCard,
@@ -451,42 +452,48 @@ function ProtocolsTab({ practicalId }: { practicalId: string }) {
             errorTitle="Не удалось загрузить протокол"
           >
             {(data) => (
-              <Table withTableBorder>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Вопрос</Table.Th>
-                    <Table.Th>Ваш ответ</Table.Th>
-                    <Table.Th w={90}>Балл</Table.Th>
-                    <Table.Th w={90}>Итог</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {data.answers.map((answer) => (
-                    <Table.Tr key={answer.questionId}>
-                      <Table.Td>
-                        <Text size="sm">{answer.questionText}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" lineClamp={2}>
-                          {answer.userAnswer || '—'}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        {toNumber(answer.questionScore)} / {toNumber(answer.questionWeight)}
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={answer.isCorrect ? 'green' : 'red'}
-                          radius="sm"
-                          variant="light"
-                        >
-                          {answer.isCorrect ? 'Верно' : 'Неверно'}
-                        </Badge>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
+              <Stack gap="lg">
+                {data.answers.map((answer) => {
+                  const kind = questionKindFromTypeId(answer.questionType);
+                  if (kind && answer.questionBody) {
+                    return (
+                      <QuestionAnswerView
+                        key={answer.questionId}
+                        kind={kind}
+                        questionText={answer.questionText}
+                        body={answer.questionBody}
+                        userAnswer={answer.userAnswer}
+                        isCorrect={answer.isCorrect}
+                        questionScore={answer.questionScore}
+                        questionWeight={answer.questionWeight}
+                      />
+                    );
+                  }
+
+                  return (
+                    <Stack key={answer.questionId} gap={2}>
+                      <Group justify="space-between" align="flex-start" wrap="nowrap">
+                        <Text fw={600}>{answer.questionText}</Text>
+                        <Group gap="xs" wrap="nowrap">
+                          <Badge color="gray" radius="sm" variant="light">
+                            {toNumber(answer.questionScore)} / {toNumber(answer.questionWeight)}
+                          </Badge>
+                          <Badge
+                            color={answer.isCorrect ? 'green' : 'red'}
+                            radius="sm"
+                            variant="light"
+                          >
+                            {answer.isCorrect ? 'Верно' : 'Неверно'}
+                          </Badge>
+                        </Group>
+                      </Group>
+                      <Text size="sm">
+                        Ответ студента: <b>{formatProtocolAnswer(answer.userAnswer) || '—'}</b>
+                      </Text>
+                    </Stack>
+                  );
+                })}
+              </Stack>
             )}
           </QueryBoundary>
         </AppCard>

@@ -26,9 +26,13 @@ import type {
 import type {
   AdminProfileResponse,
   AssignableStudentResponse,
+  ChangeStudentsRequest,
   CreateAdminProfileRequest,
+  GetCourseStudentAssignmentsParams,
+  GetPracticalStudentAssignmentsParams,
   HttpValidationProblemDetails,
   ProblemDetails,
+  StudentAssignmentPageResponse,
   UpdateAdminProfileRequest,
   UpdateCourseStudentsRequest,
   UpdatePracticalStudentsRequest
@@ -982,4 +986,514 @@ export const useSetPracticalStudents = <TError = ProblemDetails | void,
         TContext
       > => {
       return useMutation(getSetPracticalStudentsMutationOptions(options), queryClient);
+    }
+    export type getCourseStudentAssignmentsResponse200 = {
+  data: StudentAssignmentPageResponse
+  status: 200
+}
+
+export type getCourseStudentAssignmentsResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
+export type getCourseStudentAssignmentsResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getCourseStudentAssignmentsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getCourseStudentAssignmentsResponseSuccess = (getCourseStudentAssignmentsResponse200) & {
+  headers: Headers;
+};
+export type getCourseStudentAssignmentsResponseError = (getCourseStudentAssignmentsResponse400 | getCourseStudentAssignmentsResponse401 | getCourseStudentAssignmentsResponse403) & {
+  headers: Headers;
+};
+
+export type getCourseStudentAssignmentsResponse = (getCourseStudentAssignmentsResponseSuccess | getCourseStudentAssignmentsResponseError)
+
+export const getGetCourseStudentAssignmentsUrl = (courseId: string,
+    params?: GetCourseStudentAssignmentsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/courses/${courseId}/student-assignments?${stringifiedParams}` : `/api/v1/courses/${courseId}/student-assignments`
+}
+
+/**
+ * Поиск по ФИО и логину, фильтр assigned (true/false), страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.
+ * @summary Постраничный список студентов для назначения на курс
+ */
+export const getCourseStudentAssignments = async (courseId: string,
+    params?: GetCourseStudentAssignmentsParams, options?: Parameters<typeof educationFetch>[1]): Promise<getCourseStudentAssignmentsResponse> => {
+
+  return educationFetch<getCourseStudentAssignmentsResponse>(getGetCourseStudentAssignmentsUrl(courseId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCourseStudentAssignmentsQueryKey = (courseId: string,
+    params?: GetCourseStudentAssignmentsParams,) => {
+    return [
+    `/api/v1/courses/${courseId}/student-assignments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCourseStudentAssignmentsQueryOptions = <TData = Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError = HttpValidationProblemDetails | void>(courseId: string,
+    params?: GetCourseStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCourseStudentAssignmentsQueryKey(courseId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCourseStudentAssignments>>> = ({ signal }) => getCourseStudentAssignments(courseId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: courseId !== null && courseId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCourseStudentAssignmentsQueryResult = NonNullable<Awaited<ReturnType<typeof getCourseStudentAssignments>>>
+export type GetCourseStudentAssignmentsQueryError = HttpValidationProblemDetails | void
+
+
+export function useGetCourseStudentAssignments<TData = Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ courseId: string,
+    params: undefined |  GetCourseStudentAssignmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCourseStudentAssignments>>,
+          TError,
+          Awaited<ReturnType<typeof getCourseStudentAssignments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCourseStudentAssignments<TData = Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ courseId: string,
+    params?: GetCourseStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCourseStudentAssignments>>,
+          TError,
+          Awaited<ReturnType<typeof getCourseStudentAssignments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCourseStudentAssignments<TData = Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ courseId: string,
+    params?: GetCourseStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Постраничный список студентов для назначения на курс
+ */
+
+export function useGetCourseStudentAssignments<TData = Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ courseId: string,
+    params?: GetCourseStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseStudentAssignments>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCourseStudentAssignmentsQueryOptions(courseId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getPracticalStudentAssignmentsResponse200 = {
+  data: StudentAssignmentPageResponse
+  status: 200
+}
+
+export type getPracticalStudentAssignmentsResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
+export type getPracticalStudentAssignmentsResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getPracticalStudentAssignmentsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getPracticalStudentAssignmentsResponseSuccess = (getPracticalStudentAssignmentsResponse200) & {
+  headers: Headers;
+};
+export type getPracticalStudentAssignmentsResponseError = (getPracticalStudentAssignmentsResponse400 | getPracticalStudentAssignmentsResponse401 | getPracticalStudentAssignmentsResponse403) & {
+  headers: Headers;
+};
+
+export type getPracticalStudentAssignmentsResponse = (getPracticalStudentAssignmentsResponseSuccess | getPracticalStudentAssignmentsResponseError)
+
+export const getGetPracticalStudentAssignmentsUrl = (practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/practicals/${practicalId}/student-assignments?${stringifiedParams}` : `/api/v1/practicals/${practicalId}/student-assignments`
+}
+
+/**
+ * Поиск по ФИО и логину, фильтр assigned (true/false), страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.
+ * @summary Постраничный список студентов для назначения на практику
+ */
+export const getPracticalStudentAssignments = async (practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams, options?: Parameters<typeof educationFetch>[1]): Promise<getPracticalStudentAssignmentsResponse> => {
+
+  return educationFetch<getPracticalStudentAssignmentsResponse>(getGetPracticalStudentAssignmentsUrl(practicalId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPracticalStudentAssignmentsQueryKey = (practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams,) => {
+    return [
+    `/api/v1/practicals/${practicalId}/student-assignments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPracticalStudentAssignmentsQueryOptions = <TData = Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError = HttpValidationProblemDetails | void>(practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticalStudentAssignmentsQueryKey(practicalId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticalStudentAssignments>>> = ({ signal }) => getPracticalStudentAssignments(practicalId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: practicalId !== null && practicalId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPracticalStudentAssignmentsQueryResult = NonNullable<Awaited<ReturnType<typeof getPracticalStudentAssignments>>>
+export type GetPracticalStudentAssignmentsQueryError = HttpValidationProblemDetails | void
+
+
+export function useGetPracticalStudentAssignments<TData = Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ practicalId: string,
+    params: undefined |  GetPracticalStudentAssignmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPracticalStudentAssignments>>,
+          TError,
+          Awaited<ReturnType<typeof getPracticalStudentAssignments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticalStudentAssignments<TData = Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPracticalStudentAssignments>>,
+          TError,
+          Awaited<ReturnType<typeof getPracticalStudentAssignments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticalStudentAssignments<TData = Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Постраничный список студентов для назначения на практику
+ */
+
+export function useGetPracticalStudentAssignments<TData = Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError = HttpValidationProblemDetails | void>(
+ practicalId: string,
+    params?: GetPracticalStudentAssignmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentAssignments>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPracticalStudentAssignmentsQueryOptions(practicalId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type changeCourseStudentsResponse204 = {
+  data: void
+  status: 204
+}
+
+export type changeCourseStudentsResponse400 = {
+  data: ProblemDetails
+  status: 400
+}
+
+export type changeCourseStudentsResponse401 = {
+  data: void
+  status: 401
+}
+
+export type changeCourseStudentsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type changeCourseStudentsResponseSuccess = (changeCourseStudentsResponse204) & {
+  headers: Headers;
+};
+export type changeCourseStudentsResponseError = (changeCourseStudentsResponse400 | changeCourseStudentsResponse401 | changeCourseStudentsResponse403) & {
+  headers: Headers;
+};
+
+export type changeCourseStudentsResponse = (changeCourseStudentsResponseSuccess | changeCourseStudentsResponseError)
+
+export const getChangeCourseStudentsUrl = (courseId: string,) => {
+
+
+
+
+  return `/api/v1/courses/${courseId}/students/changes`
+}
+
+/**
+ * Добавляет студентов из add и снимает студентов из remove, остальных не затрагивает. Только для преподавателя-владельца; неизвестные / не привязанные id в add → 400.
+ * @summary Точечное изменение студентов курса
+ */
+export const changeCourseStudents = async (courseId: string,
+    changeStudentsRequest: ChangeStudentsRequest, options?: Parameters<typeof educationFetch>[1]): Promise<changeCourseStudentsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return educationFetch<changeCourseStudentsResponse>(getChangeCourseStudentsUrl(courseId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(changeStudentsRequest)
+  }
+);}
+
+
+
+
+
+export const getChangeCourseStudentsMutationKey = () => ['changeCourseStudents'] as const;
+
+export const getChangeCourseStudentsMutationOptions = <TError = ProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeCourseStudents>>, TError,ChangeCourseStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeCourseStudents>>, TError,ChangeCourseStudentsMutationVariables, TContext> => {
+
+const mutationKey = getChangeCourseStudentsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeCourseStudents>>, ChangeCourseStudentsMutationVariables> = (props) => {
+          const {courseId,data} = props ?? {};
+
+          return  changeCourseStudents(courseId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeCourseStudentsMutationResult = NonNullable<Awaited<ReturnType<typeof changeCourseStudents>>>
+    export type ChangeCourseStudentsMutationBody = ChangeStudentsRequest
+    export type ChangeCourseStudentsMutationError = ProblemDetails | void
+    export type ChangeCourseStudentsMutationVariables = {courseId: string;data: ChangeStudentsRequest}
+
+    /**
+ * @summary Точечное изменение студентов курса
+ */
+export const useChangeCourseStudents = <TError = ProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeCourseStudents>>, TError,ChangeCourseStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changeCourseStudents>>,
+        TError,
+        ChangeCourseStudentsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getChangeCourseStudentsMutationOptions(options), queryClient);
+    }
+    export type changePracticalStudentsResponse204 = {
+  data: void
+  status: 204
+}
+
+export type changePracticalStudentsResponse400 = {
+  data: ProblemDetails
+  status: 400
+}
+
+export type changePracticalStudentsResponse401 = {
+  data: void
+  status: 401
+}
+
+export type changePracticalStudentsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type changePracticalStudentsResponseSuccess = (changePracticalStudentsResponse204) & {
+  headers: Headers;
+};
+export type changePracticalStudentsResponseError = (changePracticalStudentsResponse400 | changePracticalStudentsResponse401 | changePracticalStudentsResponse403) & {
+  headers: Headers;
+};
+
+export type changePracticalStudentsResponse = (changePracticalStudentsResponseSuccess | changePracticalStudentsResponseError)
+
+export const getChangePracticalStudentsUrl = (practicalId: string,) => {
+
+
+
+
+  return `/api/v1/practicals/${practicalId}/students/changes`
+}
+
+/**
+ * Добавляет студентов из add и снимает студентов из remove, остальных не затрагивает. Только для преподавателя-владельца; неизвестные / не привязанные id в add → 400.
+ * @summary Точечное изменение студентов практики
+ */
+export const changePracticalStudents = async (practicalId: string,
+    changeStudentsRequest: ChangeStudentsRequest, options?: Parameters<typeof educationFetch>[1]): Promise<changePracticalStudentsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return educationFetch<changePracticalStudentsResponse>(getChangePracticalStudentsUrl(practicalId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(changeStudentsRequest)
+  }
+);}
+
+
+
+
+
+export const getChangePracticalStudentsMutationKey = () => ['changePracticalStudents'] as const;
+
+export const getChangePracticalStudentsMutationOptions = <TError = ProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePracticalStudents>>, TError,ChangePracticalStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changePracticalStudents>>, TError,ChangePracticalStudentsMutationVariables, TContext> => {
+
+const mutationKey = getChangePracticalStudentsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePracticalStudents>>, ChangePracticalStudentsMutationVariables> = (props) => {
+          const {practicalId,data} = props ?? {};
+
+          return  changePracticalStudents(practicalId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePracticalStudentsMutationResult = NonNullable<Awaited<ReturnType<typeof changePracticalStudents>>>
+    export type ChangePracticalStudentsMutationBody = ChangeStudentsRequest
+    export type ChangePracticalStudentsMutationError = ProblemDetails | void
+    export type ChangePracticalStudentsMutationVariables = {practicalId: string;data: ChangeStudentsRequest}
+
+    /**
+ * @summary Точечное изменение студентов практики
+ */
+export const useChangePracticalStudents = <TError = ProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePracticalStudents>>, TError,ChangePracticalStudentsMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePracticalStudents>>,
+        TError,
+        ChangePracticalStudentsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getChangePracticalStudentsMutationOptions(options), queryClient);
     }

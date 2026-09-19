@@ -7,7 +7,7 @@
 
 /**
  * Ссылка для SSO-перехода преподавателя в контур авторинга внешнего модуля.
- * string ModuleAuthoringLinkResponse.Url открывается новой вкладкой; int ModuleAuthoringLinkResponse.ExpiresInSeconds —
+ * string ModuleAuthoringLinkResponse.Url открывается в текущей вкладке; int ModuleAuthoringLinkResponse.ExpiresInSeconds —
  * сколько ещё живёт вложенный в него токен.
  */
 export interface ModuleAuthoringLinkResponse {

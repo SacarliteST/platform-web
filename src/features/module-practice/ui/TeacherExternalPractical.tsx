@@ -12,13 +12,13 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useBindPracticalModule } from '../../../api/education/practicals/practicals';
 import {
-  useCreatePracticalModuleAuthoringLink,
   useGetEnabledPracticalModules,
   useGetPracticalModuleTasks,
 } from '../../../api/education/practical-modules/practical-modules';
 import type { PracticalDetailResponse } from '../../../api/education/model';
 import { getEducationProblemMessage, toNumber } from '../../../shared/lib';
 import { AppCard } from '../../../shared/ui';
+import { useOpenModuleAuthoring } from '../model/use-open-module-authoring';
 
 type Props = {
   practicalId: string;
@@ -28,28 +28,9 @@ type Props = {
 
 export function TeacherExternalPractical({ practicalId, detail, onChanged }: Props) {
   const [opened, setOpened] = useState(false);
-  const [authoringError, setAuthoringError] = useState<string | null>(null);
-  const authoringLink = useCreatePracticalModuleAuthoringLink();
+  const authoring = useOpenModuleAuthoring();
   const isExternal = detail.kind === 'external';
   const binding = detail.moduleBinding;
-
-  const openAuthoring = async (practicalModuleId: string) => {
-    setAuthoringError(null);
-    const response = await authoringLink
-      .mutateAsync({ practicalModuleId })
-      .catch(() => null);
-
-    if (response?.status === 200) {
-      // токен — только в URL-фрагменте, не логируем и не держим в state
-      window.open(response.data.url, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    if (response?.status === 409) {
-      setAuthoringError('Модуль выключен — обратитесь к администратору.');
-      return;
-    }
-    setAuthoringError('Модуль или IdentityService недоступны, попробуйте позже.');
-  };
 
   return (
     <AppCard p="md">
@@ -66,9 +47,9 @@ export function TeacherExternalPractical({ practicalId, detail, onChanged }: Pro
                 ? 'без лимита времени'
                 : `лимит ${toNumber(detail.timeLimitMinutes)} мин`}
             </Text>
-            {authoringError ? (
+            {authoring.error ? (
               <Alert color="red" variant="light" title="Не удалось открыть модуль">
-                {authoringError}
+                {authoring.error}
               </Alert>
             ) : null}
             <Group gap="xs">
@@ -78,10 +59,10 @@ export function TeacherExternalPractical({ practicalId, detail, onChanged }: Pro
               <Button
                 size="xs"
                 variant="light"
-                loading={authoringLink.isPending}
-                onClick={() => openAuthoring(binding.practicalModuleId)}
+                loading={authoring.isPending}
+                onClick={() => authoring.open(binding.practicalModuleId, binding.externalTaskRef)}
               >
-                Открыть модуль для создания заданий
+                Открыть задание в модуле
               </Button>
             </Group>
           </>

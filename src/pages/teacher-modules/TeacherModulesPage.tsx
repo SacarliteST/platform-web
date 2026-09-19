@@ -1,34 +1,13 @@
 import { Alert, Badge, Button, SimpleGrid, Stack, Text } from '@mantine/core';
-import { useState } from 'react';
-import {
-  useCreatePracticalModuleAuthoringLink,
-  useGetEnabledPracticalModules,
-} from '../../api/education/practical-modules/practical-modules';
+import { useGetEnabledPracticalModules } from '../../api/education/practical-modules/practical-modules';
+import { useOpenModuleAuthoring } from '../../features/module-practice/model/use-open-module-authoring';
 import { AppCard, Page, PageBreadcrumbs, PageHeader, QueryBoundary } from '../../shared/ui';
 
 export function TeacherModulesPage() {
   const modulesQuery = useGetEnabledPracticalModules({ query: { retry: false } });
-  const authoringLink = useCreatePracticalModuleAuthoringLink();
-  const [openingId, setOpeningId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const openModule = async (practicalModuleId: string) => {
-    setError(null);
-    setOpeningId(practicalModuleId);
-    const response = await authoringLink.mutateAsync({ practicalModuleId }).catch(() => null);
-    setOpeningId(null);
-
-    if (response?.status === 200) {
-      // токен — только в URL-фрагменте, не логируем и не держим в state
-      window.open(response.data.url, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    if (response?.status === 409) {
-      setError('Модуль выключен — обратитесь к администратору.');
-      return;
-    }
-    setError('Модуль или IdentityService недоступны, попробуйте позже.');
-  };
+  const authoring = useOpenModuleAuthoring();
+  const { error, openingId } = authoring;
+  const openModule = (practicalModuleId: string) => authoring.open(practicalModuleId);
 
   return (
     <Page>

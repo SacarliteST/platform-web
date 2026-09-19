@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CreateModuleAuthoringLinkRequest,
   CreatePracticalModuleRequest,
   HttpValidationProblemDetails,
   ModuleAuthoringLinkResponse,
@@ -776,6 +777,11 @@ export type createPracticalModuleAuthoringLinkResponse200 = {
   status: 200
 }
 
+export type createPracticalModuleAuthoringLinkResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
 export type createPracticalModuleAuthoringLinkResponse401 = {
   data: void
   status: 401
@@ -804,7 +810,7 @@ export type createPracticalModuleAuthoringLinkResponse502 = {
 export type createPracticalModuleAuthoringLinkResponseSuccess = (createPracticalModuleAuthoringLinkResponse200) & {
   headers: Headers;
 };
-export type createPracticalModuleAuthoringLinkResponseError = (createPracticalModuleAuthoringLinkResponse401 | createPracticalModuleAuthoringLinkResponse403 | createPracticalModuleAuthoringLinkResponse404 | createPracticalModuleAuthoringLinkResponse409 | createPracticalModuleAuthoringLinkResponse502) & {
+export type createPracticalModuleAuthoringLinkResponseError = (createPracticalModuleAuthoringLinkResponse400 | createPracticalModuleAuthoringLinkResponse401 | createPracticalModuleAuthoringLinkResponse403 | createPracticalModuleAuthoringLinkResponse404 | createPracticalModuleAuthoringLinkResponse409 | createPracticalModuleAuthoringLinkResponse502) & {
   headers: Headers;
 };
 
@@ -819,17 +825,24 @@ export const getCreatePracticalModuleAuthoringLinkUrl = (practicalModuleId: stri
 }
 
 /**
- * Обменивает токен преподавателя на токен под audience модуля без сессии и возвращает URL перехода в /teacher-контур модуля. Открывать новой вкладкой.
+ * Обменивает токен преподавателя на токен под audience модуля без сессии и возвращает URL перехода в /teacher-контур модуля. Открывать в текущей вкладке; необязательные returnPath/taskRef добавляют кнопку возврата на платформу и открытие конкретного задания.
  * @summary SSO-ссылка преподавателя в контур авторинга модуля
  */
-export const createPracticalModuleAuthoringLink = async (practicalModuleId: string, options?: Parameters<typeof educationFetch>[1]): Promise<createPracticalModuleAuthoringLinkResponse> => {
+export const createPracticalModuleAuthoringLink = async (practicalModuleId: string,
+    nullCreateModuleAuthoringLinkRequest?: null | CreateModuleAuthoringLinkRequest, options?: Parameters<typeof educationFetch>[1]): Promise<createPracticalModuleAuthoringLinkResponse> => {
 
-  return educationFetch<createPracticalModuleAuthoringLinkResponse>(getCreatePracticalModuleAuthoringLinkUrl(practicalModuleId),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return educationFetch<createPracticalModuleAuthoringLinkResponse>(getCreatePracticalModuleAuthoringLinkUrl(practicalModuleId),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(nullCreateModuleAuthoringLinkRequest)
   }
 );}
 
@@ -839,7 +852,7 @@ export const createPracticalModuleAuthoringLink = async (practicalModuleId: stri
 
 export const getCreatePracticalModuleAuthoringLinkMutationKey = () => ['createPracticalModuleAuthoringLink'] as const;
 
-export const getCreatePracticalModuleAuthoringLinkMutationOptions = <TError = void,
+export const getCreatePracticalModuleAuthoringLinkMutationOptions = <TError = HttpValidationProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, TError,CreatePracticalModuleAuthoringLinkMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, TError,CreatePracticalModuleAuthoringLinkMutationVariables, TContext> => {
 
@@ -854,9 +867,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, CreatePracticalModuleAuthoringLinkMutationVariables> = (props) => {
-          const {practicalModuleId} = props ?? {};
+          const {practicalModuleId,data} = props ?? {};
 
-          return  createPracticalModuleAuthoringLink(practicalModuleId,requestOptions)
+          return  createPracticalModuleAuthoringLink(practicalModuleId,data,requestOptions)
         }
 
 
@@ -867,14 +880,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreatePracticalModuleAuthoringLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>>
-
-    export type CreatePracticalModuleAuthoringLinkMutationError = void
-    export type CreatePracticalModuleAuthoringLinkMutationVariables = {practicalModuleId: string}
+    export type CreatePracticalModuleAuthoringLinkMutationBody = null | CreateModuleAuthoringLinkRequest | undefined
+    export type CreatePracticalModuleAuthoringLinkMutationError = HttpValidationProblemDetails | void
+    export type CreatePracticalModuleAuthoringLinkMutationVariables = {practicalModuleId: string;data?: null | CreateModuleAuthoringLinkRequest}
 
     /**
  * @summary SSO-ссылка преподавателя в контур авторинга модуля
  */
-export const useCreatePracticalModuleAuthoringLink = <TError = void,
+export const useCreatePracticalModuleAuthoringLink = <TError = HttpValidationProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>, TError,CreatePracticalModuleAuthoringLinkMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createPracticalModuleAuthoringLink>>,

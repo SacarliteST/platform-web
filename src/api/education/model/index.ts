@@ -16,6 +16,7 @@ export * from './configurePracticalQuestionsRequest';
 export * from './courseResponse';
 export * from './createAdminProfileRequest';
 export * from './createCourseRequest';
+export * from './createModuleAuthoringLinkRequest';
 export * from './createModuleRequest';
 export * from './createPracticalModuleRequest';
 export * from './createPracticalRequest';

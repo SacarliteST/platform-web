@@ -710,7 +710,7 @@
           "PracticalModules"
         ],
         "summary": "SSO-ссылка преподавателя в контур авторинга модуля",
-        "description": "Обменивает токен преподавателя на токен под audience модуля без сессии и возвращает URL перехода в /teacher-контур модуля. Открывать новой вкладкой.",
+        "description": "Обменивает токен преподавателя на токен под audience модуля без сессии и возвращает URL перехода в /teacher-контур модуля. Открывать в текущей вкладке; необязательные returnPath/taskRef добавляют кнопку возврата на платформу и открытие конкретного задания.",
         "operationId": "CreatePracticalModuleAuthoringLink",
         "parameters": [
           {
@@ -723,6 +723,22 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateModuleAuthoringLinkRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -730,6 +746,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ModuleAuthoringLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -4145,7 +4171,7 @@
             "format": "int32"
           }
         },
-        "description": "Ссылка для SSO-перехода преподавателя в контур авторинга внешнего модуля.\r\nstring ModuleAuthoringLinkResponse.Url открывается новой вкладкой; int ModuleAuthoringLinkResponse.ExpiresInSeconds —\r\nсколько ещё живёт вложенный в него токен."
+        "description": "Ссылка для SSO-перехода преподавателя в контур авторинга внешнего модуля.\r\nstring ModuleAuthoringLinkResponse.Url открывается в текущей вкладке; int ModuleAuthoringLinkResponse.ExpiresInSeconds —\r\nсколько ещё живёт вложенный в него токен."
       },
       "ModuleResponse": {
         "required": [
@@ -5254,6 +5280,30 @@
           }
         },
         "description": "Запрос на обновление заголовка теоретического материала."
+      },
+      "CreateModuleAuthoringLinkRequest": {
+        "required": [
+          "returnPath",
+          "taskRef"
+        ],
+        "type": "object",
+        "properties": {
+          "returnPath": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Путь на платформе, куда модуль вернёт преподавателя: относительный, начинается с\r\nодного «/» (например, `/teacher/courses/…/practicals/…`). Абсолютные адреса запрещены."
+          },
+          "taskRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Ссылка на задание модуля (`externalTaskRef`), которое нужно открыть сразу;\r\nдопустимы латиница, цифры, «-» и «_»."
+          }
+        },
+        "description": "Необязательные параметры перехода преподавателя в контур авторинга внешнего модуля.\r\nТело запроса можно не передавать — тогда модуль откроется на своей стартовой странице\r\nбез кнопки возврата на платформу."
       }
     }
   },

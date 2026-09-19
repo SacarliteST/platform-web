@@ -22,4 +22,9 @@ export interface CreateAdminProfileRequest {
   middleName: string;
   /** Роль профиля (по умолчанию — студент). */
   role?: ProfileRole;
+  /**
+     * Учебная группа (до 50 символов); пусто — без группы.
+     * @nullable
+     */
+  group?: string | null;
 }

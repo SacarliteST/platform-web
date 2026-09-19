@@ -33,6 +33,7 @@ import type {
   HttpValidationProblemDetails,
   ProblemDetails,
   StudentAssignmentPageResponse,
+  StudentGroupResponse,
   UpdateAdminProfileRequest,
   UpdateCourseStudentsRequest,
   UpdatePracticalStudentsRequest
@@ -1033,7 +1034,7 @@ export const getGetCourseStudentAssignmentsUrl = (courseId: string,
 }
 
 /**
- * Поиск по ФИО и логину, фильтр assigned (true/false), страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.
+ * Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.
  * @summary Постраничный список студентов для назначения на курс
  */
 export const getCourseStudentAssignments = async (courseId: string,
@@ -1178,7 +1179,7 @@ export const getGetPracticalStudentAssignmentsUrl = (practicalId: string,
 }
 
 /**
- * Поиск по ФИО и логину, фильтр assigned (true/false), страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.
+ * Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.
  * @summary Постраничный список студентов для назначения на практику
  */
 export const getPracticalStudentAssignments = async (practicalId: string,
@@ -1497,3 +1498,128 @@ export const useChangePracticalStudents = <TError = ProblemDetails | void,
       > => {
       return useMutation(getChangePracticalStudentsMutationOptions(options), queryClient);
     }
+    export type getStudentGroupsResponse200 = {
+  data: StudentGroupResponse[]
+  status: 200
+}
+
+export type getStudentGroupsResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getStudentGroupsResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getStudentGroupsResponseSuccess = (getStudentGroupsResponse200) & {
+  headers: Headers;
+};
+export type getStudentGroupsResponseError = (getStudentGroupsResponse401 | getStudentGroupsResponse403) & {
+  headers: Headers;
+};
+
+export type getStudentGroupsResponse = (getStudentGroupsResponseSuccess | getStudentGroupsResponseError)
+
+export const getGetStudentGroupsUrl = () => {
+
+
+
+
+  return `/api/v1/student-groups`
+}
+
+/**
+ * Названия групп привязанных студентов с числом студентов в каждой, по алфавиту. Для преподавателя и администратора.
+ * @summary Учебные группы студентов
+ */
+export const getStudentGroups = async ( options?: Parameters<typeof educationFetch>[1]): Promise<getStudentGroupsResponse> => {
+
+  return educationFetch<getStudentGroupsResponse>(getGetStudentGroupsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudentGroupsQueryKey = () => {
+    return [
+    `/api/v1/student-groups`
+    ] as const;
+    }
+
+
+export const getGetStudentGroupsQueryOptions = <TData = Awaited<ReturnType<typeof getStudentGroups>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStudentGroups>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudentGroupsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudentGroups>>> = ({ signal }) => getStudentGroups({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudentGroups>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetStudentGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof getStudentGroups>>>
+export type GetStudentGroupsQueryError = void
+
+
+export function useGetStudentGroups<TData = Awaited<ReturnType<typeof getStudentGroups>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStudentGroups>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStudentGroups>>,
+          TError,
+          Awaited<ReturnType<typeof getStudentGroups>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetStudentGroups<TData = Awaited<ReturnType<typeof getStudentGroups>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStudentGroups>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStudentGroups>>,
+          TError,
+          Awaited<ReturnType<typeof getStudentGroups>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetStudentGroups<TData = Awaited<ReturnType<typeof getStudentGroups>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStudentGroups>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Учебные группы студентов
+ */
+
+export function useGetStudentGroups<TData = Awaited<ReturnType<typeof getStudentGroups>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStudentGroups>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetStudentGroupsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

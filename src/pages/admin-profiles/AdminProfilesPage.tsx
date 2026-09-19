@@ -1,5 +1,6 @@
 import {
   Alert,
+  Autocomplete,
   Badge,
   Button,
   Group,
@@ -17,8 +18,10 @@ import {
   useCreateAdminProfile,
   useDeactivateAdminProfile,
   useGetAdminProfiles,
+  useGetStudentGroups,
+  useUpdateAdminProfile,
 } from '../../api/education/admin-profiles/admin-profiles';
-import type { CreateAdminProfileRequest } from '../../api/education/model';
+import type { AdminProfileResponse, CreateAdminProfileRequest } from '../../api/education/model';
 import { ProfileRole } from '../../api/education/model';
 import { useGetUserDetails } from '../../api/identity/users/users';
 import { UserRole } from '../../api/identity/model';
@@ -41,7 +44,19 @@ const emptyForm: CreateAdminProfileRequest = {
   lastName: '',
   middleName: '',
   role: ProfileRole.Student,
+  group: '',
 };
+
+type EditForm = {
+  legacyUserId: string;
+  login: string;
+  lastName: string;
+  firstName: string;
+  middleName: string;
+  group: string;
+};
+
+const MAX_GROUP_LENGTH = 50;
 
 const roleOptions = [
   { value: ProfileRole.Student, label: 'Студент' },
@@ -66,7 +81,13 @@ export function AdminProfilesPage() {
   const profilesQuery = useGetAdminProfiles({ query: { retry: false } });
   const createMutation = useCreateAdminProfile();
   const deactivateMutation = useDeactivateAdminProfile();
+  const updateMutation = useUpdateAdminProfile();
+  const groupsQuery = useGetStudentGroups({ query: { retry: false } });
+  const groupNames =
+    groupsQuery.data?.status === 200 ? groupsQuery.data.data.map((group) => group.name) : [];
 
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [createOpened, createModal] = useDisclosure(false);
   const [form, setForm] = useState<CreateAdminProfileRequest>(emptyForm);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -92,11 +113,62 @@ export function AdminProfilesPage() {
   }, [detectedRole]);
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/profiles'] });
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/profiles'] }),
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/student-groups'] }),
+    ]);
+
+  const startEdit = (profile: AdminProfileResponse) => {
+    setEditError(null);
+    setEditForm({
+      legacyUserId: profile.legacyUserId,
+      login: profile.login,
+      lastName: profile.lastName,
+      firstName: profile.firstName,
+      middleName: profile.middleName,
+      group: profile.group ?? '',
+    });
+  };
+
+  const submitEdit = async () => {
+    if (!editForm) {
+      return;
+    }
+    setEditError(null);
+    const response = await updateMutation
+      .mutateAsync({
+        legacyUserId: editForm.legacyUserId,
+        data: {
+          login: editForm.login.trim(),
+          lastName: editForm.lastName.trim(),
+          firstName: editForm.firstName.trim(),
+          middleName: editForm.middleName.trim(),
+          group: editForm.group.trim() || undefined,
+        },
+      })
+      .catch(() => null);
+
+    if (!response) {
+      setEditError('Education API недоступен.');
+      return;
+    }
+    if (response.status === 200) {
+      await invalidate();
+      setEditForm(null);
+      return;
+    }
+    setEditError(
+      response.data && typeof response.data === 'object'
+        ? getEducationProblemMessage(response.data, response.status)
+        : 'Не удалось сохранить профиль.',
+    );
+  };
 
   const submitCreate = async () => {
     setCreateError(null);
-    const response = await createMutation.mutateAsync({ data: form }).catch(() => null);
+    const response = await createMutation
+      .mutateAsync({ data: { ...form, group: form.group?.trim() || undefined } })
+      .catch(() => null);
 
     if (!response) {
       setCreateError('Education API недоступен.');
@@ -177,6 +249,7 @@ export function AdminProfilesPage() {
                 <Table.Tr>
                   <Table.Th>ФИО</Table.Th>
                   <Table.Th>Логин</Table.Th>
+                  <Table.Th>Группа</Table.Th>
                   <Table.Th>Identity ID</Table.Th>
                   <Table.Th>Статус</Table.Th>
                   <Table.Th>Действия</Table.Th>
@@ -196,6 +269,11 @@ export function AdminProfilesPage() {
                       <Text size="sm">{profile.login}</Text>
                     </Table.Td>
                     <Table.Td>
+                      <Text size="sm" c={profile.group ? undefined : 'dimmed'}>
+                        {profile.group ?? '—'}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
                       <Text size="sm" c="dimmed">
                         {profile.identityUserId ?? '—'}
                       </Text>
@@ -206,20 +284,21 @@ export function AdminProfilesPage() {
                       </Badge>
                     </Table.Td>
                     <Table.Td>
-                      {profile.isActive ? (
-                        <Button
-                          size="xs"
-                          variant="subtle"
-                          color="red"
-                          onClick={() => setDeactivateTarget(profile.legacyUserId)}
-                        >
-                          Отвязать
+                      <Group gap={4} wrap="nowrap">
+                        <Button size="xs" variant="subtle" onClick={() => startEdit(profile)}>
+                          Изменить
                         </Button>
-                      ) : (
-                        <Text c="dimmed" size="xs">
-                          —
-                        </Text>
-                      )}
+                        {profile.isActive ? (
+                          <Button
+                            size="xs"
+                            variant="subtle"
+                            color="red"
+                            onClick={() => setDeactivateTarget(profile.legacyUserId)}
+                          >
+                            Отвязать
+                          </Button>
+                        ) : null}
+                      </Group>
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -275,6 +354,16 @@ export function AdminProfilesPage() {
               value={form.middleName}
               onChange={(event) => setForm({ ...form, middleName: event.currentTarget.value })}
             />
+            {(detectedRole ?? form.role ?? ProfileRole.Student) === ProfileRole.Student ? (
+              <Autocomplete
+                label="Группа"
+                description="Учебная группа студента, например «ИС-21». Необязательно — можно задать позже"
+                data={groupNames}
+                value={form.group ?? ''}
+                maxLength={MAX_GROUP_LENGTH}
+                onChange={(value) => setForm({ ...form, group: value })}
+              />
+            ) : null}
             {identityIdIsGuid && identityLookup.isFetching ? (
               <Text size="sm" c="dimmed">
                 Определяем роль по IdentityService…
@@ -315,6 +404,68 @@ export function AdminProfilesPage() {
             />
           </Stack>
         </form>
+      </Modal>
+
+      <Modal
+        opened={editForm !== null}
+        onClose={() => setEditForm(null)}
+        title="Изменить профиль"
+        centered
+      >
+        {editForm ? (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitEdit();
+            }}
+          >
+            <Stack gap="md">
+              {editError ? (
+                <Alert color="red" variant="light" title="Не удалось сохранить">
+                  {editError}
+                </Alert>
+              ) : null}
+              <TextInput
+                label="Логин / отображаемое имя"
+                value={editForm.login}
+                onChange={(event) => setEditForm({ ...editForm, login: event.currentTarget.value })}
+                withAsterisk
+              />
+              <Group grow>
+                <TextInput
+                  label="Фамилия"
+                  value={editForm.lastName}
+                  onChange={(event) => setEditForm({ ...editForm, lastName: event.currentTarget.value })}
+                  withAsterisk
+                />
+                <TextInput
+                  label="Имя"
+                  value={editForm.firstName}
+                  onChange={(event) => setEditForm({ ...editForm, firstName: event.currentTarget.value })}
+                  withAsterisk
+                />
+              </Group>
+              <TextInput
+                label="Отчество"
+                value={editForm.middleName}
+                onChange={(event) => setEditForm({ ...editForm, middleName: event.currentTarget.value })}
+              />
+              <Autocomplete
+                label="Группа"
+                description="Оставьте пустым, чтобы снять группу"
+                data={groupNames}
+                value={editForm.group}
+                maxLength={MAX_GROUP_LENGTH}
+                onChange={(value) => setEditForm({ ...editForm, group: value })}
+              />
+              <FormActions
+                submitLabel="Сохранить"
+                loading={updateMutation.isPending}
+                onCancel={() => setEditForm(null)}
+              />
+            </Stack>
+          </form>
+        ) : null}
       </Modal>
 
       <ConfirmModal

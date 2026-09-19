@@ -8,6 +8,7 @@
 export type GetPracticalStudentAssignmentsParams = {
 search?: string;
 assigned?: boolean;
+group?: string;
 page?: number;
 pageSize?: number;
 };

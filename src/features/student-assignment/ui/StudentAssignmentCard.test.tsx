@@ -6,7 +6,11 @@ import { renderWithProviders } from '../../../test/render';
 import type { StudentAssignmentPageResponse } from '../../../api/education/model';
 
 const changeCourse = vi.fn();
+const groupsResult = {
+  data: { status: 200, data: [{ name: 'ИС-21', studentsCount: 12 }, { name: 'ИС-22', studentsCount: 9 }] },
+};
 const fetchCoursePage = vi.fn();
+const courseListParams = vi.fn();
 let pageData: StudentAssignmentPageResponse;
 
 vi.mock('../../../api/education/admin-profiles/admin-profiles', () => ({
@@ -14,17 +18,17 @@ vi.mock('../../../api/education/admin-profiles/admin-profiles', () => ({
   getPracticalStudentAssignments: vi.fn(),
   getGetCourseStudentAssignmentsQueryKey: (id: string) => ['course-students', id],
   getGetPracticalStudentAssignmentsQueryKey: (id: string) => ['practical-students', id],
-  useGetCourseStudentAssignments: () => ({
-    data: { status: 200, data: pageData },
-    isPending: false,
-    isError: false,
-  }),
+  useGetCourseStudentAssignments: (_id: string, params: unknown) => {
+    courseListParams(params);
+    return { data: { status: 200, data: pageData }, isPending: false, isError: false };
+  },
+  useGetStudentGroups: () => groupsResult,
   useGetPracticalStudentAssignments: () => ({ data: undefined, isPending: false, isError: false }),
   useChangeCourseStudents: () => ({ mutateAsync: changeCourse, isPending: false }),
   useChangePracticalStudents: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-const ann = { legacyUserId: 'a', fullName: 'Иванова Анна ', login: 'ivanova', isAssigned: true };
+const ann = { legacyUserId: 'a', fullName: 'Иванова Анна ', login: 'ivanova', isAssigned: true, group: 'ИС-21' };
 const bob = { legacyUserId: 'b', fullName: 'Петров Борис ', login: 'petrov', isAssigned: false };
 
 function page(overrides: Partial<StudentAssignmentPageResponse> = {}): StudentAssignmentPageResponse {
@@ -35,6 +39,7 @@ describe('StudentAssignmentCard', () => {
   beforeEach(() => {
     changeCourse.mockReset();
     fetchCoursePage.mockReset();
+    courseListParams.mockReset();
     pageData = page();
   });
 
@@ -122,5 +127,33 @@ describe('StudentAssignmentCard', () => {
     expect(await screen.findByText(/принадлежат другому преподавателю/)).toBeInTheDocument();
     // правки не потеряны — их можно повторить
     expect(screen.getByText('Изменения: назначить 1, снять 0')).toBeInTheDocument();
+  });
+});
+
+describe('StudentAssignmentCard: группа', () => {
+  beforeEach(() => {
+    changeCourse.mockReset();
+    fetchCoursePage.mockReset();
+    courseListParams.mockReset();
+    pageData = page();
+  });
+
+  it('показывает группу студента, а без группы — прочерк', () => {
+    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+
+    expect(screen.getByRole('columnheader', { name: 'Группа' })).toBeInTheDocument();
+    expect(screen.getByText('ИС-21')).toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+  });
+
+  it('фильтр по группе передаёт её в запрос и сбрасывается', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+
+    await user.selectOptions(screen.getByLabelText('Фильтр по группе'), 'ИС-22');
+
+    await waitFor(() =>
+      expect(courseListParams).toHaveBeenLastCalledWith(expect.objectContaining({ group: 'ИС-22', page: 1 })),
+    );
   });
 });

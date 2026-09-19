@@ -17,4 +17,9 @@ export interface StudentAssignmentEntryResponse {
   login: string;
   /** Признак текущего назначения. */
   isAssigned: boolean;
+  /**
+     * Учебная группа или `null`, если не задана.
+     * @nullable
+     */
+  group?: string | null;
 }

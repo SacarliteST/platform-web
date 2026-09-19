@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   Group,
+  NativeSelect,
   Pagination,
   SegmentedControl,
   Stack,
@@ -23,6 +24,7 @@ import {
   useChangePracticalStudents,
   useGetCourseStudentAssignments,
   useGetPracticalStudentAssignments,
+  useGetStudentGroups,
 } from '../../../api/education/admin-profiles/admin-profiles';
 import type {
   GetCourseStudentAssignmentsParams,
@@ -92,6 +94,7 @@ export function StudentAssignmentCard({ kind, id }: Props) {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const [filter, setFilter] = useState<AssignmentFilter>('assigned');
+  const [group, setGroup] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pending, setPending] = useState<PendingChanges>(new Map());
   const [notice, setNotice] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
@@ -102,9 +105,23 @@ export function StudentAssignmentCard({ kind, id }: Props) {
   const params: GetCourseStudentAssignmentsParams = {
     search: debouncedSearch || undefined,
     assigned: toAssignedParam(filter),
+    group: group ?? undefined,
     page,
     pageSize: PAGE_SIZE,
   };
+
+  const groupsQuery = useGetStudentGroups({ query: { retry: false, staleTime: 60_000 } });
+  const groupsData = groupsQuery.data;
+  const groupOptions = useMemo(
+    () => [
+      { value: '', label: 'Все группы' },
+      ...(groupsData?.status === 200 ? groupsData.data : []).map((item) => ({
+        value: item.name,
+        label: item.name + ' (' + item.studentsCount + ')',
+      })),
+    ],
+    [groupsData],
+  );
 
   const courseQuery = useGetCourseStudentAssignments(id, params, {
     query: { enabled: isCourse && Boolean(id), retry: false, placeholderData: keepPreviousData },
@@ -145,10 +162,16 @@ export function StudentAssignmentCard({ kind, id }: Props) {
     setPage(1);
   };
 
+  const changeGroup = (value: string) => {
+    setGroup(value || null);
+    setPage(1);
+  };
+
   const fetchPage = (pageNumber: number) => {
     const bulkParams: GetCourseStudentAssignmentsParams = {
       search: debouncedSearch || undefined,
       assigned: toAssignedParam(filter),
+      group: group ?? undefined,
       page: pageNumber,
       pageSize: BULK_PAGE_SIZE,
     };
@@ -231,7 +254,8 @@ export function StudentAssignmentCard({ kind, id }: Props) {
     });
 
   const listFailed = listQuery.isError || (listQuery.data !== undefined && listQuery.data.status !== 200);
-  const noAssignedYet = filter === 'assigned' && !debouncedSearch && data?.assignedCount === 0;
+  const noAssignedYet =
+    filter === 'assigned' && !debouncedSearch && !group && data?.assignedCount === 0;
 
   return (
     <AppCard p="md">
@@ -259,11 +283,20 @@ export function StudentAssignmentCard({ kind, id }: Props) {
         <Group gap="sm" align="flex-end" wrap="wrap">
           <TextInput
             aria-label="Поиск студента"
-            placeholder="Поиск по ФИО или логину"
+            placeholder="Поиск по ФИО, логину или группе"
             value={search}
             onChange={(event) => changeSearch(event.currentTarget.value)}
             style={{ flex: '1 1 220px' }}
           />
+          {groupOptions.length > 1 ? (
+            <NativeSelect
+              aria-label="Фильтр по группе"
+              data={groupOptions}
+              value={group ?? ''}
+              onChange={(event) => changeGroup(event.currentTarget.value)}
+              w={200}
+            />
+          ) : null}
           <SegmentedControl
             aria-label="Фильтр по назначению"
             data={filterOptions}
@@ -334,6 +367,7 @@ export function StudentAssignmentCard({ kind, id }: Props) {
                     </Table.Th>
                     <Table.Th>Студент</Table.Th>
                     <Table.Th>Логин</Table.Th>
+                    <Table.Th>Группа</Table.Th>
                     <Table.Th w={130}>Статус</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -360,6 +394,9 @@ export function StudentAssignmentCard({ kind, id }: Props) {
                           <Text size="sm" c="dimmed">
                             {student.login}
                           </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{student.group ?? '—'}</Text>
                         </Table.Td>
                         <Table.Td>
                           {change ? (

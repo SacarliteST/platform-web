@@ -55,6 +55,7 @@ export * from './startModuleSessionResponse';
 export * from './startTestResponse';
 export * from './studentAssignmentEntryResponse';
 export * from './studentAssignmentPageResponse';
+export * from './studentGroupResponse';
 export * from './submitAnswerRequest';
 export * from './submitTestRequest';
 export * from './taskFileCommentResponse';

@@ -17,4 +17,9 @@ export interface UpdateAdminProfileRequest {
   lastName: string;
   /** Отчество пользователя. */
   middleName: string;
+  /**
+     * Учебная группа (до 50 символов); пусто или отсутствие значения снимает группу.
+     * @nullable
+     */
+  group?: string | null;
 }

@@ -26,4 +26,9 @@ export interface AdminProfileResponse {
   middleName: string;
   /** Признак активной связи с identity-сервисом. */
   isActive: boolean;
+  /**
+     * Учебная группа или `null`, если не задана.
+     * @nullable
+     */
+  group?: string | null;
 }

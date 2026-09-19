@@ -3550,7 +3550,7 @@
           "AdminProfiles"
         ],
         "summary": "Постраничный список студентов для назначения на курс",
-        "description": "Поиск по ФИО и логину, фильтр assigned (true/false), страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.",
+        "description": "Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.",
         "operationId": "GetCourseStudentAssignments",
         "parameters": [
           {
@@ -3574,6 +3574,13 @@
             "in": "query",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -3629,7 +3636,7 @@
           "AdminProfiles"
         ],
         "summary": "Постраничный список студентов для назначения на практику",
-        "description": "Поиск по ФИО и логину, фильтр assigned (true/false), страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.",
+        "description": "Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.",
         "operationId": "GetPracticalStudentAssignments",
         "parameters": [
           {
@@ -3653,6 +3660,13 @@
             "in": "query",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -3805,6 +3819,37 @@
           }
         }
       }
+    },
+    "/api/v1/student-groups": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Учебные группы студентов",
+        "description": "Названия групп привязанных студентов с числом студентов в каждой, по алфавиту. Для преподавателя и администратора.",
+        "operationId": "GetStudentGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentGroupResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3880,6 +3925,13 @@
           "isActive": {
             "type": "boolean",
             "description": "Признак активной связи с identity-сервисом."
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа или `null`, если не задана."
           }
         },
         "description": "Локальный учебный профиль пользователя."
@@ -4110,6 +4162,13 @@
           "role": {
             "description": "Роль профиля (по умолчанию — студент).",
             "$ref": "#/components/schemas/ProfileRole"
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа (до 50 символов); пусто — без группы."
           }
         },
         "description": "Запрос на создание локального учебного профиля и связи с identity-пользователем."
@@ -5400,6 +5459,13 @@
           "middleName": {
             "type": "string",
             "description": "Отчество пользователя."
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа (до 50 символов); пусто или отсутствие значения снимает группу."
           }
         },
         "description": "Запрос на обновление отображаемых данных локального учебного профиля."
@@ -5632,6 +5698,13 @@
           "isAssigned": {
             "type": "boolean",
             "description": "Признак текущего назначения."
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа или `null`, если не задана."
           }
         },
         "description": "Студент в постраничном списке назначения на курс или практический материал."
@@ -5661,6 +5734,25 @@
           }
         },
         "description": "Запрос на изменение набора студентов курса или практики точечно: добавить и убрать.\r\nОстальные назначения не затрагиваются, поэтому одновременные правки разных преподавателей не перезаписывают друг друга."
+      },
+      "StudentGroupResponse": {
+        "required": [
+          "name",
+          "studentsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название группы."
+          },
+          "studentsCount": {
+            "type": "integer",
+            "description": "Число привязанных студентов в группе.",
+            "format": "int32"
+          }
+        },
+        "description": "Учебная группа студентов."
       }
     }
   },

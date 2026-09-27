@@ -72,6 +72,50 @@ function isActive(session: ModuleSessionResponse | null | undefined): boolean {
   return true;
 }
 
+/** Обратный отсчёт до `expiresAt` активной попытки. Тикает раз в секунду; по истечении один раз
+ * зовёт onExpire — сервер завершает сессию лениво, поэтому это только сигнал обновить состояние. */
+function SessionCountdown({
+  expiresAt,
+  onExpire,
+}: {
+  expiresAt: string;
+  onExpire: () => void;
+}) {
+  const deadline = useMemo(() => new Date(expiresAt).getTime(), [expiresAt]);
+  const [remainingMs, setRemainingMs] = useState(() => deadline - Date.now());
+  const expiredRef = useRef(false);
+
+  useEffect(() => {
+    expiredRef.current = false;
+    setRemainingMs(deadline - Date.now());
+    const timer = setInterval(() => {
+      const next = deadline - Date.now();
+      setRemainingMs(next);
+      if (next <= 0 && !expiredRef.current) {
+        expiredRef.current = true;
+        onExpire();
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [deadline, onExpire]);
+
+  const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const text = `${minutes}:${String(seconds).padStart(2, '0')}`;
+  const low = totalSeconds <= 60;
+
+  return totalSeconds > 0 ? (
+    <Text size="sm" c={low ? 'red' : 'dimmed'} fw={low ? 600 : undefined}>
+      Осталось: {text}
+    </Text>
+  ) : (
+    <Text size="sm" c="red">
+      Время вышло, обновляем…
+    </Text>
+  );
+}
+
 function Gate({
   practicalId,
   taskId,
@@ -159,10 +203,18 @@ function Gate({
           <Stack gap="sm">
             <Group justify="space-between" wrap="wrap" gap="xs">
               <Text fw={600}>Практика в модуле «{moduleName}»</Text>
-              <Text size="sm" c="dimmed">
-                Попытка {Math.min(attemptsCount + (canResume ? 0 : 1), triesCount)} из {triesCount}
-                {timeLimitMinutes ? ` · лимит ${timeLimitMinutes} мин` : ' · без лимита'}
-              </Text>
+              <Group gap="xs" wrap="nowrap">
+                <Text size="sm" c="dimmed">
+                  Попытка {Math.min(attemptsCount + (canResume ? 0 : 1), triesCount)} из {triesCount}
+                  {timeLimitMinutes ? ` · лимит ${timeLimitMinutes} мин` : ' · без лимита'}
+                </Text>
+                {canResume && session?.expiresAt ? (
+                  <SessionCountdown
+                    expiresAt={session.expiresAt}
+                    onExpire={() => void currentQuery.refetch()}
+                  />
+                ) : null}
+              </Group>
             </Group>
 
             {bestGrade !== null ? (

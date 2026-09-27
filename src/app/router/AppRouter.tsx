@@ -1,8 +1,7 @@
 import { Loader } from '@mantine/core';
 import { lazy, Suspense, type ReactNode } from 'react';
-import { Route, Routes } from 'react-router-dom';
-import { LoginPage, RequireAuth, RequireRole } from '../../session';
-import { HomePage } from '../../pages/home';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { getDefaultSessionRoute, LoginPage, RequireAuth, RequireRole, useSessionStore } from '../../session';
 import { NotFoundPage } from '../../pages/not-found';
 import { StudentHomePage } from '../../pages/student-home';
 import { TeacherHomePage } from '../../pages/teacher-home';
@@ -104,11 +103,21 @@ function StudentRoute({ children }: { children: ReactNode }) {
   );
 }
 
+function RootRedirect() {
+  const status = useSessionStore((state) => state.status);
+  const user = useSessionStore((state) => state.user);
+
+  if (status === 'authenticated' && user) {
+    return <Navigate to={getDefaultSessionRoute(user)} replace />;
+  }
+  return <Navigate to="/login" replace />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<RootRedirect />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="help" element={<HelpPage />} />
 

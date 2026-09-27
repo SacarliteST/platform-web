@@ -5,7 +5,6 @@ export { AdminSettingsPage } from './admin-settings';
 export { AdminUserDetailsPage } from './admin-user-details';
 export { AdminUsersPage } from './admin-users';
 export { HelpPage } from './help';
-export { HomePage } from './home';
 export { NotFoundPage } from './not-found';
 export { StudentCoursePage } from './student-course';
 export { StudentCoursesPage } from './student-courses';

@@ -1,5 +1,6 @@
 import { Badge, Button, Group, Text } from '@mantine/core';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import logoMark from '../../assets/branding/logo-mark.png';
 import { useSessionStore } from '../../session';
 import './AppLayout.css';
 
@@ -23,7 +24,6 @@ export function AppLayout() {
   const clearSession = useSessionStore((state) => state.clearSession);
   const userRoles = user?.roles ?? [];
   const navigationItems = [
-    { to: '/', label: 'Главная', visible: status === 'authenticated' },
     { to: '/admin', label: 'Администратор', visible: canSeeAdmin(userRoles) },
     { to: '/teacher', label: 'Преподаватель', visible: canSeeTeacher(userRoles) },
     { to: '/student', label: 'Студент', visible: canSeeStudent(userRoles) },
@@ -41,9 +41,7 @@ export function AppLayout() {
       <header className="app-shell__header">
         <div className="app-shell__header-inner">
           <Group gap="sm" wrap="nowrap">
-            <div className="app-shell__logo-placeholder" aria-label="Место под логотип">
-              LOGO
-            </div>
+            <img className="app-shell__logo" src={logoMark} alt="Scoodle" width={32} height={32} />
             <div>
               <h1 className="app-shell__title">Scoodle</h1>
               <Text c="gray.4" size="xs">
@@ -71,12 +69,7 @@ export function AppLayout() {
             {navigationItems
               .filter((item) => item.visible)
               .map((item) => (
-                <NavLink
-                  key={`${item.label}:${item.to}`}
-                  to={item.to}
-                  className="app-shell__nav-link"
-                  end={item.to === '/'}
-                >
+                <NavLink key={`${item.label}:${item.to}`} to={item.to} className="app-shell__nav-link">
                   {item.label}
                 </NavLink>
               ))}

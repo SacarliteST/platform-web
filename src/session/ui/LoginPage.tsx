@@ -123,6 +123,7 @@ export function LoginPage() {
 
     setSession({
       accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
       user,
     });
     navigate(getDefaultSessionRoute(user), { replace: true });

@@ -1,5 +1,6 @@
 import { Badge, Button, Group, Text } from '@mantine/core';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { logout } from '../../api/identity/auth/auth';
 import logoMark from '../../assets/branding/logo-mark.png';
 import { useSessionStore } from '../../session';
 import './AppLayout.css';
@@ -32,7 +33,12 @@ export function AppLayout() {
   const isLoginPage = location.pathname === '/login';
 
   const handleLogout = () => {
+    const { refreshToken } = useSessionStore.getState();
     clearSession();
+    if (refreshToken) {
+      // Отзываем refresh-токен на сервере; сбой сети выходу не мешает.
+      void logout({ refreshToken }).catch(() => undefined);
+    }
     navigate('/login');
   };
 

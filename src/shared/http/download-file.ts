@@ -3,6 +3,7 @@ import { isAccessTokenActive } from '../../session/lib';
 import { useSessionStore } from '../../session/store';
 import { buildApiUrl } from './build-api-url';
 import { createAuthorizationHeader } from './auth-header';
+import { ensureFreshAccessToken } from './refresh-session';
 
 /**
  * Скачивание защищённого файла Education API.
@@ -12,7 +13,8 @@ import { createAuthorizationHeader } from './auth-header';
  */
 export async function downloadEducationFile(path: string, fallbackFileName = 'file'): Promise<void> {
   const { educationApiUrl } = getRuntimeConfig();
-  const { accessToken, status, clearSession } = useSessionStore.getState();
+  await ensureFreshAccessToken();
+  const { accessToken, status, refreshToken, clearSession } = useSessionStore.getState();
 
   const response = await fetch(buildApiUrl(educationApiUrl, path), {
     headers: { ...createAuthorizationHeader(accessToken) },
@@ -20,7 +22,7 @@ export async function downloadEducationFile(path: string, fallbackFileName = 'fi
 
   if (response.status === 401) {
     // TD-009: разлогиниваем только при действительно истёкшем токене.
-    if (status === 'authenticated' && !isAccessTokenActive(accessToken)) {
+    if (status === 'authenticated' && !refreshToken && !isAccessTokenActive(accessToken)) {
       clearSession();
     }
     throw new Error('Требуется вход в систему.');

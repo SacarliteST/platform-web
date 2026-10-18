@@ -1,4 +1,4 @@
-import { Button, Group, SegmentedControl, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Button, Group, SegmentedControl, Stack, Table, Tabs, Text, TextInput } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import type { CourseGradebookResponse } from '../../../api/education/model';
 import type { SortDirection } from '../../../shared/lib';
@@ -12,7 +12,10 @@ import {
   type GradebookFilter,
   type GradebookSortKey,
 } from '../model/gradebook-rows';
+import { downloadCsv } from '../lib/download-csv';
+import { summarizeByPractical } from '../model/gradebook-summary';
 import { GradeBadge } from './GradeBadge';
+import { GroupSummaryTable } from './GroupSummaryTable';
 
 type Props = { book: CourseGradebookResponse; fileName?: string };
 
@@ -21,16 +24,6 @@ const DEFAULT_DIRECTION: Record<GradebookSortKey, SortDirection> = {
   passedCount: 'desc',
   averageGrade: 'desc',
 };
-
-function downloadCsv(content: string, fileName: string) {
-  const blob = new Blob(['﻿', content], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-}
 
 /** Ведомость курса: студенты × практики с оценками, поиск, фильтр по итогу, сортировка и выгрузка в CSV. */
 export function GradebookTable({ book, fileName = 'gradebook.csv' }: Props) {
@@ -47,6 +40,8 @@ export function GradebookTable({ book, fileName = 'gradebook.csv' }: Props) {
     [allRows, search, filter, sort],
   );
 
+  const practicalTotals = useMemo(() => summarizeByPractical(book, rows), [book, rows]);
+
   const toggleSort = (key: GradebookSortKey) =>
     setSort((current) =>
       current.key === key
@@ -60,7 +55,7 @@ export function GradebookTable({ book, fileName = 'gradebook.csv' }: Props) {
     </SortableTh>
   );
 
-  return (
+  const matrix = (
     <Stack gap="sm" p="md">
       <Group justify="space-between" align="flex-end" wrap="wrap" gap="sm">
         <Group align="flex-end" gap="md" wrap="wrap">
@@ -160,6 +155,23 @@ export function GradebookTable({ book, fileName = 'gradebook.csv' }: Props) {
                 </Table.Tr>
               ))}
             </Table.Tbody>
+            <Table.Tfoot>
+              <Table.Tr>
+                <Table.Th>Зачтено / средняя</Table.Th>
+                {practicalTotals.map((total) => (
+                  <Table.Td key={total.practicalId} ta="center">
+                    <Text size="sm" fw={600}>
+                      {total.passed} из {total.assigned}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {total.averageGrade === null ? '—' : total.averageGrade.toFixed(2)}
+                    </Text>
+                  </Table.Td>
+                ))}
+                <Table.Td />
+                <Table.Td />
+              </Table.Tr>
+            </Table.Tfoot>
           </Table>
         </Table.ScrollContainer>
       )}
@@ -167,5 +179,18 @@ export function GradebookTable({ book, fileName = 'gradebook.csv' }: Props) {
         «нет» — оценки ещё нет (условия практики не выполнены), «—» — практика студенту не назначена. Средняя — по практикам, где оценка уже есть.
       </Text>
     </Stack>
+  );
+
+  return (
+    <Tabs defaultValue="matrix" keepMounted={false}>
+      <Tabs.List px="md" pt="xs">
+        <Tabs.Tab value="matrix">Ведомость</Tabs.Tab>
+        <Tabs.Tab value="groups">Сводка по группам</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Panel value="matrix">{matrix}</Tabs.Panel>
+      <Tabs.Panel value="groups">
+        <GroupSummaryTable rows={allRows} fileName={fileName.replace(/\.csv$/, '-summary.csv')} />
+      </Tabs.Panel>
+    </Tabs>
   );
 }

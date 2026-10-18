@@ -12,6 +12,20 @@ type Props = {
   title?: string;
 };
 
+/**
+ * Названия известных видов событий. Платформа модуль-агностична: незнакомый `kind` (другой модуль)
+ * показывается как есть. Итог — это локальная финализация модуля, а не подтверждение оценки Education
+ * (оценка приходит отдельным HTTP-каналом и показана в таблице), поэтому подпись явно говорит «по данным модуля».
+ */
+const KIND_META: Record<string, { label: string; color: string }> = {
+  sql_submit: { label: 'Попытка', color: 'blue' },
+  session_summary: { label: 'Итог по данным модуля', color: 'grape' },
+};
+
+export function describeEventKind(kind: string): { label: string; color: string } {
+  return KIND_META[kind] ?? { label: kind, color: 'gray' };
+}
+
 /** События по времени; при одинаковом времени сохраняется порядок, в котором их отдал сервер. */
 export function sortEventsByTime(events: readonly ModuleSessionEventResponse[]): ModuleSessionEventResponse[] {
   return events
@@ -65,19 +79,22 @@ export function SessionEventsFeed({ practicalId, sessionId, title = 'Прото�
           </Text>
         ) : (
           <Timeline bulletSize={14} lineWidth={2}>
-            {events.map((event) => (
-              <Timeline.Item key={event.eventId}>
-                <Group gap="xs" wrap="wrap">
-                  <Badge size="sm" radius="sm" variant="light">
-                    {event.kind}
-                  </Badge>
-                  <Text size="xs" c="dimmed">
-                    {formatDateTime(event.occurredAt)}
-                  </Text>
-                </Group>
-                <EventBody event={event} />
-              </Timeline.Item>
-            ))}
+            {events.map((event) => {
+              const meta = describeEventKind(event.kind);
+              return (
+                <Timeline.Item key={event.eventId} color={meta.color} data-kind={event.kind}>
+                  <Group gap="xs" wrap="wrap">
+                    <Badge size="sm" radius="sm" variant="light" color={meta.color}>
+                      {meta.label}
+                    </Badge>
+                    <Text size="xs" c="dimmed">
+                      {formatDateTime(event.occurredAt)}
+                    </Text>
+                  </Group>
+                  <EventBody event={event} />
+                </Timeline.Item>
+              );
+            })}
           </Timeline>
         )}
       </Stack>

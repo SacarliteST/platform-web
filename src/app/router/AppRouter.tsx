@@ -27,6 +27,9 @@ const AdminModulesPage = lazy(() =>
 const TeacherCoursesPage = lazy(() =>
   import('../../pages/teacher-courses').then((m) => ({ default: m.TeacherCoursesPage })),
 );
+const TeacherGradebookPage = lazy(() =>
+  import('../../pages/teacher-gradebook').then((m) => ({ default: m.TeacherGradebookPage })),
+);
 const TeacherCoursePage = lazy(() =>
   import('../../pages/teacher-course').then((m) => ({ default: m.TeacherCoursePage })),
 );
@@ -150,6 +153,10 @@ export function AppRouter() {
         />
         <Route path="teacher/courses" element={<TeacherRoute><TeacherCoursesPage /></TeacherRoute>} />
         <Route path="teacher/modules" element={<TeacherRoute><TeacherModulesPage /></TeacherRoute>} />
+        <Route
+          path="teacher/courses/:courseId/gradebook"
+          element={<TeacherRoute><TeacherGradebookPage /></TeacherRoute>}
+        />
         <Route
           path="teacher/courses/:courseId"
           element={<TeacherRoute><TeacherCoursePage /></TeacherRoute>}

@@ -30,7 +30,7 @@ import {
 } from '../../api/education/practicals/practicals';
 import { TeacherExternalPractical, TeacherSessionProtocols } from '../../features/module-practice';
 import { StudentAssignmentCard } from '../../features/student-assignment';
-import { TestProtocolsTable } from '../../features/teacher-results';
+import { PracticalGradesTable, TestProtocolsTable } from '../../features/teacher-results';
 import {
   useAcceptTaskFile,
   useAddTaskFileComment,
@@ -40,6 +40,7 @@ import {
   useGetTeacherPracticalProtocols,
   useGetTestProtocol,
 } from '../../api/education/test-results/test-results';
+import { useGetPracticalStudentGrades } from '../../api/education/grades/grades';
 import { QUESTION_KIND_LABELS, questionKindFromTypeId } from '../../entities';
 import { downloadEducationFile } from '../../shared/http';
 import { toNumber } from '../../shared/lib';
@@ -104,6 +105,7 @@ export function TeacherPracticalPage() {
               <>
                 <StudentAssignmentCard kind="practical" id={practicalId} />
                 <TeacherSessionProtocols practicalId={practicalId} />
+                <GradesTab practicalId={practicalId} />
               </>
             ) : (
               <Tabs defaultValue="setup">
@@ -113,6 +115,7 @@ export function TeacherPracticalPage() {
                   <Tabs.Tab value="students">Студенты</Tabs.Tab>
                   <Tabs.Tab value="submissions">Сдачи</Tabs.Tab>
                   <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
+                  <Tabs.Tab value="grades">Оценки</Tabs.Tab>
                 </Tabs.List>
                 <Tabs.Panel value="setup" pt="md">
                   <SetupTab practicalId={practicalId} />
@@ -128,6 +131,9 @@ export function TeacherPracticalPage() {
                 </Tabs.Panel>
                 <Tabs.Panel value="protocols" pt="md">
                   <ProtocolsTab practicalId={practicalId} />
+                </Tabs.Panel>
+                <Tabs.Panel value="grades" pt="md">
+                  <GradesTab practicalId={practicalId} />
                 </Tabs.Panel>
               </Tabs>
             )}
@@ -622,6 +628,28 @@ function SubmissionsTab({ practicalId }: { practicalId: string }) {
           </Group>
         </Stack>
       </Modal>
+    </AppCard>
+  );
+}
+
+function GradesTab({ practicalId }: { practicalId: string }) {
+  const gradesQuery = useGetPracticalStudentGrades(practicalId, {
+    query: { enabled: Boolean(practicalId), retry: false },
+  });
+
+  return (
+    <AppCard p={0}>
+      <QueryBoundary
+        isPending={gradesQuery.isPending}
+        isError={gradesQuery.isError || gradesQuery.data?.status !== 200}
+        data={gradesQuery.data?.status === 200 ? gradesQuery.data.data : undefined}
+        errorTitle="Не удалось загрузить оценки"
+        emptyTitle="Студентов нет"
+        emptyDescription="Назначьте студентов на практику."
+        isEmpty={(rows) => rows.length === 0}
+      >
+        {(rows) => <PracticalGradesTable items={rows} />}
+      </QueryBoundary>
     </AppCard>
   );
 }

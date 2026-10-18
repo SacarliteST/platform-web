@@ -3497,6 +3497,87 @@
         }
       }
     },
+    "/api/v1/practicals/{practicalId}/student-grades": {
+      "get": {
+        "tags": [
+          "Grades"
+        ],
+        "summary": "Оценки студентов по практике (преподаватель)",
+        "description": "Итоговая оценка по практике (шкала 2–5, то же правило, что видит сам студент) для каждого назначенного студента. status: passed — не ниже 3, failed — ниже, incomplete — условия практики не выполнены. Доступ: преподаватель — владелец курса практики.",
+        "operationId": "GetPracticalStudentGrades",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PracticalStudentGradeResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/gradebook": {
+      "get": {
+        "tags": [
+          "Grades"
+        ],
+        "summary": "Ведомость курса (преподаватель)",
+        "description": "Студенты курса × практики курса: оценка 2–5 и статус каждой ячейки, число назначенных и зачтённых практик, средняя оценка. Студенты — назначенные на курс или на любую его практику. Доступ: владелец курса.",
+        "operationId": "GetCourseGradebook",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseGradebookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/v1/tasks/{taskId}/file": {
       "get": {
         "tags": [
@@ -4210,6 +4291,28 @@
         },
         "description": "Запрос на настройку вопросов и порогов оценивания практического материала."
       },
+      "CourseGradebookResponse": {
+        "required": [
+          "practicals",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "practicals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradebookPracticalResponse"
+            }
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradebookStudentResponse"
+            }
+          }
+        },
+        "description": "Ведомость курса: практики и студенты с оценками."
+      },
       "CourseResponse": {
         "required": [
           "id",
@@ -4559,6 +4662,122 @@
         },
         "description": "Привязка внешней практики к заданию модуля."
       },
+      "GradebookCellResponse": {
+        "required": [
+          "practicalId",
+          "assigned",
+          "grade",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "practicalId": {
+            "type": "string",
+            "description": "Практика.",
+            "format": "uuid"
+          },
+          "assigned": {
+            "type": "boolean",
+            "description": "`false` — практика студенту не назначена."
+          },
+          "grade": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Оценка 2–5 или `null`.",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "`passed` / `failed` / `incomplete`."
+          }
+        },
+        "description": "Ячейка ведомости: студент × практика."
+      },
+      "GradebookPracticalResponse": {
+        "required": [
+          "id",
+          "name",
+          "isExternal",
+          "moduleId",
+          "moduleName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isExternal": {
+            "type": "boolean"
+          },
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleName": {
+            "type": "string"
+          }
+        },
+        "description": "Практика в ведомости курса."
+      },
+      "GradebookStudentResponse": {
+        "required": [
+          "studentId",
+          "studentName",
+          "login",
+          "group",
+          "cells",
+          "assignedCount",
+          "passedCount",
+          "averageGrade"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradebookCellResponse"
+            }
+          },
+          "assignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageGrade": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Строка ведомости — студент и его ячейки в порядке практик ведомости."
+      },
       "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
@@ -4608,7 +4827,7 @@
         "type": "string",
         "format": "binary"
       },
-      "JsonElement": {},
+      "JsonElement": { },
       "ModuleAuthoringLinkResponse": {
         "required": [
           "url",
@@ -4991,6 +5210,60 @@
           }
         },
         "description": "Данные практического материала, возвращаемые API системы обучения."
+      },
+      "PracticalStudentGradeResponse": {
+        "required": [
+          "studentId",
+          "studentName",
+          "login",
+          "group",
+          "grade",
+          "status",
+          "messages"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "description": "Идентификатор студента в учебной системе.",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "description": "Полное имя студента."
+          },
+          "login": {
+            "type": "string",
+            "description": "Логин студента."
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа или `null`."
+          },
+          "grade": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Оценка 2–5 или `null`, если условия практики ещё не выполнены.",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "description": "`passed` — зачтено (не ниже 3), `failed` — ниже проходной, `incomplete` — оценки ещё нет."
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Что осталось выполнить, если оценки ещё нет."
+          }
+        },
+        "description": "Оценка студента по практике для преподавателя."
       },
       "ProblemDetails": {
         "type": "object",

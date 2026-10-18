@@ -20,7 +20,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  PracticalGradeResponse
+  CourseGradebookResponse,
+  PracticalGradeResponse,
+  PracticalStudentGradeResponse
 } from '../model';
 
 import { educationFetch } from '../../../shared/http/education-fetch';
@@ -159,6 +161,256 @@ export function useGetPracticalGrade<TData = Awaited<ReturnType<typeof getPracti
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPracticalGradeQueryOptions(practicalId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getPracticalStudentGradesResponse200 = {
+  data: PracticalStudentGradeResponse[]
+  status: 200
+}
+
+export type getPracticalStudentGradesResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getPracticalStudentGradesResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getPracticalStudentGradesResponseSuccess = (getPracticalStudentGradesResponse200) & {
+  headers: Headers;
+};
+export type getPracticalStudentGradesResponseError = (getPracticalStudentGradesResponse401 | getPracticalStudentGradesResponse403) & {
+  headers: Headers;
+};
+
+export type getPracticalStudentGradesResponse = (getPracticalStudentGradesResponseSuccess | getPracticalStudentGradesResponseError)
+
+export const getGetPracticalStudentGradesUrl = (practicalId: string,) => {
+
+
+
+
+  return `/api/v1/practicals/${practicalId}/student-grades`
+}
+
+/**
+ * Итоговая оценка по практике (шкала 2–5, то же правило, что видит сам студент) для каждого назначенного студента. status: passed — не ниже 3, failed — ниже, incomplete — условия практики не выполнены. Доступ: преподаватель — владелец курса практики.
+ * @summary Оценки студентов по практике (преподаватель)
+ */
+export const getPracticalStudentGrades = async (practicalId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getPracticalStudentGradesResponse> => {
+
+  return educationFetch<getPracticalStudentGradesResponse>(getGetPracticalStudentGradesUrl(practicalId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPracticalStudentGradesQueryKey = (practicalId: string,) => {
+    return [
+    `/api/v1/practicals/${practicalId}/student-grades`
+    ] as const;
+    }
+
+
+export const getGetPracticalStudentGradesQueryOptions = <TData = Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError = void>(practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticalStudentGradesQueryKey(practicalId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticalStudentGrades>>> = ({ signal }) => getPracticalStudentGrades(practicalId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: practicalId !== null && practicalId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPracticalStudentGradesQueryResult = NonNullable<Awaited<ReturnType<typeof getPracticalStudentGrades>>>
+export type GetPracticalStudentGradesQueryError = void
+
+
+export function useGetPracticalStudentGrades<TData = Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError = void>(
+ practicalId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPracticalStudentGrades>>,
+          TError,
+          Awaited<ReturnType<typeof getPracticalStudentGrades>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticalStudentGrades<TData = Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPracticalStudentGrades>>,
+          TError,
+          Awaited<ReturnType<typeof getPracticalStudentGrades>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticalStudentGrades<TData = Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Оценки студентов по практике (преподаватель)
+ */
+
+export function useGetPracticalStudentGrades<TData = Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError = void>(
+ practicalId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticalStudentGrades>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPracticalStudentGradesQueryOptions(practicalId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getCourseGradebookResponse200 = {
+  data: CourseGradebookResponse
+  status: 200
+}
+
+export type getCourseGradebookResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getCourseGradebookResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getCourseGradebookResponseSuccess = (getCourseGradebookResponse200) & {
+  headers: Headers;
+};
+export type getCourseGradebookResponseError = (getCourseGradebookResponse401 | getCourseGradebookResponse403) & {
+  headers: Headers;
+};
+
+export type getCourseGradebookResponse = (getCourseGradebookResponseSuccess | getCourseGradebookResponseError)
+
+export const getGetCourseGradebookUrl = (courseId: string,) => {
+
+
+
+
+  return `/api/v1/courses/${courseId}/gradebook`
+}
+
+/**
+ * Студенты курса × практики курса: оценка 2–5 и статус каждой ячейки, число назначенных и зачтённых практик, средняя оценка. Студенты — назначенные на курс или на любую его практику. Доступ: владелец курса.
+ * @summary Ведомость курса (преподаватель)
+ */
+export const getCourseGradebook = async (courseId: string, options?: Parameters<typeof educationFetch>[1]): Promise<getCourseGradebookResponse> => {
+
+  return educationFetch<getCourseGradebookResponse>(getGetCourseGradebookUrl(courseId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCourseGradebookQueryKey = (courseId: string,) => {
+    return [
+    `/api/v1/courses/${courseId}/gradebook`
+    ] as const;
+    }
+
+
+export const getGetCourseGradebookQueryOptions = <TData = Awaited<ReturnType<typeof getCourseGradebook>>, TError = void>(courseId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseGradebook>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCourseGradebookQueryKey(courseId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCourseGradebook>>> = ({ signal }) => getCourseGradebook(courseId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: courseId !== null && courseId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCourseGradebook>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCourseGradebookQueryResult = NonNullable<Awaited<ReturnType<typeof getCourseGradebook>>>
+export type GetCourseGradebookQueryError = void
+
+
+export function useGetCourseGradebook<TData = Awaited<ReturnType<typeof getCourseGradebook>>, TError = void>(
+ courseId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseGradebook>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCourseGradebook>>,
+          TError,
+          Awaited<ReturnType<typeof getCourseGradebook>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCourseGradebook<TData = Awaited<ReturnType<typeof getCourseGradebook>>, TError = void>(
+ courseId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseGradebook>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCourseGradebook>>,
+          TError,
+          Awaited<ReturnType<typeof getCourseGradebook>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCourseGradebook<TData = Awaited<ReturnType<typeof getCourseGradebook>>, TError = void>(
+ courseId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseGradebook>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Ведомость курса (преподаватель)
+ */
+
+export function useGetCourseGradebook<TData = Awaited<ReturnType<typeof getCourseGradebook>>, TError = void>(
+ courseId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCourseGradebook>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCourseGradebookQueryOptions(courseId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

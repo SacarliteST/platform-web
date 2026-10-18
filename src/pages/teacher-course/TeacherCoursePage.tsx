@@ -105,6 +105,9 @@ export function TeacherCoursePage() {
           <Button component={Link} to="/teacher/courses" size="sm" variant="outline">
             К курсам
           </Button>
+          <Button component={Link} to={`/teacher/courses/${courseId}/gradebook`} size="sm" variant="outline">
+            Ведомость
+          </Button>
           <Button
             size="sm"
             onClick={() => {

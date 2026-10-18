@@ -9,11 +9,17 @@
  * Детализация ответа в протоколе попытки тестирования.
  */
 export interface TestProtocolAnswerResponse {
+  /** Идентификатор вопроса. */
   questionId: string;
+  /** Текст вопроса. */
   questionText: string;
+  /** Вес вопроса — максимальный балл за полностью верный ответ. */
   questionWeight: number;
+  /** Фактически начисленный балл за ответ студента в этой попытке. */
   questionScore: number;
+  /** Ответ студента в закодированном виде — для расшифровки нужны QuestionType и QuestionBody. */
   userAnswer: string;
+  /** Засчитан ли ответ как полностью верный (`QuestionScore == QuestionWeight`). */
   isCorrect: boolean;
   /** Идентификатор типа вопроса (как в `TestQuestionResponse.Type`). */
   questionType: string;

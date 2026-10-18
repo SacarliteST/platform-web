@@ -17,4 +17,12 @@ export interface TestProtocolSummaryResponse {
   maxScore: number | null;
   tryNumber: number;
   grade: number;
+  /** @nullable */
+  studentName?: string | null;
+  /** @nullable */
+  startedAt?: string | null;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  durationSeconds?: number | null;
 }

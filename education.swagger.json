@@ -450,6 +450,354 @@
         }
       }
     },
+    "/api/v1/courses/{courseId}/student-assignments": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Постраничный список студентов для назначения на курс",
+        "description": "Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.",
+        "operationId": "GetCourseStudentAssignments",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assigned",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentAssignmentPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/student-assignments": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Постраничный список студентов для назначения на практику",
+        "description": "Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.",
+        "operationId": "GetPracticalStudentAssignments",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assigned",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentAssignmentPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/students/changes": {
+      "post": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Точечное изменение студентов курса",
+        "description": "Добавляет студентов из add и снимает студентов из remove, остальных не затрагивает. Только для преподавателя-владельца; неизвестные / не привязанные id в add → 400.",
+        "operationId": "ChangeCourseStudents",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStudentsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/students/changes": {
+      "post": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Точечное изменение студентов практики",
+        "description": "Добавляет студентов из add и снимает студентов из remove, остальных не затрагивает. Только для преподавателя-владельца; неизвестные / не привязанные id в add → 400.",
+        "operationId": "ChangePracticalStudents",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStudentsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/student-groups": {
+      "get": {
+        "tags": [
+          "AdminProfiles"
+        ],
+        "summary": "Учебные группы студентов",
+        "description": "Названия групп привязанных студентов с числом студентов в каждой, по алфавиту. Для преподавателя и администратора.",
+        "operationId": "GetStudentGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentGroupResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/events": {
+      "get": {
+        "tags": [
+          "AdminEvents"
+        ],
+        "summary": "Журнал административных действий Education",
+        "description": "Последние события — регистрация/изменение модулей, привязка/отвязка профилей. Не путать с аудитом IdentityService (логины/роли/блокировки) — это отдельный источник, специфичный для Education. По умолчанию 100 записей, максимум 500.",
+        "operationId": "GetAdminEvents",
+        "parameters": [
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/v1/admin/practical-modules": {
       "get": {
         "tags": [
@@ -3543,313 +3891,6 @@
           }
         }
       }
-    },
-    "/api/v1/courses/{courseId}/student-assignments": {
-      "get": {
-        "tags": [
-          "AdminProfiles"
-        ],
-        "summary": "Постраничный список студентов для назначения на курс",
-        "description": "Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца курса.",
-        "operationId": "GetCourseStudentAssignments",
-        "parameters": [
-          {
-            "name": "courseId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assigned",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "group",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentAssignmentPageResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
-    "/api/v1/practicals/{practicalId}/student-assignments": {
-      "get": {
-        "tags": [
-          "AdminProfiles"
-        ],
-        "summary": "Постраничный список студентов для назначения на практику",
-        "description": "Поиск по ФИО, логину и группе, фильтры assigned (true/false) и group, страницы по pageSize ≤ 200. Только для преподавателя-владельца практики.",
-        "operationId": "GetPracticalStudentAssignments",
-        "parameters": [
-          {
-            "name": "practicalId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assigned",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "group",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentAssignmentPageResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
-    "/api/v1/courses/{courseId}/students/changes": {
-      "post": {
-        "tags": [
-          "AdminProfiles"
-        ],
-        "summary": "Точечное изменение студентов курса",
-        "description": "Добавляет студентов из add и снимает студентов из remove, остальных не затрагивает. Только для преподавателя-владельца; неизвестные / не привязанные id в add → 400.",
-        "operationId": "ChangeCourseStudents",
-        "parameters": [
-          {
-            "name": "courseId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeStudentsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
-    "/api/v1/practicals/{practicalId}/students/changes": {
-      "post": {
-        "tags": [
-          "AdminProfiles"
-        ],
-        "summary": "Точечное изменение студентов практики",
-        "description": "Добавляет студентов из add и снимает студентов из remove, остальных не затрагивает. Только для преподавателя-владельца; неизвестные / не привязанные id в add → 400.",
-        "operationId": "ChangePracticalStudents",
-        "parameters": [
-          {
-            "name": "practicalId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeStudentsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
-    "/api/v1/student-groups": {
-      "get": {
-        "tags": [
-          "AdminProfiles"
-        ],
-        "summary": "Учебные группы студентов",
-        "description": "Названия групп привязанных студентов с числом студентов в каждой, по алфавиту. Для преподавателя и администратора.",
-        "operationId": "GetStudentGroups",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StudentGroupResponse"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -3880,6 +3921,47 @@
           }
         },
         "description": "Запрос на добавление комментария преподавателя к файлу сдачи."
+      },
+      "AdminEventResponse": {
+        "required": [
+          "id",
+          "actorIdentityUserId",
+          "actorName",
+          "eventType",
+          "description",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorIdentityUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "actorName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Запись журнала административных действий Education."
       },
       "AdminProfileResponse": {
         "required": [
@@ -4032,6 +4114,32 @@
           }
         },
         "description": "Запрос привязки внешнего модуля к практике."
+      },
+      "ChangeStudentsRequest": {
+        "required": [
+          "add",
+          "remove"
+        ],
+        "type": "object",
+        "properties": {
+          "add": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Студенты, которых нужно назначить. Уже назначенные пропускаются."
+          },
+          "remove": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Студенты, с которых нужно снять назначение. Не назначенные пропускаются."
+          }
+        },
+        "description": "Запрос на изменение набора студентов курса или практики точечно: добавить и убрать.\r\nОстальные назначения не затрагиваются, поэтому одновременные правки разных преподавателей не перезаписывают друг друга."
       },
       "CompleteModuleSessionRequest": {
         "required": [
@@ -4193,6 +4301,30 @@
           }
         },
         "description": "Запрос на создание курса, принадлежащего преподавателю."
+      },
+      "CreateModuleAuthoringLinkRequest": {
+        "required": [
+          "returnPath",
+          "taskRef"
+        ],
+        "type": "object",
+        "properties": {
+          "returnPath": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Путь на платформе, куда модуль вернёт преподавателя: относительный, начинается с\r\nодного «/» (например, `/teacher/courses/…/practicals/…`). Абсолютные адреса запрещены."
+          },
+          "taskRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Ссылка на задание модуля (`externalTaskRef`), которое нужно открыть сразу;\r\nдопустимы латиница, цифры, «-» и «_»."
+          }
+        },
+        "description": "Необязательные параметры перехода преподавателя в контур авторинга внешнего модуля.\r\nТело запроса можно не передавать — тогда модуль откроется на своей стартовой странице\r\nбез кнопки возврата на платформу."
       },
       "CreateModuleRequest": {
         "required": [
@@ -4533,6 +4665,12 @@
           },
           "payload": {
             "$ref": "#/components/schemas/JsonElement"
+          },
+          "markdown": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "Одно событие ленты «цифрового следа» попытки."
@@ -4650,6 +4788,13 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "attemptsCount": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         },
         "description": "Строка списка попыток внешнего модуля для преподавателя."
@@ -5018,6 +5163,101 @@
         },
         "description": "Данные начатой или продолженной попытки тестирования."
       },
+      "StudentAssignmentEntryResponse": {
+        "required": [
+          "legacyUserId",
+          "fullName",
+          "login",
+          "isAssigned"
+        ],
+        "type": "object",
+        "properties": {
+          "legacyUserId": {
+            "type": "string",
+            "description": "Идентификатор пользователя в учебной системе.",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Полное имя пользователя."
+          },
+          "login": {
+            "type": "string",
+            "description": "Логин пользователя — отличает однофамильцев."
+          },
+          "isAssigned": {
+            "type": "boolean",
+            "description": "Признак текущего назначения."
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа или `null`, если не задана."
+          }
+        },
+        "description": "Студент в постраничном списке назначения на курс или практический материал."
+      },
+      "StudentAssignmentPageResponse": {
+        "required": [
+          "items",
+          "totalCount",
+          "assignedCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAssignmentEntryResponse"
+            },
+            "description": "Студенты запрошенной страницы, отсортированные по фамилии и имени."
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Число студентов, подходящих под поиск и фильтр.",
+            "format": "int32"
+          },
+          "assignedCount": {
+            "type": "integer",
+            "description": "Число всех назначенных студентов — не зависит от поиска и фильтра.",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Номер возвращённой страницы, начиная с 1.",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Размер страницы.",
+            "format": "int32"
+          }
+        },
+        "description": "Страница студентов для назначения на курс или практический материал."
+      },
+      "StudentGroupResponse": {
+        "required": [
+          "name",
+          "studentsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название группы."
+          },
+          "studentsCount": {
+            "type": "integer",
+            "description": "Число привязанных студентов в группе.",
+            "format": "int32"
+          }
+        },
+        "description": "Учебная группа студентов."
+      },
       "SubmitAnswerRequest": {
         "required": [
           "id",
@@ -5175,24 +5415,30 @@
         "properties": {
           "questionId": {
             "type": "string",
+            "description": "Идентификатор вопроса.",
             "format": "uuid"
           },
           "questionText": {
-            "type": "string"
+            "type": "string",
+            "description": "Текст вопроса."
           },
           "questionWeight": {
             "type": "number",
+            "description": "Вес вопроса — максимальный балл за полностью верный ответ.",
             "format": "double"
           },
           "questionScore": {
             "type": "number",
+            "description": "Фактически начисленный балл за ответ студента в этой попытке.",
             "format": "double"
           },
           "userAnswer": {
-            "type": "string"
+            "type": "string",
+            "description": "Ответ студента в закодированном виде — для расшифровки нужны QuestionType и QuestionBody."
           },
           "isCorrect": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Засчитан ли ответ как полностью верный (`QuestionScore == QuestionWeight`)."
           },
           "questionType": {
             "type": "string",
@@ -5286,6 +5532,33 @@
           },
           "grade": {
             "type": "integer",
+            "format": "int32"
+          },
+          "studentName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "submittedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "durationSeconds": {
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           }
         },
@@ -5608,151 +5881,6 @@
           }
         },
         "description": "Запрос на обновление заголовка теоретического материала."
-      },
-      "CreateModuleAuthoringLinkRequest": {
-        "required": [
-          "returnPath",
-          "taskRef"
-        ],
-        "type": "object",
-        "properties": {
-          "returnPath": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Путь на платформе, куда модуль вернёт преподавателя: относительный, начинается с\r\nодного «/» (например, `/teacher/courses/…/practicals/…`). Абсолютные адреса запрещены."
-          },
-          "taskRef": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Ссылка на задание модуля (`externalTaskRef`), которое нужно открыть сразу;\r\nдопустимы латиница, цифры, «-» и «_»."
-          }
-        },
-        "description": "Необязательные параметры перехода преподавателя в контур авторинга внешнего модуля.\r\nТело запроса можно не передавать — тогда модуль откроется на своей стартовой странице\r\nбез кнопки возврата на платформу."
-      },
-      "StudentAssignmentPageResponse": {
-        "required": [
-          "items",
-          "totalCount",
-          "assignedCount",
-          "page",
-          "pageSize"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StudentAssignmentEntryResponse"
-            },
-            "description": "Студенты запрошенной страницы, отсортированные по фамилии и имени."
-          },
-          "totalCount": {
-            "type": "integer",
-            "description": "Число студентов, подходящих под поиск и фильтр.",
-            "format": "int32"
-          },
-          "assignedCount": {
-            "type": "integer",
-            "description": "Число всех назначенных студентов — не зависит от поиска и фильтра.",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "description": "Номер возвращённой страницы, начиная с 1.",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "description": "Размер страницы.",
-            "format": "int32"
-          }
-        },
-        "description": "Страница студентов для назначения на курс или практический материал."
-      },
-      "StudentAssignmentEntryResponse": {
-        "required": [
-          "legacyUserId",
-          "fullName",
-          "login",
-          "isAssigned"
-        ],
-        "type": "object",
-        "properties": {
-          "legacyUserId": {
-            "type": "string",
-            "description": "Идентификатор пользователя в учебной системе.",
-            "format": "uuid"
-          },
-          "fullName": {
-            "type": "string",
-            "description": "Полное имя пользователя."
-          },
-          "login": {
-            "type": "string",
-            "description": "Логин пользователя — отличает однофамильцев."
-          },
-          "isAssigned": {
-            "type": "boolean",
-            "description": "Признак текущего назначения."
-          },
-          "group": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Учебная группа или `null`, если не задана."
-          }
-        },
-        "description": "Студент в постраничном списке назначения на курс или практический материал."
-      },
-      "ChangeStudentsRequest": {
-        "required": [
-          "add",
-          "remove"
-        ],
-        "type": "object",
-        "properties": {
-          "add": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Студенты, которых нужно назначить. Уже назначенные пропускаются."
-          },
-          "remove": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Студенты, с которых нужно снять назначение. Не назначенные пропускаются."
-          }
-        },
-        "description": "Запрос на изменение набора студентов курса или практики точечно: добавить и убрать.\r\nОстальные назначения не затрагиваются, поэтому одновременные правки разных преподавателей не перезаписывают друг друга."
-      },
-      "StudentGroupResponse": {
-        "required": [
-          "name",
-          "studentsCount"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Название группы."
-          },
-          "studentsCount": {
-            "type": "integer",
-            "description": "Число привязанных студентов в группе.",
-            "format": "int32"
-          }
-        },
-        "description": "Учебная группа студентов."
       }
     }
   },
@@ -5771,6 +5899,9 @@
     },
     {
       "name": "AdminProfiles"
+    },
+    {
+      "name": "AdminEvents"
     },
     {
       "name": "PracticalModules"

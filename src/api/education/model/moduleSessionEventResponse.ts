@@ -14,4 +14,6 @@ export interface ModuleSessionEventResponse {
   kind: string;
   occurredAt: string;
   payload: JsonElement;
+  /** @nullable */
+  markdown?: string | null;
 }

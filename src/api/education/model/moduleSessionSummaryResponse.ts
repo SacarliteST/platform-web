@@ -21,4 +21,6 @@ export interface ModuleSessionSummaryResponse {
   startedAt: string;
   /** @nullable */
   endedAt: string | null;
+  /** @nullable */
+  attemptsCount?: number | null;
 }

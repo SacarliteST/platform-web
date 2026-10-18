@@ -24,3 +24,5 @@ export type {
   IdentityApiProblem,
   IdentityApiProblemPresentation,
 } from './identity-problem-details';
+export { compareNullable, formatDateTime, formatDuration, matchesAllWords } from './table';
+export type { SortDirection } from './table';

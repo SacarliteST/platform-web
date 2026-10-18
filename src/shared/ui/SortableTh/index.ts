@@ -1,0 +1,1 @@
+export { SortableTh } from './SortableTh';

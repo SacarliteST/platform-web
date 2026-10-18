@@ -14,6 +14,7 @@ export { StudentPracticalPage } from './student-practical';
 export { StudentTheoryPage } from './student-theory';
 export { TeacherCoursePage } from './teacher-course';
 export { TeacherCoursesPage } from './teacher-courses';
+export { TeacherGradebookPage } from './teacher-gradebook';
 export { TeacherHomePage } from './teacher-home';
 export { TeacherModulePage } from './teacher-module';
 export { TeacherPracticalPage } from './teacher-practical';

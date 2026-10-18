@@ -30,6 +30,7 @@ import {
 } from '../../api/education/practicals/practicals';
 import { TeacherExternalPractical, TeacherSessionProtocols } from '../../features/module-practice';
 import { StudentAssignmentCard } from '../../features/student-assignment';
+import { TestProtocolsTable } from '../../features/teacher-results';
 import {
   useAcceptTaskFile,
   useAddTaskFileComment,
@@ -647,32 +648,7 @@ function ProtocolsTab({ practicalId }: { practicalId: string }) {
           isEmpty={(rows) => rows.length === 0}
         >
           {(rows) => (
-            <Table striped highlightOnHover withTableBorder withColumnBorders>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Попытка</Table.Th>
-                  <Table.Th w={110}>Баллы</Table.Th>
-                  <Table.Th w={90}>Оценка</Table.Th>
-                  <Table.Th w={120}>Действия</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {rows.map((row) => (
-                  <Table.Tr key={row.id}>
-                    <Table.Td>#{toNumber(row.tryNumber)}</Table.Td>
-                    <Table.Td>
-                      {row.score === null ? '—' : `${toNumber(row.score)} / ${toNumber(row.maxScore)}`}
-                    </Table.Td>
-                    <Table.Td>{toNumber(row.grade)}</Table.Td>
-                    <Table.Td>
-                      <Button size="xs" variant="subtle" onClick={() => setSelectedId(row.id)}>
-                        Разбор
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+            <TestProtocolsTable items={rows} selectedId={selectedId} onSelect={setSelectedId} />
           )}
         </QueryBoundary>
       </AppCard>

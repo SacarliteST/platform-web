@@ -1,8 +1,9 @@
-import { Badge, Code, Group, Loader, Spoiler, Stack, Text, Timeline } from '@mantine/core';
-import { useMemo } from 'react';
+import { Badge, Button, Code, Group, Loader, Spoiler, Stack, Text, Timeline } from '@mantine/core';
+import { useMemo, useState } from 'react';
 import { useGetModuleSessionEvents } from '../../../api/education/module-sessions/module-sessions';
 import type { ModuleSessionEventResponse } from '../../../api/education/model';
-import { AppCard } from '../../../shared/ui';
+import { formatDateTime } from '../../../shared/lib';
+import { AppCard, MarkdownView } from '../../../shared/ui';
 
 type Props = {
   practicalId: string;
@@ -11,14 +12,29 @@ type Props = {
   title?: string;
 };
 
-/** Лента «цифрового следа» одной попытки внешнего модуля (события + payload). */
+/** События по времени; при одинаковом времени сохраняется порядок, в котором их отдал сервер. */
+export function sortEventsByTime(events: readonly ModuleSessionEventResponse[]): ModuleSessionEventResponse[] {
+  return events
+    .map((event, index) => ({ event, index, time: Date.parse(event.occurredAt) }))
+    .sort((a, b) => {
+      const aTime = Number.isNaN(a.time) ? Number.POSITIVE_INFINITY : a.time;
+      const bTime = Number.isNaN(b.time) ? Number.POSITIVE_INFINITY : b.time;
+      return aTime - bTime || a.index - b.index;
+    })
+    .map(({ event }) => event);
+}
+
+/**
+ * Лента «цифрового следа» одной попытки внешнего модуля. Если модуль прислал готовый разбор (markdown) —
+ * показываем его, а сырые данные (JSON) прячем под кнопку; иначе — прежний вид с JSON.
+ */
 export function SessionEventsFeed({ practicalId, sessionId, title = 'Протокол попытки' }: Props) {
   const eventsQuery = useGetModuleSessionEvents(practicalId, sessionId, {
     query: { enabled: Boolean(practicalId && sessionId), retry: false },
   });
 
   const events = useMemo<ModuleSessionEventResponse[]>(
-    () => (eventsQuery.data?.status === 200 ? [...eventsQuery.data.data] : []),
+    () => (eventsQuery.data?.status === 200 ? sortEventsByTime(eventsQuery.data.data) : []),
     [eventsQuery.data],
   );
 
@@ -56,10 +72,10 @@ export function SessionEventsFeed({ practicalId, sessionId, title = 'Прото�
                     {event.kind}
                   </Badge>
                   <Text size="xs" c="dimmed">
-                    {formatTimestamp(event.occurredAt)}
+                    {formatDateTime(event.occurredAt)}
                   </Text>
                 </Group>
-                <PayloadBlock payload={event.payload} />
+                <EventBody event={event} />
               </Timeline.Item>
             ))}
           </Timeline>
@@ -69,30 +85,55 @@ export function SessionEventsFeed({ practicalId, sessionId, title = 'Прото�
   );
 }
 
-function PayloadBlock({ payload }: { payload: ModuleSessionEventResponse['payload'] }) {
-  const text = useMemo(() => {
-    try {
-      const json = JSON.stringify(payload, null, 2);
-      return json && json !== '{}' ? json : null;
-    } catch {
-      return null;
-    }
-  }, [payload]);
+function EventBody({ event }: { event: ModuleSessionEventResponse }) {
+  const markdown = event.markdown?.trim() ? event.markdown : null;
+  const json = useMemo(() => payloadText(event.payload), [event.payload]);
 
-  if (!text) {
+  if (markdown) {
+    return (
+      <Stack gap={4} mt={4}>
+        <MarkdownView>{markdown}</MarkdownView>
+        {json ? <RawData text={json} /> : null}
+      </Stack>
+    );
+  }
+
+  if (!json) {
     return null;
   }
 
   return (
     <Spoiler maxHeight={72} showLabel="Показать данные" hideLabel="Свернуть" mt={4}>
       <Code block style={{ fontSize: 12 }}>
-        {text}
+        {json}
       </Code>
     </Spoiler>
   );
 }
 
-function formatTimestamp(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ru-RU');
+/** Исходные данные события (JSON модуля) — свёрнуты, пока преподаватель не раскроет. */
+function RawData({ text }: { text: string }) {
+  const [opened, setOpened] = useState(false);
+
+  return (
+    <Stack gap={4}>
+      <Button size="compact-xs" variant="subtle" w="fit-content" onClick={() => setOpened((value) => !value)}>
+        {opened ? 'Скрыть исходные данные' : 'Исходные данные (JSON)'}
+      </Button>
+      {opened ? (
+        <Code block style={{ fontSize: 12 }}>
+          {text}
+        </Code>
+      ) : null}
+    </Stack>
+  );
+}
+
+function payloadText(payload: ModuleSessionEventResponse['payload']): string | null {
+  try {
+    const json = JSON.stringify(payload, null, 2);
+    return json && json !== '{}' ? json : null;
+  } catch {
+    return null;
+  }
 }

@@ -8,7 +8,7 @@ import { GradebookTable } from './GradebookTable';
 function names(): string[] {
   return screen
     .getAllByRole('row')
-    .slice(1)
+    .slice(1, -1) // без заголовка и итоговой строки
     .map((row) => within(row).getAllByRole('cell')[0].textContent ?? '');
 }
 
@@ -33,6 +33,24 @@ describe('GradebookTable', () => {
 
     await userEvent.click(screen.getByText('Не прошли'));
     expect(names()).toEqual(['Петров Пётр']);
+  });
+
+  it('итоговая строка: зачтено и средняя по каждой практике', () => {
+    renderWithProviders(<GradebookTable book={book} />);
+
+    const footer = screen.getAllByRole('row').at(-1)!;
+    expect(within(footer).getAllByRole('cell').map((cell) => cell.textContent).slice(0, 2)).toEqual(['1 из 33.50', '2 из 23.50']);
+  });
+
+  it('вкладка «Сводка по группам» показывает группы и общий итог', async () => {
+    renderWithProviders(<GradebookTable book={book} />);
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Сводка по группам' }));
+
+    expect(await screen.findByText('Все студенты')).toBeInTheDocument();
+    expect(screen.getByText('ИС-21')).toBeInTheDocument();
+    expect(screen.getByText('Без группы')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Скачать сводку CSV' })).toBeInTheDocument();
   });
 
   it('поиск без результата показывает сброс', async () => {

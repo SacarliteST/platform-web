@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ModuleSessionEventResponse } from '../../../api/education/model';
 import { renderWithProviders } from '../../../test/render';
-import { SessionEventsFeed, sortEventsByTime } from './SessionEventsFeed';
+import { describeEventKind, SessionEventsFeed, sortEventsByTime } from './SessionEventsFeed';
 
 let response: { status: number; data: ModuleSessionEventResponse[] } = { status: 200, data: [] };
 
@@ -83,6 +83,30 @@ describe('SessionEventsFeed', () => {
     expect(text.indexOf('Попытка 2')).toBeLessThan(text.indexOf('Итог прохождения'));
   });
 
+  it('известные виды событий получают понятные подписи, итог — «по данным модуля»', async () => {
+    response = {
+      status: 200,
+      data: [
+        event({ eventId: 'a1', kind: 'sql_submit', occurredAt: '2026-10-18T10:01:00Z', markdown: '**Попытка 1**' }),
+        event({ eventId: 's1', kind: 'session_summary', occurredAt: '2026-10-18T10:05:00Z', markdown: '**Итог прохождения**' }),
+      ],
+    };
+    renderFeed();
+
+    expect(await screen.findByText('Итог прохождения')).toBeInTheDocument();
+    expect(screen.getByText('Попытка', { selector: '.mantine-Badge-label' })).toBeInTheDocument();
+    expect(screen.getByText('Итог по данным модуля')).toBeInTheDocument();
+    expect(screen.queryByText('sql_submit')).not.toBeInTheDocument();
+    expect(screen.queryByText('session_summary')).not.toBeInTheDocument();
+  });
+
+  it('вид события другого модуля показывается как есть', async () => {
+    response = { status: 200, data: [event({ eventId: 'x1', kind: 'code_run', payload: { ok: true } })] };
+    renderFeed();
+
+    expect(await screen.findByText('code_run')).toBeInTheDocument();
+  });
+
   it('404 — ничего не показывает', () => {
     response = { status: 404, data: [] };
     renderFeed();
@@ -95,6 +119,14 @@ describe('SessionEventsFeed', () => {
     renderFeed();
 
     expect(await screen.findByText('Событий по этой попытке пока нет.')).toBeInTheDocument();
+  });
+});
+
+describe('describeEventKind', () => {
+  it('известные — с подписью, неизвестные — сырой kind и нейтральный цвет', () => {
+    expect(describeEventKind('sql_submit').label).toBe('Попытка');
+    expect(describeEventKind('session_summary').label).toBe('Итог по данным модуля');
+    expect(describeEventKind('другой')).toEqual({ label: 'другой', color: 'gray' });
   });
 });
 

@@ -117,7 +117,7 @@ export function TeacherSessionProtocols({ practicalId }: Props) {
                       <Table.Tr>
                         {header('studentName', 'Студент')}
                         {header('tryNumber', 'Попытка', 100)}
-                        {header('attemptsCount', 'Действий', 100)}
+                        {header('attemptsCount', 'Попыток в модуле', 140)}
                         {header('status', 'Статус', 170)}
                         {header('grade', 'Оценка', 90)}
                         {header('studentBestGrade', 'Лучшая у студента', 130)}

@@ -62,7 +62,7 @@ describe('TeacherSessionProtocols', () => {
     const second = rows.find((row) => within(row).queryByText('#2'));
     expect(second).toBeDefined();
     const cells = within(second!).getAllByRole('cell').map((cell) => cell.textContent);
-    expect(cells[2]).toBe('3'); // Действий
+    expect(cells[2]).toBe('3'); // Попыток в модуле
     expect(cells[4]).toBe('90'); // Оценка
     expect(cells[5]).toBe('90'); // Лучшая у студента
     expect(cells[6]).toBe('30 мин 00 с'); // Длительность

@@ -1,10 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { screen } from '@testing-library/react';
 import { MarkdownView } from './MarkdownView';
 import { safeUrl } from './MarkdownViewContent';
 import { renderWithProviders } from '../../../test/render';
 
 describe('MarkdownView', () => {
+  beforeAll(async () => {
+    await import('./MarkdownViewContent');
+  });
+
   it('рендерит жирный текст, список и таблицу GFM', async () => {
     const { container } = renderWithProviders(
       <MarkdownView>{'**Попытка 1 — верно**\n\n- пункт\n\n| Критерий | Баллы |\n|---|---|\n| Результат | 60 / 60 |'}</MarkdownView>,

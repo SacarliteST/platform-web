@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ModuleSessionEventResponse } from '../../../api/education/model';
@@ -30,6 +30,11 @@ function renderFeed() {
 }
 
 describe('SessionEventsFeed', () => {
+  // Ленивый чанк react-markdown при первой загрузке тяжёлый: прогреваем, чтобы findBy не упирался в таймаут.
+  beforeAll(async () => {
+    await import('../../../shared/ui/MarkdownView/MarkdownViewContent');
+  });
+
   beforeEach(() => {
     response = { status: 200, data: [] };
   });

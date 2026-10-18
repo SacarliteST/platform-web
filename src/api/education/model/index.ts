@@ -7,6 +7,7 @@
 
 export * from './acceptTaskFileRequest';
 export * from './addTaskFileCommentRequest';
+export * from './adminEventResponse';
 export * from './adminProfileResponse';
 export * from './assignableStudentResponse';
 export * from './authMeResponse';
@@ -28,6 +29,7 @@ export * from './createTheoryLinkRequest';
 export * from './createTheoryRequest';
 export * from './currentModuleSessionResponse';
 export * from './externalModuleBindingResponse';
+export * from './getAdminEventsParams';
 export * from './getCourseStudentAssignmentsParams';
 export * from './getCurrentModuleSessionParams';
 export * from './getPracticalStudentAssignmentsParams';

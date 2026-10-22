@@ -26,8 +26,9 @@ export interface TokenExchangeRequest {
      */
   sessionId?: string | null;
   /**
-     * Необязательное время истечения практической сессии. Если раньше стандартного TTL
-     * обменянного токена — `exp` токена обрезается по нему.
+     * Необязательное время истечения практической сессии. С SessionId токен живёт
+     * до этого момента (но не дольше `Jwt:SessionTokenMaxHours`); без SessionId —
+     * `exp` обрезается по нему, если он раньше стандартного TTL обмена.
      * @nullable
      */
   sessionExpiresAt?: string | null;

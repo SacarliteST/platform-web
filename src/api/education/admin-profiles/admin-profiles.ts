@@ -229,8 +229,8 @@ export const getCreateAdminProfileUrl = () => {
 }
 
 /**
- * Создаёт legacy-профиль пользователя и связывает его с identity-пользователем.
- * @summary Создание связанного профиля
+ * Создаёт профиль с идентификатором пользователя Identity либо восстанавливает отключённый. Обычно профиль создаётся автоматически при первом обращении пользователя.
+ * @summary Создание профиля
  */
 export const createAdminProfile = async (createAdminProfileRequest: CreateAdminProfileRequest, options?: Parameters<typeof educationFetch>[1]): Promise<createAdminProfileResponse> => {
 
@@ -288,7 +288,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateAdminProfileMutationVariables = {data: CreateAdminProfileRequest}
 
     /**
- * @summary Создание связанного профиля
+ * @summary Создание профиля
  */
 export const useCreateAdminProfile = <TError = HttpValidationProblemDetails | void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminProfile>>, TError,CreateAdminProfileMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
@@ -343,7 +343,7 @@ export const getUpdateAdminProfileUrl = (legacyUserId: string,) => {
 }
 
 /**
- * Обновляет данные legacy-профиля пользователя.
+ * Обновляет учебные данные профиля (группа). ФИО и роль приходят из Identity.
  * @summary Обновление профиля пользователя
  */
 export const updateAdminProfile = async (legacyUserId: string,
@@ -453,7 +453,7 @@ export const getDeactivateAdminProfileUrl = (legacyUserId: string,) => {
 }
 
 /**
- * Отключает связь legacy-профиля с identity-пользователем.
+ * Отключает профиль: пользователь теряет доступ и автоматически не восстанавливается.
  * @summary Деактивация связи профиля
  */
 export const deactivateAdminProfile = async (legacyUserId: string, options?: Parameters<typeof educationFetch>[1]): Promise<deactivateAdminProfileResponse> => {

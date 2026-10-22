@@ -29,6 +29,8 @@ import type {
   CreateUserRequest,
   ListUsersParams,
   ProblemDetails,
+  ResetUserPasswordRequest,
+  UpdateUserProfileRequest,
   UpdateUserRolesRequest,
   UserDetailsDto,
   UserListItemDtoPagedResponse,
@@ -177,6 +179,121 @@ export const useUpdateUserRoles = <TError = ProblemDetails | ValidationProblemDe
       > => {
       return useMutation(getUpdateUserRolesMutationOptions(options), queryClient);
     }
+    export type updateUserProfileResponse204 = {
+  data: void
+  status: 204
+}
+
+export type updateUserProfileResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type updateUserProfileResponse403 = {
+  data: ProblemDetails
+  status: 403
+}
+
+export type updateUserProfileResponse404 = {
+  data: ProblemDetails
+  status: 404
+}
+
+export type updateUserProfileResponse422 = {
+  data: ValidationProblemDetails
+  status: 422
+}
+
+export type updateUserProfileResponseSuccess = (updateUserProfileResponse204) & {
+  headers: Headers;
+};
+export type updateUserProfileResponseError = (updateUserProfileResponse401 | updateUserProfileResponse403 | updateUserProfileResponse404 | updateUserProfileResponse422) & {
+  headers: Headers;
+};
+
+export type updateUserProfileResponse = (updateUserProfileResponseSuccess | updateUserProfileResponseError)
+
+export const getUpdateUserProfileUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/users/${id}/profile`
+}
+
+/**
+ * Меняет имя, фамилию и отчество и пересчитывает отображаемое имя. Учебные сервисы получат новые значения в следующем выданном токене (claims given_name, family_name, middle_name). Доступно только для роли Admin.
+ * @summary Изменение ФИО пользователя
+ */
+export const updateUserProfile = async (id: string,
+    updateUserProfileRequest: UpdateUserProfileRequest, options?: Parameters<typeof identityFetch>[1]): Promise<updateUserProfileResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return identityFetch<updateUserProfileResponse>(getUpdateUserProfileUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateUserProfileRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateUserProfileMutationKey = () => ['updateUserProfile'] as const;
+
+export const getUpdateUserProfileMutationOptions = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,UpdateUserProfileMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,UpdateUserProfileMutationVariables, TContext> => {
+
+const mutationKey = getUpdateUserProfileMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserProfile>>, UpdateUserProfileMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateUserProfile(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserProfile>>>
+    export type UpdateUserProfileMutationBody = UpdateUserProfileRequest
+    export type UpdateUserProfileMutationError = ProblemDetails | ValidationProblemDetails
+    export type UpdateUserProfileMutationVariables = {id: string;data: UpdateUserProfileRequest}
+
+    /**
+ * @summary Изменение ФИО пользователя
+ */
+export const useUpdateUserProfile = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,UpdateUserProfileMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateUserProfile>>,
+        TError,
+        UpdateUserProfileMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateUserProfileMutationOptions(options), queryClient);
+    }
     export type unblockUserResponse204 = {
   data: void
   status: 204
@@ -279,6 +396,121 @@ export const useUnblockUser = <TError = ProblemDetails,
         TContext
       > => {
       return useMutation(getUnblockUserMutationOptions(options), queryClient);
+    }
+    export type resetUserPasswordResponse204 = {
+  data: void
+  status: 204
+}
+
+export type resetUserPasswordResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type resetUserPasswordResponse403 = {
+  data: ProblemDetails
+  status: 403
+}
+
+export type resetUserPasswordResponse404 = {
+  data: ProblemDetails
+  status: 404
+}
+
+export type resetUserPasswordResponse422 = {
+  data: ValidationProblemDetails
+  status: 422
+}
+
+export type resetUserPasswordResponseSuccess = (resetUserPasswordResponse204) & {
+  headers: Headers;
+};
+export type resetUserPasswordResponseError = (resetUserPasswordResponse401 | resetUserPasswordResponse403 | resetUserPasswordResponse404 | resetUserPasswordResponse422) & {
+  headers: Headers;
+};
+
+export type resetUserPasswordResponse = (resetUserPasswordResponseSuccess | resetUserPasswordResponseError)
+
+export const getResetUserPasswordUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/users/${id}/password`
+}
+
+/**
+ * Устанавливает новый пароль и отзывает все активные refresh-токены пользователя. Доступно только для роли Admin.
+ * @summary Сброс пароля пользователя
+ */
+export const resetUserPassword = async (id: string,
+    resetUserPasswordRequest: ResetUserPasswordRequest, options?: Parameters<typeof identityFetch>[1]): Promise<resetUserPasswordResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return identityFetch<resetUserPasswordResponse>(getResetUserPasswordUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(resetUserPasswordRequest)
+  }
+);}
+
+
+
+
+
+export const getResetUserPasswordMutationKey = () => ['resetUserPassword'] as const;
+
+export const getResetUserPasswordMutationOptions = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetUserPassword>>, TError,ResetUserPasswordMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetUserPassword>>, TError,ResetUserPasswordMutationVariables, TContext> => {
+
+const mutationKey = getResetUserPasswordMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetUserPassword>>, ResetUserPasswordMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  resetUserPassword(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetUserPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetUserPassword>>>
+    export type ResetUserPasswordMutationBody = ResetUserPasswordRequest
+    export type ResetUserPasswordMutationError = ProblemDetails | ValidationProblemDetails
+    export type ResetUserPasswordMutationVariables = {id: string;data: ResetUserPasswordRequest}
+
+    /**
+ * @summary Сброс пароля пользователя
+ */
+export const useResetUserPassword = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetUserPassword>>, TError,ResetUserPasswordMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resetUserPassword>>,
+        TError,
+        ResetUserPasswordMutationVariables,
+        TContext
+      > => {
+      return useMutation(getResetUserPasswordMutationOptions(options), queryClient);
     }
     export type listUsersResponse200 = {
   data: UserListItemDtoPagedResponse

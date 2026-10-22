@@ -119,8 +119,8 @@
         "tags": [
           "AdminProfiles"
         ],
-        "summary": "Создание связанного профиля",
-        "description": "Создаёт legacy-профиль пользователя и связывает его с identity-пользователем.",
+        "summary": "Создание профиля",
+        "description": "Создаёт профиль с идентификатором пользователя Identity либо восстанавливает отключённый. Обычно профиль создаётся автоматически при первом обращении пользователя.",
         "operationId": "CreateAdminProfile",
         "requestBody": {
           "content": {
@@ -171,7 +171,7 @@
           "AdminProfiles"
         ],
         "summary": "Обновление профиля пользователя",
-        "description": "Обновляет данные legacy-профиля пользователя.",
+        "description": "Обновляет учебные данные профиля (группа). ФИО и роль приходят из Identity.",
         "operationId": "UpdateAdminProfile",
         "parameters": [
           {
@@ -233,7 +233,7 @@
           "AdminProfiles"
         ],
         "summary": "Деактивация связи профиля",
-        "description": "Отключает связь legacy-профиля с identity-пользователем.",
+        "description": "Отключает профиль: пользователь теряет доступ и автоматически не восстанавливается.",
         "operationId": "DeactivateAdminProfile",
         "parameters": [
           {
@@ -3964,8 +3964,7 @@
       },
       "AdminProfileResponse": {
         "required": [
-          "legacyUserId",
-          "identityUserId",
+          "id",
           "login",
           "firstName",
           "lastName",
@@ -3974,48 +3973,40 @@
         ],
         "type": "object",
         "properties": {
-          "legacyUserId": {
+          "id": {
             "type": "string",
-            "description": "Идентификатор пользователя в учебной системе.",
-            "format": "uuid"
-          },
-          "identityUserId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Идентификатор пользователя во внешнем identity-сервисе.",
+            "description": "Идентификатор профиля; равен идентификатору пользователя в Identity.",
             "format": "uuid"
           },
           "login": {
             "type": "string",
-            "description": "Отображаемый логин или имя пользователя."
+            "description": "Отображаемый логин (email)."
           },
           "firstName": {
             "type": "string",
-            "description": "Имя пользователя."
+            "description": "Имя (копия данных Identity)."
           },
           "lastName": {
             "type": "string",
-            "description": "Фамилия пользователя."
+            "description": "Фамилия (копия данных Identity)."
           },
           "middleName": {
             "type": "string",
-            "description": "Отчество пользователя."
+            "description": "Отчество (копия данных Identity)."
           },
           "isActive": {
             "type": "boolean",
-            "description": "Признак активной связи с identity-сервисом."
+            "description": "Профиль активен; отключённый администратором доступа не имеет."
           },
           "group": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Учебная группа или `null`, если не задана."
+            "description": "Учебная группа или `null`."
           }
         },
-        "description": "Локальный учебный профиль пользователя."
+        "description": "Профиль пользователя в административном контуре."
       },
       "AssignableStudentResponse": {
         "required": [
@@ -4259,7 +4250,7 @@
       },
       "CreateAdminProfileRequest": {
         "required": [
-          "identityUserId",
+          "userId",
           "login",
           "firstName",
           "lastName",
@@ -4267,29 +4258,29 @@
         ],
         "type": "object",
         "properties": {
-          "identityUserId": {
+          "userId": {
             "type": "string",
-            "description": "Идентификатор пользователя во внешнем identity-сервисе.",
+            "description": "Идентификатор пользователя в Identity; он же станет идентификатором профиля.",
             "format": "uuid"
           },
           "login": {
             "type": "string",
-            "description": "Отображаемый логин или имя пользователя."
+            "description": "Отображаемый логин (email)."
           },
           "firstName": {
             "type": "string",
-            "description": "Имя пользователя."
+            "description": "Имя."
           },
           "lastName": {
             "type": "string",
-            "description": "Фамилия пользователя."
+            "description": "Фамилия."
           },
           "middleName": {
             "type": "string",
-            "description": "Отчество пользователя."
+            "description": "Отчество."
           },
           "role": {
-            "description": "Роль профиля (по умолчанию — студент).",
+            "description": "Роль профиля.",
             "$ref": "#/components/schemas/ProfileRole"
           },
           "group": {
@@ -4297,10 +4288,10 @@
               "null",
               "string"
             ],
-            "description": "Учебная группа (до 50 символов); пусто — без группы."
+            "description": "Учебная группа (до 50 символов) или `null`."
           }
         },
-        "description": "Запрос на создание локального учебного профиля и связи с identity-пользователем."
+        "description": "Запрос на ручное создание (или восстановление отключённого) профиля. Обычно профиль создаётся сам при первом\r\nобращении пользователя; ручное создание нужно, когда автосоздание выключено."
       },
       "CreateCourseRequest": {
         "required": [
@@ -5900,30 +5891,8 @@
         "description": "Текст теоретического материала, возвращаемый API системы обучения."
       },
       "UpdateAdminProfileRequest": {
-        "required": [
-          "login",
-          "firstName",
-          "lastName",
-          "middleName"
-        ],
         "type": "object",
         "properties": {
-          "login": {
-            "type": "string",
-            "description": "Отображаемый логин или имя пользователя."
-          },
-          "firstName": {
-            "type": "string",
-            "description": "Имя пользователя."
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Фамилия пользователя."
-          },
-          "middleName": {
-            "type": "string",
-            "description": "Отчество пользователя."
-          },
           "group": {
             "type": [
               "null",
@@ -5932,7 +5901,7 @@
             "description": "Учебная группа (до 50 символов); пусто или отсутствие значения снимает группу."
           }
         },
-        "description": "Запрос на обновление отображаемых данных локального учебного профиля."
+        "description": "Запрос на обновление учебных данных профиля. ФИО и роль принадлежат Identity и здесь не правятся."
       },
       "UpdateCourseStudentsRequest": {
         "required": [

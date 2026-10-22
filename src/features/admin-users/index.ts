@@ -1,4 +1,10 @@
-export { blockAdminUser, createAdminUser, replaceAdminUserRoles, unblockAdminUser } from './api';
+export {
+  blockAdminUser,
+  createAdminUser,
+  replaceAdminUserRoles,
+  unblockAdminUser,
+  updateAdminUserProfile,
+} from './api';
 export {
   AdminUsersApiError,
   getAdminUsersErrorMessage,

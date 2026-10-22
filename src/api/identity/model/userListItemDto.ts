@@ -19,4 +19,10 @@ export interface UserListItemDto {
   createdAt: string;
   /** @nullable */
   lastLoginAt?: string | null;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
+  middleName?: string | null;
 }

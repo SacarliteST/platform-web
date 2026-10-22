@@ -16,4 +16,10 @@ export interface CreateUserRequest {
   displayName?: string | null;
   password: string;
   roles: UserRole[];
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
+  middleName?: string | null;
 }

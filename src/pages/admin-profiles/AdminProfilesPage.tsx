@@ -38,7 +38,7 @@ import {
 } from '../../shared/ui';
 
 const emptyForm: CreateAdminProfileRequest = {
-  identityUserId: '',
+  userId: '',
   login: '',
   firstName: '',
   lastName: '',
@@ -48,11 +48,8 @@ const emptyForm: CreateAdminProfileRequest = {
 };
 
 type EditForm = {
-  legacyUserId: string;
-  login: string;
-  lastName: string;
-  firstName: string;
-  middleName: string;
+  id: string;
+  displayName: string;
   group: string;
 };
 
@@ -76,6 +73,11 @@ function pickProfileRole(identityRoles: string[]): ProfileRole {
   return ProfileRole.Student;
 }
 
+const fullName = (profile: Pick<AdminProfileResponse, 'lastName' | 'firstName' | 'middleName'>) =>
+  [profile.lastName, profile.firstName, profile.middleName]
+    .filter((part) => part && part !== '-')
+    .join(' ') || '—';
+
 export function AdminProfilesPage() {
   const queryClient = useQueryClient();
   const profilesQuery = useGetAdminProfiles({ query: { retry: false } });
@@ -92,25 +94,37 @@ export function AdminProfilesPage() {
   const [form, setForm] = useState<CreateAdminProfileRequest>(emptyForm);
   const [createError, setCreateError] = useState<string | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
-  // Роль берём из IdentityService по Identity User ID — чтобы нельзя было случайно
-  // связать профиль с ролью, не совпадающей с ролью в токене этого пользователя.
-  const trimmedIdentityId = form.identityUserId.trim();
-  const identityIdIsGuid = GUID_RE.test(trimmedIdentityId);
-  const identityLookup = useGetUserDetails(trimmedIdentityId, {
-    query: { enabled: createOpened && identityIdIsGuid, retry: false },
+  // Данные берём из IdentityService по ID пользователя: роль определяется автоматически, ФИО и логин подставляются
+  // из учётной записи — их источник истины Identity, руками вводить не нужно.
+  const trimmedUserId = form.userId.trim();
+  const userIdIsGuid = GUID_RE.test(trimmedUserId);
+  const identityLookup = useGetUserDetails(trimmedUserId, {
+    query: { enabled: createOpened && userIdIsGuid, retry: false },
   });
   const identityUser =
-    identityIdIsGuid && identityLookup.data?.status === 200 ? identityLookup.data.data : null;
+    userIdIsGuid && identityLookup.data?.status === 200 ? identityLookup.data.data : null;
   const identityLookupFailed =
-    identityIdIsGuid && !identityLookup.isFetching && identityLookup.data?.status !== 200;
+    userIdIsGuid && !identityLookup.isFetching && identityLookup.data?.status !== 200;
   const detectedRole = identityUser ? pickProfileRole(identityUser.roles) : null;
+  const identityUserKey = identityUser?.id ?? null;
 
   useEffect(() => {
-    if (detectedRole) {
-      setForm((previous) => (previous.role === detectedRole ? previous : { ...previous, role: detectedRole }));
+    if (!identityUser) {
+      return;
     }
-  }, [detectedRole]);
+    setForm((previous) => ({
+      ...previous,
+      role: pickProfileRole(identityUser.roles),
+      login: previous.login || identityUser.email,
+      firstName: identityUser.firstName ?? previous.firstName,
+      lastName: identityUser.lastName ?? previous.lastName,
+      middleName: identityUser.middleName ?? previous.middleName,
+    }));
+    // Подставляем один раз на найденного пользователя, а не на каждое обновление кэша.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identityUserKey]);
 
   const invalidate = () =>
     Promise.all([
@@ -120,14 +134,7 @@ export function AdminProfilesPage() {
 
   const startEdit = (profile: AdminProfileResponse) => {
     setEditError(null);
-    setEditForm({
-      legacyUserId: profile.legacyUserId,
-      login: profile.login,
-      lastName: profile.lastName,
-      firstName: profile.firstName,
-      middleName: profile.middleName,
-      group: profile.group ?? '',
-    });
+    setEditForm({ id: profile.id, displayName: fullName(profile), group: profile.group ?? '' });
   };
 
   const submitEdit = async () => {
@@ -137,14 +144,8 @@ export function AdminProfilesPage() {
     setEditError(null);
     const response = await updateMutation
       .mutateAsync({
-        legacyUserId: editForm.legacyUserId,
-        data: {
-          login: editForm.login.trim(),
-          lastName: editForm.lastName.trim(),
-          firstName: editForm.firstName.trim(),
-          middleName: editForm.middleName.trim(),
-          group: editForm.group.trim() || undefined,
-        },
+        legacyUserId: editForm.id,
+        data: { group: editForm.group.trim() || undefined },
       })
       .catch(() => null);
 
@@ -167,7 +168,9 @@ export function AdminProfilesPage() {
   const submitCreate = async () => {
     setCreateError(null);
     const response = await createMutation
-      .mutateAsync({ data: { ...form, group: form.group?.trim() || undefined } })
+      .mutateAsync({
+        data: { ...form, userId: trimmedUserId, group: form.group?.trim() || undefined },
+      })
       .catch(() => null);
 
     if (!response) {
@@ -183,14 +186,14 @@ export function AdminProfilesPage() {
     }
 
     if (response.status === 409) {
-      setCreateError('Такой identity-пользователь или логин уже связан.');
+      setCreateError('Профиль с таким ID или логином уже существует.');
       return;
     }
 
     setCreateError(
       response.data && typeof response.data === 'object'
         ? getEducationProblemMessage(response.data, response.status)
-        : 'Не удалось связать пользователя.',
+        : 'Не удалось создать профиль.',
     );
   };
 
@@ -201,6 +204,29 @@ export function AdminProfilesPage() {
     await deactivateMutation.mutateAsync({ legacyUserId: deactivateTarget }).catch(() => null);
     await invalidate();
     setDeactivateTarget(null);
+  };
+
+  // Восстановление отключённого профиля — тот же POST: для существующей записи сервер лишь включает её обратно.
+  const restore = async (profile: AdminProfileResponse) => {
+    setRestoreError(null);
+    const response = await createMutation
+      .mutateAsync({
+        data: {
+          userId: profile.id,
+          login: profile.login,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          middleName: profile.middleName,
+          role: ProfileRole.Student,
+          group: profile.group ?? undefined,
+        },
+      })
+      .catch(() => null);
+    if (response?.status === 201) {
+      await invalidate();
+      return;
+    }
+    setRestoreError('Не удалось восстановить профиль.');
   };
 
   return (
@@ -217,21 +243,28 @@ export function AdminProfilesPage() {
         <Group justify="space-between" align="flex-end" gap="md" wrap="wrap">
           <PageHeader
             title="Учебные профили"
-            description="Связь пользователей IdentityService с локальными профилями платформы."
+            description="Профиль создаётся автоматически при первом входе пользователя. ФИО и роль приходят из IdentityService, здесь задаётся учебная группа."
           />
           <Button
             size="sm"
+            variant="outline"
             onClick={() => {
               setForm(emptyForm);
               setCreateError(null);
               createModal.open();
             }}
           >
-            Связать пользователя
+            Создать вручную
           </Button>
         </Group>
         <AdminContourTabs />
       </Stack>
+
+      {restoreError ? (
+        <Alert color="red" variant="light" withCloseButton onClose={() => setRestoreError(null)}>
+          {restoreError}
+        </Alert>
+      ) : null}
 
       <AppCard p={0}>
         <QueryBoundary
@@ -239,8 +272,8 @@ export function AdminProfilesPage() {
           isError={profilesQuery.isError || profilesQuery.data?.status !== 200}
           data={profilesQuery.data?.status === 200 ? profilesQuery.data.data : undefined}
           errorTitle="Education API недоступен"
-          emptyTitle="Профилей нет"
-          emptyDescription="Свяжите identity-пользователя с учебным профилем."
+          emptyTitle="Профилей пока нет"
+          emptyDescription="Профиль появится, когда пользователь первый раз войдёт на платформу."
           isEmpty={(rows) => rows.length === 0}
         >
           {(rows) => (
@@ -250,20 +283,16 @@ export function AdminProfilesPage() {
                   <Table.Th>ФИО</Table.Th>
                   <Table.Th>Логин</Table.Th>
                   <Table.Th>Группа</Table.Th>
-                  <Table.Th>Identity ID</Table.Th>
+                  <Table.Th>ID</Table.Th>
                   <Table.Th>Статус</Table.Th>
                   <Table.Th>Действия</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {rows.map((profile) => (
-                  <Table.Tr key={profile.legacyUserId}>
+                  <Table.Tr key={profile.id}>
                     <Table.Td>
-                      <Text size="sm">
-                        {[profile.lastName, profile.firstName, profile.middleName]
-                          .filter(Boolean)
-                          .join(' ') || '—'}
-                      </Text>
+                      <Text size="sm">{fullName(profile)}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm">{profile.login}</Text>
@@ -274,30 +303,39 @@ export function AdminProfilesPage() {
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" c="dimmed">
-                        {profile.identityUserId ?? '—'}
+                      <Text size="xs" c="dimmed">
+                        {profile.id}
                       </Text>
                     </Table.Td>
                     <Table.Td>
                       <Badge color={profile.isActive ? 'green' : 'gray'} radius="sm" variant="dot">
-                        {profile.isActive ? 'Связан' : 'Не связан'}
+                        {profile.isActive ? 'Активен' : 'Отключён'}
                       </Badge>
                     </Table.Td>
                     <Table.Td>
                       <Group gap={4} wrap="nowrap">
                         <Button size="xs" variant="subtle" onClick={() => startEdit(profile)}>
-                          Изменить
+                          Группа
                         </Button>
                         {profile.isActive ? (
                           <Button
                             size="xs"
                             variant="subtle"
                             color="red"
-                            onClick={() => setDeactivateTarget(profile.legacyUserId)}
+                            onClick={() => setDeactivateTarget(profile.id)}
                           >
-                            Отвязать
+                            Отключить
                           </Button>
-                        ) : null}
+                        ) : (
+                          <Button
+                            size="xs"
+                            variant="subtle"
+                            loading={createMutation.isPending}
+                            onClick={() => void restore(profile)}
+                          >
+                            Восстановить
+                          </Button>
+                        )}
                       </Group>
                     </Table.Td>
                   </Table.Tr>
@@ -308,7 +346,7 @@ export function AdminProfilesPage() {
         </QueryBoundary>
       </AppCard>
 
-      <Modal opened={createOpened} onClose={createModal.close} title="Связать пользователя" centered>
+      <Modal opened={createOpened} onClose={createModal.close} title="Создать профиль вручную" centered>
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -316,21 +354,25 @@ export function AdminProfilesPage() {
           }}
         >
           <Stack gap="md">
+            <Text size="sm" c="dimmed">
+              Обычно не нужно: профиль создаётся сам при первом входе. Ручное создание нужно, если автосоздание
+              выключено.
+            </Text>
             {createError ? (
-              <Alert color="red" variant="light" title="Не удалось связать">
+              <Alert color="red" variant="light" title="Не удалось создать">
                 {createError}
               </Alert>
             ) : null}
             <TextInput
-              label="Identity User ID"
-              description="GUID пользователя из IdentityService — по нему определяем роль автоматически"
-              value={form.identityUserId}
-              onChange={(event) => setForm({ ...form, identityUserId: event.currentTarget.value })}
+              label="ID пользователя (IdentityService)"
+              description="GUID пользователя — по нему подставляются роль, логин и ФИО"
+              value={form.userId}
+              onChange={(event) => setForm({ ...form, userId: event.currentTarget.value })}
               error={identityLookupFailed ? 'Пользователь с таким ID не найден в IdentityService' : undefined}
               withAsterisk
             />
             <TextInput
-              label="Логин / отображаемое имя"
+              label="Логин"
               value={form.login}
               onChange={(event) => setForm({ ...form, login: event.currentTarget.value })}
               withAsterisk
@@ -364,9 +406,9 @@ export function AdminProfilesPage() {
                 onChange={(value) => setForm({ ...form, group: value })}
               />
             ) : null}
-            {identityIdIsGuid && identityLookup.isFetching ? (
+            {userIdIsGuid && identityLookup.isFetching ? (
               <Text size="sm" c="dimmed">
-                Определяем роль по IdentityService…
+                Загружаем данные из IdentityService…
               </Text>
             ) : detectedRole ? (
               <Stack gap={4}>
@@ -376,7 +418,7 @@ export function AdminProfilesPage() {
                 <Group gap="xs">
                   <Badge radius="sm">{roleLabel(detectedRole)}</Badge>
                   <Text size="xs" c="dimmed">
-                    определена автоматически по роли в IdentityService, вручную не меняется
+                    определена по роли в IdentityService, вручную не меняется
                   </Text>
                 </Group>
               </Stack>
@@ -386,7 +428,7 @@ export function AdminProfilesPage() {
                 description={
                   identityLookupFailed
                     ? 'Не удалось определить автоматически — укажите вручную. Только профили с ролью «Студент» доступны для назначения на курсы и практики'
-                    : 'Укажите Identity User ID, чтобы роль определилась автоматически. Только профили с ролью «Студент» доступны для назначения на курсы и практики'
+                    : 'Укажите ID пользователя, чтобы роль определилась автоматически. Только профили с ролью «Студент» доступны для назначения на курсы и практики'
                 }
                 data={roleOptions}
                 value={form.role ?? ProfileRole.Student}
@@ -398,8 +440,8 @@ export function AdminProfilesPage() {
               />
             )}
             <FormActions
-              submitLabel="Связать"
-              loading={createMutation.isPending || (identityIdIsGuid && identityLookup.isFetching)}
+              submitLabel="Создать"
+              loading={createMutation.isPending || (userIdIsGuid && identityLookup.isFetching)}
               onCancel={createModal.close}
             />
           </Stack>
@@ -409,7 +451,7 @@ export function AdminProfilesPage() {
       <Modal
         opened={editForm !== null}
         onClose={() => setEditForm(null)}
-        title="Изменить профиль"
+        title="Учебная группа"
         centered
       >
         {editForm ? (
@@ -426,29 +468,10 @@ export function AdminProfilesPage() {
                 </Alert>
               ) : null}
               <TextInput
-                label="Логин / отображаемое имя"
-                value={editForm.login}
-                onChange={(event) => setEditForm({ ...editForm, login: event.currentTarget.value })}
-                withAsterisk
-              />
-              <Group grow>
-                <TextInput
-                  label="Фамилия"
-                  value={editForm.lastName}
-                  onChange={(event) => setEditForm({ ...editForm, lastName: event.currentTarget.value })}
-                  withAsterisk
-                />
-                <TextInput
-                  label="Имя"
-                  value={editForm.firstName}
-                  onChange={(event) => setEditForm({ ...editForm, firstName: event.currentTarget.value })}
-                  withAsterisk
-                />
-              </Group>
-              <TextInput
-                label="Отчество"
-                value={editForm.middleName}
-                onChange={(event) => setEditForm({ ...editForm, middleName: event.currentTarget.value })}
+                label="Пользователь"
+                description="ФИО и роль меняются в разделе «Пользователи» (IdentityService)"
+                value={editForm.displayName}
+                readOnly
               />
               <Autocomplete
                 label="Группа"
@@ -470,9 +493,9 @@ export function AdminProfilesPage() {
 
       <ConfirmModal
         opened={deactivateTarget !== null}
-        title="Отвязать профиль"
-        message="Связь учебного профиля с identity-пользователем будет деактивирована."
-        confirmLabel="Отвязать"
+        title="Отключить профиль"
+        message="Пользователь потеряет доступ к учебным разделам и автоматически не восстановится. Вернуть доступ можно кнопкой «Восстановить»."
+        confirmLabel="Отключить"
         loading={deactivateMutation.isPending}
         onCancel={() => setDeactivateTarget(null)}
         onConfirm={() => void confirmDeactivate()}

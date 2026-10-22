@@ -2,11 +2,13 @@ import {
   blockUser,
   createUser,
   unblockUser,
+  updateUserProfile,
   updateUserRoles,
 } from '../../../api/identity/users/users';
 import type {
   BlockUserRequest,
   CreateUserRequest,
+  UpdateUserProfileRequest,
   UserDetailsDto,
   UserRole,
 } from '../../../api/identity/model';
@@ -37,6 +39,14 @@ export const createAdminUser = async (data: CreateUserRequest): Promise<UserDeta
 
 export const replaceAdminUserRoles = async (userId: string, roles: UserRole[]): Promise<void> => {
   const response = await updateUserRoles(userId, { roles });
+  return ensureSuccess(response, 204);
+};
+
+export const updateAdminUserProfile = async (
+  userId: string,
+  data: UpdateUserProfileRequest,
+): Promise<void> => {
+  const response = await updateUserProfile(userId, data);
   return ensureSuccess(response, 204);
 };
 

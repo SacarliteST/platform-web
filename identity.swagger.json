@@ -626,6 +626,87 @@
         }
       }
     },
+    "/api/v1/users/{id}/profile": {
+      "put": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Изменение ФИО пользователя",
+        "description": "Меняет имя, фамилию и отчество и пересчитывает отображаемое имя. Учебные сервисы получат новые значения в следующем выданном токене (claims given_name, family_name, middle_name). Доступно только для роли Admin.",
+        "operationId": "UpdateUserProfile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateUserProfileRequest"
+                  }
+                ],
+                "description": "Запрос администратора на изменение ФИО пользователя. Хотя бы имя или фамилия должны быть заполнены."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/{id}/unblock": {
       "post": {
         "tags": [
@@ -675,6 +756,87 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/password": {
+      "put": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Сброс пароля пользователя",
+        "description": "Устанавливает новый пароль и отзывает все активные refresh-токены пользователя. Доступно только для роли Admin.",
+        "operationId": "ResetUserPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ResetUserPasswordRequest"
+                  }
+                ],
+                "description": "Запрос администратора на установку нового пароля пользователю."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               }
             }
@@ -1120,6 +1282,18 @@
             "items": {
               "$ref": "#/components/schemas/UserRole"
             }
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -1203,6 +1377,19 @@
         "additionalProperties": false,
         "description": "Запрос на регистрацию нового пользователя."
       },
+      "ResetUserPasswordRequest": {
+        "required": [
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос администратора на установку нового пароля пользователю."
+      },
       "TokenExchangeRequest": {
         "required": [
           "audience",
@@ -1230,7 +1417,7 @@
           },
           "sessionExpiresAt": {
             "type": "string",
-            "description": "Необязательное время истечения практической сессии. Если раньше стандартного TTL\r\nобменянного токена — `exp` токена обрезается по нему.",
+            "description": "Необязательное время истечения практической сессии. С SessionId токен живёт\r\nдо этого момента (но не дольше `Jwt:SessionTokenMaxHours`); без SessionId —\r\n`exp` обрезается по нему, если он раньше стандартного TTL обмена.",
             "format": "date-time",
             "nullable": true
           }
@@ -1298,6 +1485,25 @@
         },
         "additionalProperties": false,
         "description": "Ответ с парой JWT/refresh токенов и данными аутентифицированного пользователя."
+      },
+      "UpdateUserProfileRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос администратора на изменение ФИО пользователя. Хотя бы имя или фамилия должны быть заполнены."
       },
       "UpdateUserRolesRequest": {
         "required": [
@@ -1367,6 +1573,18 @@
           "blockReason": {
             "type": "string",
             "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -1409,6 +1627,18 @@
           "lastLoginAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
             "nullable": true
           }
         },

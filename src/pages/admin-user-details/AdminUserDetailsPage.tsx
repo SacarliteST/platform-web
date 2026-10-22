@@ -10,6 +10,7 @@ import {
   Stack,
   Text,
   Textarea,
+  TextInput,
   Title,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -35,6 +36,7 @@ import {
   getAdminUsersErrorPresentation,
   replaceAdminUserRoles,
   unblockAdminUser,
+  updateAdminUserProfile,
 } from '../../features/admin-users';
 import type { IdentityApiProblemPresentation } from '../../shared/lib/identity-problem-details';
 import {
@@ -89,6 +91,9 @@ export function AdminUserDetailsPage() {
   const [rolesModalOpened, rolesModal] = useDisclosure(false);
   const [blockModalOpened, blockModal] = useDisclosure(false);
   const [unblockModalOpened, unblockModal] = useDisclosure(false);
+  const [profileModalOpened, profileModal] = useDisclosure(false);
+  const [profileForm, setProfileForm] = useState({ lastName: '', firstName: '', middleName: '' });
+  const [profileError, setProfileError] = useState<IdentityApiProblemPresentation | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<UserRoleType[]>([]);
   const [rolesError, setRolesError] = useState<IdentityApiProblemPresentation | null>(null);
   const [blockReason, setBlockReason] = useState('');
@@ -144,6 +149,21 @@ export function AdminUserDetailsPage() {
     onError: (error) => setRolesError(getAdminUserMutationErrorPresentation(error)),
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: () =>
+      updateAdminUserProfile(safeUserId, {
+        lastName: profileForm.lastName.trim() || null,
+        firstName: profileForm.firstName.trim() || null,
+        middleName: profileForm.middleName.trim() || null,
+      }),
+    onSuccess: async () => {
+      await refreshUserQueries();
+      setProfileError(null);
+      profileModal.close();
+    },
+    onError: (error) => setProfileError(getAdminUserMutationErrorPresentation(error)),
+  });
+
   const blockUserMutation = useMutation({
     mutationFn: () => blockAdminUser(safeUserId, blockReason),
     onSuccess: async () => {
@@ -164,6 +184,25 @@ export function AdminUserDetailsPage() {
     },
     onError: (error) => setUnblockError(getAdminUserMutationErrorPresentation(error)),
   });
+
+  const openProfileModal = () => {
+    if (!user) {
+      return;
+    }
+
+    setProfileForm({
+      lastName: user.lastName ?? '',
+      firstName: user.firstName ?? '',
+      middleName: user.middleName ?? '',
+    });
+    setProfileError(null);
+    profileModal.open();
+  };
+
+  const submitProfile = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updateProfileMutation.mutate();
+  };
 
   const openRolesModal = () => {
     if (!user) {
@@ -274,7 +313,17 @@ export function AdminUserDetailsPage() {
                       <Text c="dimmed" size="xs" tt="uppercase">
                         Имя пользователя
                       </Text>
-                      <Text fw={600}>{getUserDisplayName(user)}</Text>
+                      <Group gap="xs" align="center">
+                        <Text fw={600}>{getUserDisplayName(user)}</Text>
+                        <Button size="compact-xs" variant="subtle" onClick={openProfileModal}>
+                          Изменить ФИО
+                        </Button>
+                      </Group>
+                      {user.lastName || user.firstName || user.middleName ? (
+                        <Text c="dimmed" size="xs">
+                          {[user.lastName, user.firstName, user.middleName].filter(Boolean).join(' ')}
+                        </Text>
+                      ) : null}
                     </Grid.Col>
                     <Grid.Col span={{ base: 12, sm: 6 }}>
                       <Text c="dimmed" size="xs" tt="uppercase">
@@ -450,6 +499,52 @@ export function AdminUserDetailsPage() {
       ) : (
         <UserNotFound />
       )}
+
+      <Modal opened={profileModalOpened} onClose={profileModal.close} title="Изменить ФИО" centered size="md">
+        <form onSubmit={submitProfile}>
+          <Stack gap="md">
+            {profileError ? (
+              <Alert color="red" title={profileError.title} variant="light">
+                {profileError.message}
+              </Alert>
+            ) : null}
+            <Text c="dimmed" size="sm">
+              ФИО хранится в IdentityService и попадает в учебные профили при следующем входе пользователя.
+            </Text>
+            <Group grow align="flex-start">
+              <TextInput
+                label="Фамилия"
+                value={profileForm.lastName}
+                maxLength={100}
+                onChange={(event) =>
+                  setProfileForm({ ...profileForm, lastName: event.currentTarget.value })
+                }
+              />
+              <TextInput
+                label="Имя"
+                value={profileForm.firstName}
+                maxLength={100}
+                onChange={(event) =>
+                  setProfileForm({ ...profileForm, firstName: event.currentTarget.value })
+                }
+              />
+            </Group>
+            <TextInput
+              label="Отчество"
+              value={profileForm.middleName}
+              maxLength={100}
+              onChange={(event) =>
+                setProfileForm({ ...profileForm, middleName: event.currentTarget.value })
+              }
+            />
+            <FormActions
+              submitLabel="Сохранить"
+              loading={updateProfileMutation.isPending}
+              onCancel={profileModal.close}
+            />
+          </Stack>
+        </form>
+      </Modal>
 
       <Modal
         opened={rolesModalOpened}

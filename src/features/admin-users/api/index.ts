@@ -1,1 +1,7 @@
-export { blockAdminUser, createAdminUser, replaceAdminUserRoles, unblockAdminUser } from './admin-users-commands';
+export {
+  blockAdminUser,
+  createAdminUser,
+  replaceAdminUserRoles,
+  unblockAdminUser,
+  updateAdminUserProfile,
+} from './admin-users-commands';

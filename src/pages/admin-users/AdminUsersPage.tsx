@@ -57,6 +57,9 @@ const pageSize = 10;
 
 const createUserSchema = z.object({
   email: z.string().email('Введите корректный email'),
+  lastName: z.string().max(100, 'Не длиннее 100 символов').optional(),
+  firstName: z.string().max(100, 'Не длиннее 100 символов').optional(),
+  middleName: z.string().max(100, 'Не длиннее 100 символов').optional(),
   displayName: z.string().optional(),
   password: z.string().min(6, 'Пароль должен быть не короче 6 символов'),
   roles: z
@@ -68,6 +71,9 @@ type CreateUserFormValues = z.infer<typeof createUserSchema>;
 
 const createUserDefaultValues: CreateUserFormValues = {
   email: '',
+  lastName: '',
+  firstName: '',
+  middleName: '',
   displayName: '',
   password: '',
   roles: [UserRole.Student],
@@ -104,6 +110,9 @@ export function AdminUsersPage() {
       const payload: CreateUserRequest = {
         email: values.email.trim(),
         displayName: values.displayName?.trim() || null,
+        lastName: values.lastName?.trim() || null,
+        firstName: values.firstName?.trim() || null,
+        middleName: values.middleName?.trim() || null,
         password: values.password,
         roles: values.roles,
       };
@@ -132,6 +141,9 @@ export function AdminUsersPage() {
         if (
           normalizedFieldName === 'email' ||
           normalizedFieldName === 'displayName' ||
+          normalizedFieldName === 'lastName' ||
+          normalizedFieldName === 'firstName' ||
+          normalizedFieldName === 'middleName' ||
           normalizedFieldName === 'password' ||
           normalizedFieldName === 'roles'
         ) {
@@ -375,11 +387,25 @@ export function AdminUsersPage() {
               {...createUserForm.register('email')}
             />
 
+            <Group grow align="flex-start">
+              <TextInput
+                label="Фамилия"
+                placeholder="Петров"
+                error={createUserForm.formState.errors.lastName?.message}
+                {...createUserForm.register('lastName')}
+              />
+              <TextInput
+                label="Имя"
+                placeholder="Иван"
+                error={createUserForm.formState.errors.firstName?.message}
+                {...createUserForm.register('firstName')}
+              />
+            </Group>
             <TextInput
-              label="Имя"
-              placeholder="Иван Петров"
-              error={createUserForm.formState.errors.displayName?.message}
-              {...createUserForm.register('displayName')}
+              label="Отчество"
+              placeholder="Сергеевич"
+              error={createUserForm.formState.errors.middleName?.message}
+              {...createUserForm.register('middleName')}
             />
 
             <PasswordInput

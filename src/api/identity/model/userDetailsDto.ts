@@ -25,4 +25,10 @@ export interface UserDetailsDto {
   blockedAt?: string | null;
   /** @nullable */
   blockReason?: string | null;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
+  middleName?: string | null;
 }

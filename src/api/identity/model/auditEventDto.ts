@@ -10,12 +10,42 @@
  * Событие безопасности или административное действие.
  */
 export interface AuditEventDto {
+  /** Идентификатор события. */
   id: string;
-  /** @nullable */
+  /**
+     * Кто выполнил действие; `null` — система.
+     * @nullable
+     */
   actorUserId?: string | null;
-  /** @nullable */
+  /**
+     * Над кем выполнено действие.
+     * @nullable
+     */
   targetUserId?: string | null;
+  /** Тип события. */
   eventType: string;
+  /** Описание. */
   description: string;
+  /** Время события. */
   createdAt: string;
+  /**
+     * ФИО инициатора (или отображаемое имя); `null`, если инициатора нет или он удалён.
+     * @nullable
+     */
+  actorName?: string | null;
+  /**
+     * Email инициатора.
+     * @nullable
+     */
+  actorEmail?: string | null;
+  /**
+     * ФИО объекта (или отображаемое имя).
+     * @nullable
+     */
+  targetName?: string | null;
+  /**
+     * Email объекта.
+     * @nullable
+     */
+  targetEmail?: string | null;
 }

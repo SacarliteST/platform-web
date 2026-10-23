@@ -1654,27 +1654,53 @@
         "properties": {
           "id": {
             "type": "string",
+            "description": "Идентификатор события.",
             "format": "uuid"
           },
           "actorUserId": {
             "type": "string",
+            "description": "Кто выполнил действие; `null` — система.",
             "format": "uuid",
             "nullable": true
           },
           "targetUserId": {
             "type": "string",
+            "description": "Над кем выполнено действие.",
             "format": "uuid",
             "nullable": true
           },
           "eventType": {
-            "type": "string"
+            "type": "string",
+            "description": "Тип события."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "Описание."
           },
           "createdAt": {
             "type": "string",
+            "description": "Время события.",
             "format": "date-time"
+          },
+          "actorName": {
+            "type": "string",
+            "description": "ФИО инициатора (или отображаемое имя); `null`, если инициатора нет или он удалён.",
+            "nullable": true
+          },
+          "actorEmail": {
+            "type": "string",
+            "description": "Email инициатора.",
+            "nullable": true
+          },
+          "targetName": {
+            "type": "string",
+            "description": "ФИО объекта (или отображаемое имя).",
+            "nullable": true
+          },
+          "targetEmail": {
+            "type": "string",
+            "description": "Email объекта.",
+            "nullable": true
           }
         },
         "additionalProperties": false,

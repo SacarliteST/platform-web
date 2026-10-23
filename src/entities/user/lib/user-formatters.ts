@@ -66,6 +66,21 @@ export const getUserDisplayName = (user: {
   return user.displayName?.trim() || user.email;
 };
 
+/** Полное ФИО «Фамилия Имя Отчество»; если структурного ФИО нет — отображаемое имя, затем email. */
+export const getUserFullName = (user: {
+  lastName?: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  displayName?: string | null;
+  email: string;
+}): string => {
+  const full = [user.lastName, user.firstName, user.middleName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ');
+  return full || getUserDisplayName(user);
+};
+
 export const getUserInitials = (user: {
   displayName?: string | null;
   email: string;

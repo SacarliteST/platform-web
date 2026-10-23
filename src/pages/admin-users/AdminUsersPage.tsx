@@ -29,7 +29,7 @@ import {
   formatUserDateTime,
   formatUserRole,
   formatUserStatus,
-  getUserDisplayName,
+  getUserFullName,
   getUserInitials,
   getUserStatusTone,
 } from '../../entities/user';
@@ -290,7 +290,7 @@ export function AdminUsersPage() {
             <Table striped highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Пользователь</Table.Th>
+                  <Table.Th>ФИО</Table.Th>
                   <Table.Th>Email</Table.Th>
                   <Table.Th>Роли</Table.Th>
                   <Table.Th>Статус</Table.Th>
@@ -304,11 +304,11 @@ export function AdminUsersPage() {
                     <Table.Td>
                       <Group gap="sm" wrap="nowrap">
                         <Avatar color="gray" radius="xl" size="sm">
-                          {getUserInitials(user)}
+                          {getUserInitials({ displayName: getUserFullName(user), email: user.email })}
                         </Avatar>
-                        <Text fw={600} size="sm">
-                          {getUserDisplayName(user)}
-                        </Text>
+                        <Anchor component={Link} to={`/admin/users/${user.id}`} fw={600} size="sm">
+                          {getUserFullName(user)}
+                        </Anchor>
                       </Group>
                     </Table.Td>
                     <Table.Td>

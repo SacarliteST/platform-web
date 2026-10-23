@@ -6,5 +6,5 @@ export {
   formatUserStatus,
   getUserDisplayName,
   getUserInitials,
-  getUserStatusTone,
+  getUserFullName, getUserStatusTone,
 } from './lib';

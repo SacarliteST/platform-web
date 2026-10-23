@@ -26,6 +26,27 @@ type EventTypeFilter = 'all' | string;
 
 const pageSize = 10;
 
+/** Участник события: ФИО и email со ссылкой на карточку; для удалённого пользователя — сам идентификатор. */
+function UserCell({ id, name, email }: { id: string; name?: string | null; email?: string | null }) {
+  return (
+    <div>
+      <Anchor component={Link} to={`/admin/users/${id}`} size="sm" fw={600}>
+        {name?.trim() || email || id}
+      </Anchor>
+      {name?.trim() && email ? (
+        <Text c="dimmed" size="xs">
+          {email}
+        </Text>
+      ) : null}
+      {!name?.trim() && !email ? (
+        <Text c="dimmed" size="xs">
+          пользователь удалён или не найден
+        </Text>
+      ) : null}
+    </div>
+  );
+}
+
 export function AdminEventsPage() {
   const [page, setPage] = useState(1);
   const [actorUserId, setActorUserId] = useState('');
@@ -211,9 +232,7 @@ export function AdminEventsPage() {
                     </Table.Td>
                     <Table.Td>
                       {event.actorUserId ? (
-                        <Anchor component={Link} to={`/admin/users/${event.actorUserId}`} size="sm">
-                          {event.actorUserId}
-                        </Anchor>
+                        <UserCell id={event.actorUserId} name={event.actorName} email={event.actorEmail} />
                       ) : (
                         <Text c="dimmed" size="sm">
                           Система
@@ -222,9 +241,7 @@ export function AdminEventsPage() {
                     </Table.Td>
                     <Table.Td>
                       {event.targetUserId ? (
-                        <Anchor component={Link} to={`/admin/users/${event.targetUserId}`} size="sm">
-                          {event.targetUserId}
-                        </Anchor>
+                        <UserCell id={event.targetUserId} name={event.targetName} email={event.targetEmail} />
                       ) : (
                         <Text c="dimmed" size="sm">
                           Не указано

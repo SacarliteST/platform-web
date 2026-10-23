@@ -10,6 +10,8 @@ const roleLabels: Record<AppUserRole, string> = {
 const statusLabels: Record<string, string> = {
   Active: 'Активен',
   Blocked: 'Заблокирован',
+  Pending: 'Ожидает одобрения',
+  Rejected: 'Заявка отклонена',
 };
 
 export const formatUserRole = (role: string): string => {
@@ -24,13 +26,17 @@ export const formatUserStatus = (status: AppUserStatus): string => {
   return statusLabels[status] ?? status;
 };
 
-export const getUserStatusTone = (status: AppUserStatus): 'green' | 'red' | 'gray' => {
+export const getUserStatusTone = (status: AppUserStatus): 'green' | 'red' | 'gray' | 'yellow' => {
   if (status === 'Active') {
     return 'green';
   }
 
-  if (status === 'Blocked') {
+  if (status === 'Blocked' || status === 'Rejected') {
     return 'red';
+  }
+
+  if (status === 'Pending') {
+    return 'yellow';
   }
 
   return 'gray';

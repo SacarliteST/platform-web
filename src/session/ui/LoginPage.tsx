@@ -1,6 +1,6 @@
-import { Alert, Button, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogin } from '../../api/identity/auth/auth';
 import type { ProblemDetails } from '../../api/identity/model';
 import {
@@ -52,6 +52,7 @@ const isBlockedAccountProblem = (problem: ProblemDetails): boolean => {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const notice = (useLocation().state as { notice?: string } | null)?.notice ?? null;
   const setSession = useSessionStore((state) => state.setSession);
   const loginMutation = useLogin();
 
@@ -139,6 +140,12 @@ export function LoginPage() {
 
           <form onSubmit={onSubmit} noValidate>
             <Stack gap="md" mt="lg">
+              {notice && !formError ? (
+                <Alert color="green" variant="light">
+                  {notice}
+                </Alert>
+              ) : null}
+
               {formError ? (
                 <Alert color="red" title={formError.title} variant="light">
                   {formError.message}
@@ -169,6 +176,12 @@ export function LoginPage() {
               <Button fullWidth type="submit" size="md" loading={loginMutation.isPending}>
                 Войти
               </Button>
+              <Text size="sm" ta="center" c="dimmed">
+                Нет аккаунта?{' '}
+                <Anchor component={Link} to="/register" size="sm">
+                  Зарегистрироваться
+                </Anchor>
+              </Text>
             </Stack>
           </form>
         </Paper>

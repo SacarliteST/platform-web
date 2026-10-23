@@ -45,6 +45,7 @@ export * from './moduleSessionEventResponse';
 export * from './moduleSessionResponse';
 export * from './moduleSessionSummaryResponse';
 export * from './moduleTaskResponse';
+export * from './myEducationProfileResponse';
 export * from './practicalDetailResponse';
 export * from './practicalGradeResponse';
 export * from './practicalModuleResponse';

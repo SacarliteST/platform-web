@@ -1,5 +1,8 @@
 export { AdminEventsPage } from './admin-events';
 export { AdminHomePage } from './admin-home';
+export { AdminInvitesPage } from './admin-invites';
+export { ProfilePage } from './profile';
+export { RegisterPage } from './register';
 export { AdminProfilesPage } from './admin-profiles';
 export { AdminSettingsPage } from './admin-settings';
 export { AdminUserDetailsPage } from './admin-user-details';

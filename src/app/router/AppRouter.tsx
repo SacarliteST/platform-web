@@ -14,6 +14,11 @@ const AdminUserDetailsPage = lazy(() =>
   import('../../pages/admin-user-details').then((m) => ({ default: m.AdminUserDetailsPage })),
 );
 const AdminEventsPage = lazy(() => import('../../pages/admin-events').then((m) => ({ default: m.AdminEventsPage })));
+const AdminInvitesPage = lazy(() =>
+  import('../../pages/admin-invites').then((m) => ({ default: m.AdminInvitesPage })),
+);
+const RegisterPage = lazy(() => import('../../pages/register').then((m) => ({ default: m.RegisterPage })));
+const ProfilePage = lazy(() => import('../../pages/profile').then((m) => ({ default: m.ProfilePage })));
 const AdminProfilesPage = lazy(() =>
   import('../../pages/admin-profiles').then((m) => ({ default: m.AdminProfilesPage })),
 );
@@ -122,6 +127,8 @@ export function AppRouter() {
       <Route element={<AppLayout />}>
         <Route index element={<RootRedirect />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
         <Route path="help" element={<HelpPage />} />
 
         <Route
@@ -138,6 +145,7 @@ export function AppRouter() {
         <Route path="admin/users/:userId" element={<AdminRoute><AdminUserDetailsPage /></AdminRoute>} />
         <Route path="admin/events" element={<AdminRoute><AdminEventsPage /></AdminRoute>} />
         <Route path="admin/profiles" element={<AdminRoute><AdminProfilesPage /></AdminRoute>} />
+        <Route path="admin/invites" element={<AdminRoute><AdminInvitesPage /></AdminRoute>} />
         <Route path="admin/modules" element={<AdminRoute><AdminModulesPage /></AdminRoute>} />
         <Route path="admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 

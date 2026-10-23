@@ -1,6 +1,8 @@
 import {
+  approveUser,
   blockUser,
   createUser,
+  rejectUser,
   unblockUser,
   updateUserProfile,
   updateUserRoles,
@@ -47,6 +49,16 @@ export const updateAdminUserProfile = async (
   data: UpdateUserProfileRequest,
 ): Promise<void> => {
   const response = await updateUserProfile(userId, data);
+  return ensureSuccess(response, 204);
+};
+
+export const approveAdminUser = async (userId: string): Promise<void> => {
+  const response = await approveUser(userId);
+  return ensureSuccess(response, 204);
+};
+
+export const rejectAdminUser = async (userId: string, reason?: string | null): Promise<void> => {
+  const response = await rejectUser(userId, { reason: reason?.trim() || null });
   return ensureSuccess(response, 204);
 };
 

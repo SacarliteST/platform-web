@@ -28,9 +28,11 @@ export function AppLayout() {
     { to: '/admin', label: 'Администратор', visible: canSeeAdmin(userRoles) },
     { to: '/teacher', label: 'Преподаватель', visible: canSeeTeacher(userRoles) },
     { to: '/student', label: 'Студент', visible: canSeeStudent(userRoles) },
+    { to: '/profile', label: 'Личный кабинет', visible: status === 'authenticated' },
     { to: '/help', label: 'Справка', visible: true },
   ];
   const isLoginPage = location.pathname === '/login';
+  const isRegisterPage = location.pathname === '/register';
 
   const handleLogout = () => {
     const { refreshToken } = useSessionStore.getState();
@@ -84,11 +86,20 @@ export function AppLayout() {
             <Button color="gray" size="xs" variant="outline" onClick={handleLogout}>
               Выйти
             </Button>
-          ) : !isLoginPage ? (
-            <Button color="blue" size="xs" variant="filled" onClick={() => navigate('/login')}>
-              Войти
-            </Button>
-          ) : null}
+          ) : (
+            <Group gap="xs">
+              {!isRegisterPage ? (
+                <Button color="gray" size="xs" variant="outline" onClick={() => navigate('/register')}>
+                  Регистрация
+                </Button>
+              ) : null}
+              {!isLoginPage ? (
+                <Button color="blue" size="xs" variant="filled" onClick={() => navigate('/login')}>
+                  Войти
+                </Button>
+              ) : null}
+            </Group>
+          )}
         </div>
       </header>
       <main className="app-shell__main">

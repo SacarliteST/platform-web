@@ -27,6 +27,7 @@ import {
   formatUserRole,
   formatUserStatus,
   getUserDisplayName,
+  getUserFullName,
   getUserStatusTone,
 } from '../../entities/user';
 import { AdminContourTabs } from '../../features/admin-contour';
@@ -336,19 +337,17 @@ export function AdminUserDetailsPage() {
                   <Grid gutter="md">
                     <Grid.Col span={{ base: 12, sm: 6 }}>
                       <Text c="dimmed" size="xs" tt="uppercase">
-                        Имя пользователя
+                        ФИО
                       </Text>
                       <Group gap="xs" align="center">
-                        <Text fw={600}>{getUserDisplayName(user)}</Text>
+                        <Text fw={600}>{getUserFullName(user)}</Text>
                         <Button size="compact-xs" variant="subtle" onClick={openProfileModal}>
                           Изменить ФИО
                         </Button>
                       </Group>
-                      {user.lastName || user.firstName || user.middleName ? (
-                        <Text c="dimmed" size="xs">
-                          {[user.lastName, user.firstName, user.middleName].filter(Boolean).join(' ')}
-                        </Text>
-                      ) : null}
+                      <Text c="dimmed" size="xs">
+                        Отображаемое имя: {getUserDisplayName(user)}
+                      </Text>
                     </Grid.Col>
                     <Grid.Col span={{ base: 12, sm: 6 }}>
                       <Text c="dimmed" size="xs" tt="uppercase">

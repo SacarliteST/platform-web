@@ -1,5 +1,6 @@
 import {
   Alert,
+  Anchor,
   Autocomplete,
   Badge,
   Button,
@@ -14,6 +15,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useCreateAdminProfile,
   useDeactivateAdminProfile,
@@ -292,7 +294,9 @@ export function AdminProfilesPage() {
                 {rows.map((profile) => (
                   <Table.Tr key={profile.id}>
                     <Table.Td>
-                      <Text size="sm">{fullName(profile)}</Text>
+                      <Anchor component={Link} to={`/admin/users/${profile.id}`} size="sm">
+                        {fullName(profile)}
+                      </Anchor>
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm">{profile.login}</Text>

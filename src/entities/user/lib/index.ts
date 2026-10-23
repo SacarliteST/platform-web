@@ -5,5 +5,6 @@ export {
   formatUserStatus,
   getUserDisplayName,
   getUserInitials,
+  getUserFullName,
   getUserStatusTone,
 } from './user-formatters';

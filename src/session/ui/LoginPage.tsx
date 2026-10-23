@@ -1,6 +1,6 @@
 import { Alert, Anchor, Button, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLogin } from '../../api/identity/auth/auth';
 import type { ProblemDetails } from '../../api/identity/model';
 import {
@@ -14,6 +14,7 @@ import {
   getDefaultSessionRoute,
   useSessionStore,
 } from '../index';
+import { takeLoginNotice } from '../lib/login-notice';
 import './LoginPage.css';
 
 // Простая клиентская проверка формы из двух полей — без react-hook-form/zod,
@@ -52,7 +53,7 @@ const isBlockedAccountProblem = (problem: ProblemDetails): boolean => {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const notice = (useLocation().state as { notice?: string } | null)?.notice ?? null;
+  const [notice] = useState<string | null>(() => takeLoginNotice());
   const setSession = useSessionStore((state) => state.setSession);
   const loginMutation = useLogin();
 

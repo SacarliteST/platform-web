@@ -7,6 +7,8 @@ const identityTagNames: Record<string, string> = {
   Метаданные: 'discovery',
   Пользователи: 'users',
   Состояние: 'health',
+  'Личный кабинет': 'cabinet',
+  'Коды приглашения': 'invite-codes',
 };
 
 const normalizeIdentityTags = (spec: OpenApiDocument): OpenApiDocument => {

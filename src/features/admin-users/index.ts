@@ -1,6 +1,8 @@
 export {
+  approveAdminUser,
   blockAdminUser,
   createAdminUser,
+  rejectAdminUser,
   replaceAdminUserRoles,
   unblockAdminUser,
   updateAdminUserProfile,

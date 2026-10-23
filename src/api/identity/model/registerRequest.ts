@@ -7,11 +7,36 @@
  */
 
 /**
- * Запрос на регистрацию нового пользователя.
+ * Запрос на самостоятельную регистрацию. ФИО и код приглашения необязательны для обратной совместимости клиентов.
  */
 export interface RegisterRequest {
+  /** Email — он же логин. */
   email: string;
+  /** Пароль. */
   password: string;
-  /** @nullable */
+  /**
+     * Отображаемое имя; если не задано, собирается из имени и фамилии.
+     * @nullable
+     */
   displayName?: string | null;
+  /**
+     * Имя.
+     * @nullable
+     */
+  firstName?: string | null;
+  /**
+     * Фамилия.
+     * @nullable
+     */
+  lastName?: string | null;
+  /**
+     * Отчество.
+     * @nullable
+     */
+  middleName?: string | null;
+  /**
+     * Код приглашения: с действующим кодом заявка одобряется сразу.
+     * @nullable
+     */
+  inviteCode?: string | null;
 }

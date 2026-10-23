@@ -36,6 +36,7 @@ import {
 import { AdminContourTabs } from '../../features/admin-contour';
 import {
   AdminUsersApiError,
+  approveAdminUser,
   createAdminUser,
   getAdminUsersErrorPresentation,
   getAdminUsersFieldErrors,
@@ -51,7 +52,7 @@ import {
 } from '../../shared/ui';
 
 type RoleFilter = 'all' | (typeof UserRole)[keyof typeof UserRole];
-type StatusFilter = 'all' | 'Active' | 'Blocked';
+type StatusFilter = 'all' | 'Active' | 'Blocked' | 'Pending' | 'Rejected';
 
 const pageSize = 10;
 
@@ -103,6 +104,11 @@ export function AdminUsersPage() {
   const createUserForm = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
     defaultValues: createUserDefaultValues,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (userId: string) => approveAdminUser(userId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/v1/users'] }),
   });
 
   const createUserMutation = useMutation({
@@ -252,6 +258,8 @@ export function AdminUsersPage() {
                 { value: 'all', label: 'Все статусы' },
                 { value: 'Active', label: formatUserStatus('Active') },
                 { value: 'Blocked', label: formatUserStatus('Blocked') },
+                { value: 'Pending', label: formatUserStatus('Pending') },
+                { value: 'Rejected', label: formatUserStatus('Rejected') },
               ]}
               size="sm"
               allowDeselect={false}
@@ -342,6 +350,17 @@ export function AdminUsersPage() {
                         >
                           Роли
                         </Button>
+                        {user.status === 'Pending' || user.status === 'Rejected' ? (
+                          <Button
+                            size="xs"
+                            variant="light"
+                            color="green"
+                            loading={approveMutation.isPending && approveMutation.variables === user.id}
+                            onClick={() => approveMutation.mutate(user.id)}
+                          >
+                            Одобрить
+                          </Button>
+                        ) : null}
                       </Group>
                     </Table.Td>
                   </Table.Tr>

@@ -757,6 +757,34 @@
         }
       }
     },
+    "/api/v1/profile": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Мой учебный профиль",
+        "description": "Логин, ФИО, роль и учебная группа текущего пользователя. Группу назначает администратор.",
+        "operationId": "GetMyEducationProfile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyEducationProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/v1/admin/practical-modules": {
       "get": {
         "tags": [
@@ -4947,6 +4975,53 @@
         },
         "description": "Задание из каталога внешнего практического модуля."
       },
+      "MyEducationProfileResponse": {
+        "required": [
+          "id",
+          "login",
+          "firstName",
+          "lastName",
+          "middleName",
+          "role",
+          "group"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор профиля; равен идентификатору пользователя в Identity.",
+            "format": "uuid"
+          },
+          "login": {
+            "type": "string",
+            "description": "Логин (email)."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя (копия данных Identity)."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия (копия данных Identity)."
+          },
+          "middleName": {
+            "type": "string",
+            "description": "Отчество (копия данных Identity)."
+          },
+          "role": {
+            "type": "string",
+            "description": "Роль в учебной системе: `Admin`, `Teacher` или `Student`."
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Учебная группа или `null`; назначает администратор, пользователь её не меняет."
+          }
+        },
+        "description": "Учебный профиль текущего пользователя для личного кабинета."
+      },
       "PracticalDetailResponse": {
         "required": [
           "id",
@@ -6059,6 +6134,9 @@
     },
     {
       "name": "AdminProfiles"
+    },
+    {
+      "name": "Profile"
     },
     {
       "name": "PracticalModules"

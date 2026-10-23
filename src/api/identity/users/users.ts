@@ -29,6 +29,7 @@ import type {
   CreateUserRequest,
   ListUsersParams,
   ProblemDetails,
+  RejectUserRequest,
   ResetUserPasswordRequest,
   UpdateUserProfileRequest,
   UpdateUserRolesRequest,
@@ -511,6 +512,126 @@ export const useResetUserPassword = <TError = ProblemDetails | ValidationProblem
         TContext
       > => {
       return useMutation(getResetUserPasswordMutationOptions(options), queryClient);
+    }
+    export type rejectUserResponse204 = {
+  data: void
+  status: 204
+}
+
+export type rejectUserResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type rejectUserResponse403 = {
+  data: ProblemDetails
+  status: 403
+}
+
+export type rejectUserResponse404 = {
+  data: ProblemDetails
+  status: 404
+}
+
+export type rejectUserResponse409 = {
+  data: ProblemDetails
+  status: 409
+}
+
+export type rejectUserResponse422 = {
+  data: ValidationProblemDetails
+  status: 422
+}
+
+export type rejectUserResponseSuccess = (rejectUserResponse204) & {
+  headers: Headers;
+};
+export type rejectUserResponseError = (rejectUserResponse401 | rejectUserResponse403 | rejectUserResponse404 | rejectUserResponse409 | rejectUserResponse422) & {
+  headers: Headers;
+};
+
+export type rejectUserResponse = (rejectUserResponseSuccess | rejectUserResponseError)
+
+export const getRejectUserUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/users/${id}/reject`
+}
+
+/**
+ * Отклоняет заявку в ожидании. Уже одобренного пользователя отклонить нельзя (409) — используйте блокировку. Отклонённую заявку можно позже одобрить. Доступно только для роли Admin.
+ * @summary Отклонение заявки на регистрацию
+ */
+export const rejectUser = async (id: string,
+    rejectUserRequest: RejectUserRequest, options?: Parameters<typeof identityFetch>[1]): Promise<rejectUserResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return identityFetch<rejectUserResponse>(getRejectUserUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rejectUserRequest)
+  }
+);}
+
+
+
+
+
+export const getRejectUserMutationKey = () => ['rejectUser'] as const;
+
+export const getRejectUserMutationOptions = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectUser>>, TError,RejectUserMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectUser>>, TError,RejectUserMutationVariables, TContext> => {
+
+const mutationKey = getRejectUserMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectUser>>, RejectUserMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  rejectUser(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectUserMutationResult = NonNullable<Awaited<ReturnType<typeof rejectUser>>>
+    export type RejectUserMutationBody = RejectUserRequest
+    export type RejectUserMutationError = ProblemDetails | ValidationProblemDetails
+    export type RejectUserMutationVariables = {id: string;data: RejectUserRequest}
+
+    /**
+ * @summary Отклонение заявки на регистрацию
+ */
+export const useRejectUser = <TError = ProblemDetails | ValidationProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectUser>>, TError,RejectUserMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof rejectUser>>,
+        TError,
+        RejectUserMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRejectUserMutationOptions(options), queryClient);
     }
     export type listUsersResponse200 = {
   data: UserListItemDtoPagedResponse
@@ -1012,4 +1133,107 @@ export const useBlockUser = <TError = ProblemDetails | ValidationProblemDetails,
         TContext
       > => {
       return useMutation(getBlockUserMutationOptions(options), queryClient);
+    }
+    export type approveUserResponse204 = {
+  data: void
+  status: 204
+}
+
+export type approveUserResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type approveUserResponse403 = {
+  data: ProblemDetails
+  status: 403
+}
+
+export type approveUserResponse404 = {
+  data: ProblemDetails
+  status: 404
+}
+
+export type approveUserResponseSuccess = (approveUserResponse204) & {
+  headers: Headers;
+};
+export type approveUserResponseError = (approveUserResponse401 | approveUserResponse403 | approveUserResponse404) & {
+  headers: Headers;
+};
+
+export type approveUserResponse = (approveUserResponseSuccess | approveUserResponseError)
+
+export const getApproveUserUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/users/${id}/approve`
+}
+
+/**
+ * Открывает пользователю доступ. Повторный вызов безопасен. Доступно только для роли Admin.
+ * @summary Одобрение заявки на регистрацию
+ */
+export const approveUser = async (id: string, options?: Parameters<typeof identityFetch>[1]): Promise<approveUserResponse> => {
+
+  return identityFetch<approveUserResponse>(getApproveUserUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getApproveUserMutationKey = () => ['approveUser'] as const;
+
+export const getApproveUserMutationOptions = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveUser>>, TError,ApproveUserMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveUser>>, TError,ApproveUserMutationVariables, TContext> => {
+
+const mutationKey = getApproveUserMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveUser>>, ApproveUserMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  approveUser(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveUserMutationResult = NonNullable<Awaited<ReturnType<typeof approveUser>>>
+
+    export type ApproveUserMutationError = ProblemDetails
+    export type ApproveUserMutationVariables = {id: string}
+
+    /**
+ * @summary Одобрение заявки на регистрацию
+ */
+export const useApproveUser = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveUser>>, TError,ApproveUserMutationVariables, TContext>, request?: SecondParameter<typeof identityFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof approveUser>>,
+        TError,
+        ApproveUserMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApproveUserMutationOptions(options), queryClient);
     }

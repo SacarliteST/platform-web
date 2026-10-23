@@ -19,6 +19,7 @@ import type {
   LoginRequest,
   ProblemDetails,
   RefreshRequest,
+  RegisterPendingResponse,
   RegisterRequest,
   TokenExchangeRequest,
   TokenExchangeResponse,
@@ -142,6 +143,11 @@ export const useTokenExchange = <TError = ProblemDetails | ValidationProblemDeta
   status: 201
 }
 
+export type registerResponse202 = {
+  data: RegisterPendingResponse
+  status: 202
+}
+
 export type registerResponse409 = {
   data: ProblemDetails
   status: 409
@@ -152,7 +158,7 @@ export type registerResponse422 = {
   status: 422
 }
 
-export type registerResponseSuccess = (registerResponse201) & {
+export type registerResponseSuccess = (registerResponse201 | registerResponse202) & {
   headers: Headers;
 };
 export type registerResponseError = (registerResponse409 | registerResponse422) & {
@@ -170,7 +176,7 @@ export const getRegisterUrl = () => {
 }
 
 /**
- * Создаёт пользователя с ролью Student и возвращает пару токенов.
+ * Создаёт пользователя с ролью Student. Режим Approval (по умолчанию): без кода приглашения заявка ждёт одобрения администратора (202, токенов нет), с действующим кодом доступ открыт сразу (201 и пара токенов). Режим Open — всегда 201, режим Closed — 409.
  * @summary Регистрация нового пользователя
  */
 export const register = async (registerRequest: RegisterRequest, options?: Parameters<typeof identityFetch>[1]): Promise<registerResponse> => {

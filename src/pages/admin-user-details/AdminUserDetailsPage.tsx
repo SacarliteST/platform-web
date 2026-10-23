@@ -32,8 +32,10 @@ import {
 import { AdminContourTabs } from '../../features/admin-contour';
 import {
   AdminUsersApiError,
+  approveAdminUser,
   blockAdminUser,
   getAdminUsersErrorPresentation,
+  rejectAdminUser,
   replaceAdminUserRoles,
   unblockAdminUser,
   updateAdminUserProfile,
@@ -91,6 +93,9 @@ export function AdminUserDetailsPage() {
   const [rolesModalOpened, rolesModal] = useDisclosure(false);
   const [blockModalOpened, blockModal] = useDisclosure(false);
   const [unblockModalOpened, unblockModal] = useDisclosure(false);
+  const [rejectModalOpened, rejectModal] = useDisclosure(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [registrationError, setRegistrationError] = useState<IdentityApiProblemPresentation | null>(null);
   const [profileModalOpened, profileModal] = useDisclosure(false);
   const [profileForm, setProfileForm] = useState({ lastName: '', firstName: '', middleName: '' });
   const [profileError, setProfileError] = useState<IdentityApiProblemPresentation | null>(null);
@@ -147,6 +152,26 @@ export function AdminUserDetailsPage() {
       rolesModal.close();
     },
     onError: (error) => setRolesError(getAdminUserMutationErrorPresentation(error)),
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: () => approveAdminUser(safeUserId),
+    onSuccess: async () => {
+      await refreshUserQueries();
+      setRegistrationError(null);
+    },
+    onError: (error) => setRegistrationError(getAdminUserMutationErrorPresentation(error)),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: () => rejectAdminUser(safeUserId, rejectReason),
+    onSuccess: async () => {
+      await refreshUserQueries();
+      setRegistrationError(null);
+      setRejectReason('');
+      rejectModal.close();
+    },
+    onError: (error) => setRegistrationError(getAdminUserMutationErrorPresentation(error)),
   });
 
   const updateProfileMutation = useMutation({
@@ -397,6 +422,41 @@ export function AdminUserDetailsPage() {
 
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Stack gap="md">
+              {user.status === 'Pending' || user.status === 'Rejected' ? (
+                <AppCard p="md">
+                  <Stack gap="md">
+                    <Title order={3} size="h5">
+                      Заявка на регистрацию
+                    </Title>
+                    <Text size="sm" c="dimmed">
+                      {user.status === 'Pending'
+                        ? 'Пользователь зарегистрировался сам и ждёт решения. Войти он не может.'
+                        : 'Заявка отклонена. Её можно одобрить позже.'}
+                    </Text>
+                    {registrationError ? (
+                      <Alert color="red" title={registrationError.title} variant="light">
+                        {registrationError.message}
+                      </Alert>
+                    ) : null}
+                    <Group gap="xs">
+                      <Button
+                        color="green"
+                        size="sm"
+                        loading={approveMutation.isPending}
+                        onClick={() => approveMutation.mutate()}
+                      >
+                        Одобрить
+                      </Button>
+                      {user.status === 'Pending' ? (
+                        <Button color="red" variant="outline" size="sm" onClick={rejectModal.open}>
+                          Отклонить
+                        </Button>
+                      ) : null}
+                    </Group>
+                  </Stack>
+                </AppCard>
+              ) : null}
+
               <AppCard p="md">
                 <Stack gap="md">
                   <Title order={3} size="h5">
@@ -499,6 +559,26 @@ export function AdminUserDetailsPage() {
       ) : (
         <UserNotFound />
       )}
+
+      <Modal opened={rejectModalOpened} onClose={rejectModal.close} title="Отклонить заявку" centered size="md">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            rejectMutation.mutate();
+          }}
+        >
+          <Stack gap="md">
+            <Textarea
+              label="Причина"
+              description="Необязательно. Записывается в журнал аудита"
+              value={rejectReason}
+              maxLength={500}
+              onChange={(event) => setRejectReason(event.currentTarget.value)}
+            />
+            <FormActions submitLabel="Отклонить" loading={rejectMutation.isPending} onCancel={rejectModal.close} />
+          </Stack>
+        </form>
+      </Modal>
 
       <Modal opened={profileModalOpened} onClose={profileModal.close} title="Изменить ФИО" centered size="md">
         <form onSubmit={submitProfile}>

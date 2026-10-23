@@ -290,7 +290,7 @@
           "Аутентификация"
         ],
         "summary": "Регистрация нового пользователя",
-        "description": "Создаёт пользователя с ролью Student и возвращает пару токенов.",
+        "description": "Создаёт пользователя с ролью Student. Режим Approval (по умолчанию): без кода приглашения заявка ждёт одобрения администратора (202, токенов нет), с действующим кодом доступ открыт сразу (201 и пара токенов). Режим Open — всегда 201, режим Closed — 409.",
         "operationId": "Register",
         "requestBody": {
           "content": {
@@ -301,7 +301,7 @@
                     "$ref": "#/components/schemas/RegisterRequest"
                   }
                 ],
-                "description": "Запрос на регистрацию нового пользователя."
+                "description": "Запрос на самостоятельную регистрацию. ФИО и код приглашения необязательны для обратной совместимости клиентов."
               }
             }
           },
@@ -314,6 +314,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterPendingResponse"
                 }
               }
             }
@@ -471,6 +481,312 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invite-codes": {
+      "get": {
+        "tags": [
+          "Коды приглашения"
+        ],
+        "summary": "Список кодов приглашения",
+        "operationId": "ListInviteCodes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InviteCodeDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Коды приглашения"
+        ],
+        "summary": "Создание кода приглашения",
+        "description": "Регистрация с действующим кодом сразу одобряется. Пустой код — случайный. Можно задать срок и лимит использований.",
+        "operationId": "CreateInviteCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateInviteCodeRequest"
+                  }
+                ],
+                "description": "Создание кода приглашения. Пустой Code — сгенерировать случайный."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invite-codes/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Коды приглашения"
+        ],
+        "summary": "Выключение кода приглашения",
+        "operationId": "DeactivateInviteCode",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Личный кабинет"
+        ],
+        "summary": "Мои данные",
+        "description": "Данные текущего пользователя: ФИО, email, роли, статус.",
+        "operationId": "GetMyProfile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/profile": {
+      "put": {
+        "tags": [
+          "Личный кабинет"
+        ],
+        "summary": "Изменение своего ФИО",
+        "description": "Меняет имя, фамилию и отчество текущего пользователя. Каждое изменение пишется в журнал аудита (администратор видит прежнее и новое значение). Email и роли самостоятельно не меняются.",
+        "operationId": "UpdateMyProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateUserProfileRequest"
+                  }
+                ],
+                "description": "Запрос администратора на изменение ФИО пользователя. Хотя бы имя или фамилия должны быть заполнены."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/password": {
+      "put": {
+        "tags": [
+          "Личный кабинет"
+        ],
+        "summary": "Смена своего пароля",
+        "description": "Требует текущий пароль. После смены все refresh-токены пользователя отзываются — нужно войти заново. Событие пишется в журнал аудита (без паролей).",
+        "operationId": "ChangeMyPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ChangeMyPasswordRequest"
+                  }
+                ],
+                "description": "Смена собственного пароля. Все refresh-токены пользователя после смены отзываются."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "401": {
             "description": "Unauthorized",
@@ -844,6 +1160,97 @@
         }
       }
     },
+    "/api/v1/users/{id}/reject": {
+      "post": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Отклонение заявки на регистрацию",
+        "description": "Отклоняет заявку в ожидании. Уже одобренного пользователя отклонить нельзя (409) — используйте блокировку. Отклонённую заявку можно позже одобрить. Доступно только для роли Admin.",
+        "operationId": "RejectUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RejectUserRequest"
+                  }
+                ],
+                "description": "Отклонение заявки на регистрацию."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users": {
       "get": {
         "tags": [
@@ -1164,6 +1571,62 @@
         }
       }
     },
+    "/api/v1/users/{id}/approve": {
+      "post": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Одобрение заявки на регистрацию",
+        "description": "Открывает пользователю доступ. Повторный вызов безопасен. Доступно только для роли Admin.",
+        "operationId": "ApproveUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -1259,6 +1722,48 @@
         "additionalProperties": false,
         "description": "Причина административной блокировки пользователя."
       },
+      "ChangeMyPasswordRequest": {
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Смена собственного пароля. Все refresh-токены пользователя после смены отзываются."
+      },
+      "CreateInviteCodeRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "maxUses": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Создание кода приглашения. Пустой Code — сгенерировать случайный."
+      },
       "CreateUserRequest": {
         "required": [
           "email",
@@ -1299,6 +1804,57 @@
         "additionalProperties": false,
         "description": "Запрос администратора на создание пользователя."
       },
+      "InviteCodeDto": {
+        "required": [
+          "code",
+          "createdAt",
+          "createdByUserId",
+          "id",
+          "isActive",
+          "usedCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "maxUses": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdByUserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Код приглашения в административном списке."
+      },
       "LoginRequest": {
         "required": [
           "email",
@@ -1315,6 +1871,61 @@
         },
         "additionalProperties": false,
         "description": "Запрос на аутентификацию пользователя."
+      },
+      "MyProfileDto": {
+        "required": [
+          "createdAt",
+          "email",
+          "id",
+          "roles",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Данные текущего пользователя для личного кабинета."
       },
       "ProblemDetails": {
         "type": "object",
@@ -1356,6 +1967,27 @@
         "additionalProperties": false,
         "description": "Запрос на обновление токенов по refresh-токену."
       },
+      "RegisterPendingResponse": {
+        "required": [
+          "email",
+          "message",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ 202 на регистрацию: заявка принята и ждёт решения администратора, токенов нет."
+      },
       "RegisterRequest": {
         "required": [
           "email",
@@ -1364,18 +1996,52 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "Email — он же логин."
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "description": "Пароль."
           },
           "displayName": {
+            "type": "string",
+            "description": "Отображаемое имя; если не задано, собирается из имени и фамилии.",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя.",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия.",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "description": "Отчество.",
+            "nullable": true
+          },
+          "inviteCode": {
+            "type": "string",
+            "description": "Код приглашения: с действующим кодом заявка одобряется сразу.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на самостоятельную регистрацию. ФИО и код приглашения необязательны для обратной совместимости клиентов."
+      },
+      "RejectUserRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
             "type": "string",
             "nullable": true
           }
         },
         "additionalProperties": false,
-        "description": "Запрос на регистрацию нового пользователя."
+        "description": "Отклонение заявки на регистрацию."
       },
       "ResetUserPasswordRequest": {
         "required": [
@@ -1746,6 +2412,12 @@
     },
     {
       "name": "Аутентификация"
+    },
+    {
+      "name": "Коды приглашения"
+    },
+    {
+      "name": "Личный кабинет"
     },
     {
       "name": "Метаданные"

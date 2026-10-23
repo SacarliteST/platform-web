@@ -11,6 +11,8 @@ import { getIdentityProblemPresentation, type IdentityApiProblemPresentation } f
 import { useSessionStore } from '../../session';
 import { AppCard, Page, PageBreadcrumbs, PageHeader, QueryBoundary } from '../../shared/ui';
 
+import { LOGIN_NOTICE_KEY } from '../../session/lib/login-notice';
+
 type NameForm = { lastName: string; firstName: string; middleName: string };
 
 export function ProfilePage() {
@@ -113,7 +115,13 @@ export function ProfilePage() {
     if (refreshToken) {
       void logout({ refreshToken }).catch(() => undefined);
     }
-    navigate('/login', { replace: true, state: { notice: 'Пароль изменён. Войдите с новым паролем.' } });
+    // Охранник маршрута при выходе сам перекидывает на /login и теряет state — сообщение передаём через sessionStorage.
+    try {
+      sessionStorage.setItem(LOGIN_NOTICE_KEY, 'Пароль изменён. Войдите с новым паролем.');
+    } catch {
+      // Хранилище недоступно — вход просто откроется без сообщения.
+    }
+    navigate('/login', { replace: true });
   };
 
   return (

@@ -4,6 +4,7 @@ import {
   useGetCourseModules,
   useGetStudentCourses,
 } from '../../api/education/courses/courses';
+import { ClassAccessGate } from '../../features/class-windows';
 import {
   AppCard,
   Page,
@@ -43,6 +44,7 @@ export function StudentCoursePage() {
         </Button>
       </Group>
 
+      <ClassAccessGate courseId={courseId}>
       <AppCard p={0}>
         <QueryBoundary
           isPending={modulesQuery.isPending}
@@ -84,6 +86,7 @@ export function StudentCoursePage() {
           )}
         </QueryBoundary>
       </AppCard>
+      </ClassAccessGate>
     </Page>
   );
 }

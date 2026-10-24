@@ -5,6 +5,7 @@ import { useGetModule, useGetModuleTheories } from '../../api/education/modules/
 import { useGetModulePracticals } from '../../api/education/practicals/practicals';
 import { useGetPracticalGrade } from '../../api/education/grades/grades';
 import { formatGrade, normalizePracticalGrade } from '../../entities';
+import { ClassAccessGate } from '../../features/class-windows';
 import {
   AppCard,
   Page,
@@ -53,6 +54,7 @@ export function StudentModulePage() {
         </Button>
       </Group>
 
+      <ClassAccessGate courseId={courseId}>
       <Tabs defaultValue="theory">
         <Tabs.List>
           <Tabs.Tab value="theory">Теория</Tabs.Tab>
@@ -145,6 +147,7 @@ export function StudentModulePage() {
           </AppCard>
         </Tabs.Panel>
       </Tabs>
+      </ClassAccessGate>
     </Page>
   );
 }

@@ -18,4 +18,6 @@ export interface PracticalDetailResponse {
   /** @nullable */
   timeLimitMinutes: number | null;
   moduleBinding: null | ExternalModuleBindingResponse;
+  /** @nullable */
+  attemptsPerSession?: number | null;
 }

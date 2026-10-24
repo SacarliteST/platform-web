@@ -113,6 +113,7 @@ function BindModal({
   const [moduleId, setModuleId] = useState<string | null>(null);
   const [taskRef, setTaskRef] = useState<string | null>(null);
   const [tries, setTries] = useState<number | string>(1);
+  const [attemptsPerSession, setAttemptsPerSession] = useState<number | string>('');
   const [noLimit, setNoLimit] = useState(true);
   const [limit, setLimit] = useState<number | string>(120);
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +126,9 @@ function BindModal({
     setModuleId(b?.practicalModuleId ?? null);
     setTaskRef(b?.externalTaskRef ?? null);
     setTries(toNumber(detail.triesCount, 1));
+    setAttemptsPerSession(
+      detail.attemptsPerSession == null ? '' : toNumber(detail.attemptsPerSession),
+    );
     setNoLimit(detail.timeLimitMinutes == null);
     setLimit(detail.timeLimitMinutes == null ? 120 : toNumber(detail.timeLimitMinutes));
     setError(null);
@@ -158,6 +162,7 @@ function BindModal({
           externalTaskRef: taskRef,
           triesCount: Number(tries) || 1,
           timeLimitMinutes: noLimit ? null : Number(limit) || 1,
+          attemptsPerSession: attemptsPerSession === '' ? null : Number(attemptsPerSession) || 1,
         },
       })
       .catch(() => null);
@@ -225,7 +230,14 @@ function BindModal({
         />
 
         <Group grow align="flex-start">
-          <NumberInput label="Попыток" min={1} value={tries} onChange={setTries} />
+          <NumberInput label="Заходов (запусков модуля)" min={1} value={tries} onChange={setTries} />
+          <NumberInput
+            label="Отправок решения в одном заходе"
+            description="Пусто — без ограничения"
+            min={1}
+            value={attemptsPerSession}
+            onChange={setAttemptsPerSession}
+          />
           <NumberInput
             label="Лимит времени, мин"
             min={1}

@@ -5,12 +5,14 @@ import {
   Modal,
   Stack,
   Table,
+  Tabs,
   Text,
   TextInput,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { TeacherClassWindows } from '../../features/class-windows';
 import {
   useCreateModule,
   useDeleteModule,
@@ -121,6 +123,12 @@ export function TeacherCoursePage() {
         </Group>
       </Group>
 
+      <Tabs defaultValue="modules">
+        <Tabs.List>
+          <Tabs.Tab value="modules">Модули</Tabs.Tab>
+          <Tabs.Tab value="windows">Пары</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="modules" pt="md">
       <AppCard p={0}>
         <QueryBoundary
           isPending={modulesQuery.isPending}
@@ -172,6 +180,11 @@ export function TeacherCoursePage() {
           )}
         </QueryBoundary>
       </AppCard>
+        </Tabs.Panel>
+        <Tabs.Panel value="windows" pt="md">
+          {courseId ? <TeacherClassWindows courseId={courseId} /> : null}
+        </Tabs.Panel>
+      </Tabs>
 
       {courseId ? <StudentAssignmentCard kind="course" id={courseId} /> : null}
 

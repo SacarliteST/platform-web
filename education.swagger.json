@@ -1599,6 +1599,258 @@
         }
       }
     },
+    "/api/v1/courses/{courseId}/class-windows": {
+      "get": {
+        "tags": [
+          "ClassWindows"
+        ],
+        "summary": "Режим курса, группы и пары (преподаватель)",
+        "operationId": "GetCourseClassWindows",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseClassWindowsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ClassWindows"
+        ],
+        "summary": "Начать пару для группы",
+        "operationId": "StartClassWindow",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartClassWindowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassWindowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/practice-access": {
+      "put": {
+        "tags": [
+          "ClassWindows"
+        ],
+        "summary": "Включить или выключить режим «практика только на парах»",
+        "operationId": "SetCoursePracticeAccess",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPracticeAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/class-windows/{windowId}/extend": {
+      "post": {
+        "tags": [
+          "ClassWindows"
+        ],
+        "summary": "Продлить пару",
+        "operationId": "ExtendClassWindow",
+        "parameters": [
+          {
+            "name": "windowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendClassWindowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassWindowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/class-windows/{windowId}/finish": {
+      "post": {
+        "tags": [
+          "ClassWindows"
+        ],
+        "summary": "Завершить пару досрочно",
+        "operationId": "FinishClassWindow",
+        "parameters": [
+          {
+            "name": "windowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassWindowResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/courses/{courseId}/class-access": {
+      "get": {
+        "tags": [
+          "ClassWindows"
+        ],
+        "summary": "Доступен ли студенту сейчас тест и практика курса",
+        "operationId": "GetCourseClassAccess",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassAccessResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/v1/modules": {
       "post": {
         "tags": [
@@ -4129,6 +4381,13 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "attemptsPerSession": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         },
         "description": "Запрос привязки внешнего модуля к практике."
@@ -4158,6 +4417,74 @@
           }
         },
         "description": "Запрос на изменение набора студентов курса или практики точечно: добавить и убрать.\r\nОстальные назначения не затрагиваются, поэтому одновременные правки разных преподавателей не перезаписывают друг друга."
+      },
+      "ClassAccessResponse": {
+        "required": [
+          "practiceOnlyDuringClass",
+          "isOpen",
+          "endsAt"
+        ],
+        "type": "object",
+        "properties": {
+          "practiceOnlyDuringClass": {
+            "type": "boolean"
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "endsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Доступ студента к практике курса."
+      },
+      "ClassWindowResponse": {
+        "required": [
+          "id",
+          "courseId",
+          "groupName",
+          "startsAt",
+          "endsAt",
+          "closedAt",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "description": "Пара."
       },
       "CompleteModuleSessionRequest": {
         "required": [
@@ -4227,6 +4554,32 @@
           }
         },
         "description": "Запрос на настройку вопросов и порогов оценивания практического материала."
+      },
+      "CourseClassWindowsResponse": {
+        "required": [
+          "practiceOnlyDuringClass",
+          "groups",
+          "windows"
+        ],
+        "type": "object",
+        "properties": {
+          "practiceOnlyDuringClass": {
+            "type": "boolean"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "windows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassWindowResponse"
+            }
+          }
+        },
+        "description": "Режим курса, группы студентов и пары."
       },
       "CourseGradebookResponse": {
         "required": [
@@ -4569,6 +4922,20 @@
         },
         "description": "Данные гейта кнопок «Начать»/«Продолжить»/«Прервать»."
       },
+      "ExtendClassWindowRequest": {
+        "required": [
+          "minutes"
+        ],
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "description": "На сколько минут продлить (1–240).",
+            "format": "int32"
+          }
+        },
+        "description": "Запрос продления пары."
+      },
       "ExternalModuleBindingResponse": {
         "required": [
           "practicalModuleId",
@@ -4764,7 +5131,7 @@
         "type": "string",
         "format": "binary"
       },
-      "JsonElement": { },
+      "JsonElement": {},
       "ModuleAuthoringLinkResponse": {
         "required": [
           "url",
@@ -5067,6 +5434,13 @@
                 "$ref": "#/components/schemas/ExternalModuleBindingResponse"
               }
             ]
+          },
+          "attemptsPerSession": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         },
         "description": "Детали практики: вид, лимиты и привязка к внешнему модулю."
@@ -5359,6 +5733,37 @@
           }
         },
         "description": "Вопрос с признаком выбора для практического материала."
+      },
+      "SetPracticeAccessRequest": {
+        "required": [
+          "practiceOnlyDuringClass"
+        ],
+        "type": "object",
+        "properties": {
+          "practiceOnlyDuringClass": {
+            "type": "boolean"
+          }
+        },
+        "description": "Запрос смены режима курса."
+      },
+      "StartClassWindowRequest": {
+        "required": [
+          "groupName",
+          "durationMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "groupName": {
+            "type": "string",
+            "description": "Группа студентов."
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "description": "Длительность, минут (5–480).",
+            "format": "int32"
+          }
+        },
+        "description": "Запрос запуска пары."
       },
       "StartModuleSessionRequest": {
         "required": [
@@ -6146,6 +6551,9 @@
     },
     {
       "name": "Courses"
+    },
+    {
+      "name": "ClassWindows"
     },
     {
       "name": "Modules"

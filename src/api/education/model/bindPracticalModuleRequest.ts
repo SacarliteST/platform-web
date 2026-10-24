@@ -14,4 +14,6 @@ export interface BindPracticalModuleRequest {
   triesCount: number;
   /** @nullable */
   timeLimitMinutes: number | null;
+  /** @nullable */
+  attemptsPerSession?: number | null;
 }

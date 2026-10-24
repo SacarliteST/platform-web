@@ -16,6 +16,7 @@ import { toNumber } from '../../../shared/lib';
 import { AppCard, ConfirmModal, QueryBoundary } from '../../../shared/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { SessionEventsFeed } from './SessionEventsFeed';
+import { useClassLock } from '../../class-windows';
 
 /** ~40 с ожидания оценки после возврата, дальше — ручное обновление. */
 const RETURN_POLL_TIMEOUT_MS = 40_000;
@@ -139,6 +140,7 @@ function Gate({
   );
   const startMutation = useStartModuleSession();
   const abandonMutation = useAbandonModuleSession();
+  const locked = useClassLock();
 
   const [error, setError] = useState<string | null>(null);
   const [abandonOpened, setAbandonOpened] = useState(false);
@@ -164,6 +166,10 @@ function Gate({
     }
     if (response.status === 200) {
       window.location.assign(response.data.launchUrl);
+      return;
+    }
+    if (response.status === 403) {
+      setError('Практика доступна только во время пары.');
       return;
     }
     if (response.status === 409) {
@@ -231,7 +237,7 @@ function Gate({
 
             {canResume ? (
               <Group gap="sm">
-                <Button onClick={launch} loading={startMutation.isPending}>
+                <Button onClick={launch} loading={startMutation.isPending} disabled={locked}>
                   Продолжить
                 </Button>
                 <Button
@@ -244,7 +250,7 @@ function Gate({
                 </Button>
               </Group>
             ) : canStartNew ? (
-              <Button onClick={launch} loading={startMutation.isPending} w="fit-content">
+              <Button onClick={launch} loading={startMutation.isPending} disabled={locked} w="fit-content">
                 Начать
               </Button>
             ) : exhausted ? (

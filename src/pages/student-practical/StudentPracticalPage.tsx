@@ -13,6 +13,7 @@ import {
 } from '@mantine/core';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ClassAccessGate, useClassLock } from '../../features/class-windows';
 import { useGetPracticalDetail } from '../../api/education/practicals/practicals';
 import { useGetPracticalTasks } from '../../api/education/practicals/practicals';
 import { useGetPracticalGrade } from '../../api/education/grades/grades';
@@ -77,6 +78,7 @@ export function StudentPracticalPage() {
         </Button>
       </Group>
 
+      <ClassAccessGate courseId={courseId}>
       <QueryBoundary
         isPending={detailQuery.isPending}
         isError={detailQuery.isError || detailQuery.data?.status !== 200}
@@ -117,6 +119,7 @@ export function StudentPracticalPage() {
           )
         }
       </QueryBoundary>
+      </ClassAccessGate>
     </Page>
   );
 }
@@ -133,6 +136,7 @@ function TestTab({ practicalId }: { practicalId: string }) {
   });
   const startTest = useStartTest();
   const submitTest = useSubmitTest();
+  const locked = useClassLock();
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<string | null>(null);
@@ -151,7 +155,11 @@ function TestTab({ practicalId }: { practicalId: string }) {
       await questionsQuery.refetch();
       return;
     }
-    setNotice('Не удалось начать тест. Возможно, попытки исчерпаны.');
+    setNotice(
+      response && response.status === 403
+        ? 'Тест доступен только во время пары.'
+        : 'Не удалось начать тест. Возможно, попытки исчерпаны.',
+    );
   };
 
   const submit = async () => {
@@ -202,7 +210,7 @@ function TestTab({ practicalId }: { practicalId: string }) {
                   Тест ещё не начат
                   {currentStatus.tryNumber ? ` (попытка ${currentStatus.tryNumber})` : ''}.
                 </Text>
-                <Button onClick={beginTest} loading={startTest.isPending} w="fit-content">
+                <Button onClick={beginTest} loading={startTest.isPending} disabled={locked} w="fit-content">
                   Начать тест
                 </Button>
               </Stack>
@@ -311,6 +319,7 @@ function StudentTaskCard({
     query: { enabled: Boolean(taskId), retry: false },
   });
   const upload = useUploadStudentTaskFile();
+  const locked = useClassLock();
   const [error, setError] = useState<string | null>(null);
 
   const file = fileQuery.data?.status === 200 ? fileQuery.data.data : undefined;
@@ -378,7 +387,7 @@ function StudentTaskCard({
         {!isAccepted ? (
           <FileButton onChange={handleUpload}>
             {(props) => (
-              <Button {...props} size="xs" w="fit-content" loading={upload.isPending}>
+              <Button {...props} size="xs" w="fit-content" loading={upload.isPending} disabled={locked}>
                 {file ? 'Заменить файл' : 'Загрузить файл'}
               </Button>
             )}

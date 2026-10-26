@@ -5014,16 +5014,19 @@
                 "type": "null"
               },
               {
+                "description": "Последняя сессия студента по заданию или `null`.",
                 "$ref": "#/components/schemas/ModuleSessionResponse"
               }
             ]
           },
           "attemptsCount": {
             "type": "integer",
+            "description": "Сколько заходов (сессий) уже использовано.",
             "format": "int32"
           },
           "triesCount": {
             "type": "integer",
+            "description": "Сколько заходов разрешено.",
             "format": "int32"
           },
           "timeLimitMinutes": {
@@ -5031,6 +5034,7 @@
               "null",
               "integer"
             ],
+            "description": "Лимит времени на заход, минуты, или `null`.",
             "format": "int32"
           },
           "bestGrade": {
@@ -5038,7 +5042,22 @@
               "null",
               "integer"
             ],
+            "description": "Лучшая оценка по завершённым заходам.",
             "format": "int32"
+          },
+          "attemptsPerSession": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Лимит отправок решения в одном заходе или `null` — без лимита.",
+            "format": "int32"
+          },
+          "submissionsCount": {
+            "type": "integer",
+            "description": "Сколько отправок записано по последней сессии (по журналу событий, с небольшой задержкой).",
+            "format": "int32",
+            "default": 0
           }
         },
         "description": "Данные гейта кнопок «Начать»/«Продолжить»/«Прервать»."

@@ -8,12 +8,14 @@ import type { ExternalModuleBindingResponse, ModuleSessionResponse } from '../..
 
 const refetch = vi.fn();
 let sessionValue: ModuleSessionResponse | null;
+let attemptsPerSession: number | null = null;
+let submissionsCount = 0;
 
 vi.mock('../../../api/education/module-sessions/module-sessions', () => ({
   useGetCurrentModuleSession: () => ({
     data: {
       status: 200,
-      data: { session: sessionValue, attemptsCount: 0, triesCount: 3, bestGrade: null },
+      data: { session: sessionValue, attemptsCount: 0, triesCount: 3, bestGrade: null, attemptsPerSession, submissionsCount },
     },
     isPending: false,
     isError: false,
@@ -86,5 +88,35 @@ describe('StudentExternalPractical: обратный отсчёт активно
     // дальнейшие тики не зовут refetch повторно
     act(() => { vi.advanceTimersByTime(3000); });
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('у активной сессии показывает число отправок и лимит', () => {
+    sessionValue = {
+      sessionId: 's-3', status: 'ACTIVE', endReason: null, grade: null,
+      expiresAt: new Date(Date.now() + 90_000).toISOString(),
+    };
+    attemptsPerSession = 5;
+    submissionsCount = 2;
+    renderCard();
+
+    expect(screen.getByText(/Отправок решения: 2 из 5/)).toBeInTheDocument();
+  });
+
+  it('без лимита отправок пишет «без ограничения»', () => {
+    sessionValue = {
+      sessionId: 's-4', status: 'ACTIVE', endReason: null, grade: null,
+      expiresAt: new Date(Date.now() + 90_000).toISOString(),
+    };
+    attemptsPerSession = null;
+    submissionsCount = 1;
+    renderCard();
+    expect(screen.getByText(/Отправок решения: 1 [(]без ограничения[)]/)).toBeInTheDocument();
+  });
+
+  it('без активной сессии строки с отправками нет', () => {
+    sessionValue = null;
+    attemptsPerSession = 5;
+    renderCard();
+    expect(screen.queryByText(/Отправок решения/)).not.toBeInTheDocument();
   });
 });

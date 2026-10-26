@@ -149,6 +149,8 @@ function Gate({
   const session = gate?.session ?? null;
   const attemptsCount = gate ? toNumber(gate.attemptsCount) : 0;
   const bestGrade = gate?.bestGrade == null ? null : toNumber(gate.bestGrade);
+  const attemptsPerSession = gate?.attemptsPerSession == null ? null : toNumber(gate.attemptsPerSession);
+  const submissionsCount = gate ? toNumber(gate.submissionsCount ?? 0) : 0;
 
   const canStartNew = !isActive(session) && attemptsCount < triesCount;
   const canResume = isActive(session);
@@ -226,6 +228,14 @@ function Gate({
                 ) : null}
               </Group>
             </Group>
+
+            {canResume ? (
+              <Text size="sm" c="dimmed">
+                Отправок решения: {submissionsCount}
+                {attemptsPerSession !== null ? ` из ${attemptsPerSession}` : ' (без ограничения)'}
+                {' '}· счётчик обновляется с небольшой задержкой
+              </Text>
+            ) : null}
 
             {bestGrade !== null ? (
               <Badge color="green" radius="sm" variant="light" w="fit-content">

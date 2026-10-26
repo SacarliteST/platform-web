@@ -11,10 +11,25 @@ import type { ModuleSessionResponse } from './moduleSessionResponse';
  */
 export interface CurrentModuleSessionResponse {
   session: null | ModuleSessionResponse;
+  /** Сколько заходов (сессий) уже использовано. */
   attemptsCount: number;
+  /** Сколько заходов разрешено. */
   triesCount: number;
-  /** @nullable */
+  /**
+     * Лимит времени на заход, минуты, или `null`.
+     * @nullable
+     */
   timeLimitMinutes: number | null;
-  /** @nullable */
+  /**
+     * Лучшая оценка по завершённым заходам.
+     * @nullable
+     */
   bestGrade: number | null;
+  /**
+     * Лимит отправок решения в одном заходе или `null` — без лимита.
+     * @nullable
+     */
+  attemptsPerSession?: number | null;
+  /** Сколько отправок записано по последней сессии (по журналу событий, с небольшой задержкой). */
+  submissionsCount?: number;
 }

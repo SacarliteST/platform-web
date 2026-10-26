@@ -12,7 +12,7 @@ import type {
   ExternalModuleBindingResponse,
   ModuleSessionResponse,
 } from '../../../api/education/model';
-import { toNumber } from '../../../shared/lib';
+import { readReason, toNumber } from '../../../shared/lib';
 import { AppCard, ConfirmModal, QueryBoundary } from '../../../shared/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { SessionEventsFeed } from './SessionEventsFeed';
@@ -173,7 +173,11 @@ function Gate({
       return;
     }
     if (response.status === 409) {
-      setError('Попытки исчерпаны.');
+      setError(
+        readReason(response.data) === 'SessionClosed'
+          ? 'Сессия в модуле уже завершена — результат появится на платформе в течение минуты.'
+          : 'Попытки исчерпаны.',
+      );
       void currentQuery.refetch();
       return;
     }

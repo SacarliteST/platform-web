@@ -14,6 +14,11 @@ const studentLinks: StudentLink[] = [
     description: 'Назначенные курсы, теория, тесты, сдача заданий и протоколы.',
     to: '/student/courses',
   },
+  {
+    title: 'Банк заданий',
+    description: 'Самостоятельная тренировка: любые открытые задания, подсказки и разбор. Не влияет на оценки.',
+    to: '/student/training',
+  },
 ];
 
 export function StudentHomePage() {

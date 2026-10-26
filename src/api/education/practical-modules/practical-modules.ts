@@ -26,10 +26,13 @@ import type {
 import type {
   CreateModuleAuthoringLinkRequest,
   CreatePracticalModuleRequest,
+  CreateTrainingLinkRequest,
   HttpValidationProblemDetails,
   ModuleAuthoringLinkResponse,
   ModuleTaskResponse,
+  ModuleTrainingLinkResponse,
   PracticalModuleResponse,
+  TrainingModuleResponse,
   UpdatePracticalModuleRequest
 } from '../model';
 
@@ -896,4 +899,254 @@ export const useCreatePracticalModuleAuthoringLink = <TError = HttpValidationPro
         TContext
       > => {
       return useMutation(getCreatePracticalModuleAuthoringLinkMutationOptions(options), queryClient);
+    }
+    export type getTrainingModulesResponse200 = {
+  data: TrainingModuleResponse[]
+  status: 200
+}
+
+export type getTrainingModulesResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getTrainingModulesResponse403 = {
+  data: void
+  status: 403
+}
+
+export type getTrainingModulesResponseSuccess = (getTrainingModulesResponse200) & {
+  headers: Headers;
+};
+export type getTrainingModulesResponseError = (getTrainingModulesResponse401 | getTrainingModulesResponse403) & {
+  headers: Headers;
+};
+
+export type getTrainingModulesResponse = (getTrainingModulesResponseSuccess | getTrainingModulesResponseError)
+
+export const getGetTrainingModulesUrl = () => {
+
+
+
+
+  return `/api/v1/practical-modules/training`
+}
+
+/**
+ * Включённые модули, у которых в конфигурации trainingBank.enabled = true.
+ * @summary Модули с открытым банком заданий (студент)
+ */
+export const getTrainingModules = async ( options?: Parameters<typeof educationFetch>[1]): Promise<getTrainingModulesResponse> => {
+
+  return educationFetch<getTrainingModulesResponse>(getGetTrainingModulesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTrainingModulesQueryKey = () => {
+    return [
+    `/api/v1/practical-modules/training`
+    ] as const;
+    }
+
+
+export const getGetTrainingModulesQueryOptions = <TData = Awaited<ReturnType<typeof getTrainingModules>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrainingModules>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTrainingModulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrainingModules>>> = ({ signal }) => getTrainingModules({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTrainingModules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTrainingModulesQueryResult = NonNullable<Awaited<ReturnType<typeof getTrainingModules>>>
+export type GetTrainingModulesQueryError = void
+
+
+export function useGetTrainingModules<TData = Awaited<ReturnType<typeof getTrainingModules>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrainingModules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrainingModules>>,
+          TError,
+          Awaited<ReturnType<typeof getTrainingModules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTrainingModules<TData = Awaited<ReturnType<typeof getTrainingModules>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrainingModules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrainingModules>>,
+          TError,
+          Awaited<ReturnType<typeof getTrainingModules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTrainingModules<TData = Awaited<ReturnType<typeof getTrainingModules>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrainingModules>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Модули с открытым банком заданий (студент)
+ */
+
+export function useGetTrainingModules<TData = Awaited<ReturnType<typeof getTrainingModules>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrainingModules>>, TError, TData>>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTrainingModulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type createTrainingLinkResponse200 = {
+  data: ModuleTrainingLinkResponse
+  status: 200
+}
+
+export type createTrainingLinkResponse400 = {
+  data: HttpValidationProblemDetails
+  status: 400
+}
+
+export type createTrainingLinkResponse401 = {
+  data: void
+  status: 401
+}
+
+export type createTrainingLinkResponse403 = {
+  data: void
+  status: 403
+}
+
+export type createTrainingLinkResponse404 = {
+  data: void
+  status: 404
+}
+
+export type createTrainingLinkResponse409 = {
+  data: void
+  status: 409
+}
+
+export type createTrainingLinkResponse502 = {
+  data: void
+  status: 502
+}
+
+export type createTrainingLinkResponseSuccess = (createTrainingLinkResponse200) & {
+  headers: Headers;
+};
+export type createTrainingLinkResponseError = (createTrainingLinkResponse400 | createTrainingLinkResponse401 | createTrainingLinkResponse403 | createTrainingLinkResponse404 | createTrainingLinkResponse409 | createTrainingLinkResponse502) & {
+  headers: Headers;
+};
+
+export type createTrainingLinkResponse = (createTrainingLinkResponseSuccess | createTrainingLinkResponseError)
+
+export const getCreateTrainingLinkUrl = (practicalModuleId: string,) => {
+
+
+
+
+  return `/api/v1/practical-modules/${practicalModuleId}/training-link`
+}
+
+/**
+ * Обменивает токен студента на токен под audience модуля без сессии и возвращает URL перехода в банк заданий. Открывать в текущей вкладке; необязательный returnPath добавляет кнопку возврата на платформу.
+ * @summary Ссылка входа студента в банк заданий модуля
+ */
+export const createTrainingLink = async (practicalModuleId: string,
+    nullCreateTrainingLinkRequest?: null | CreateTrainingLinkRequest, options?: Parameters<typeof educationFetch>[1]): Promise<createTrainingLinkResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return educationFetch<createTrainingLinkResponse>(getCreateTrainingLinkUrl(practicalModuleId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(nullCreateTrainingLinkRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateTrainingLinkMutationKey = () => ['createTrainingLink'] as const;
+
+export const getCreateTrainingLinkMutationOptions = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTrainingLink>>, TError,CreateTrainingLinkMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTrainingLink>>, TError,CreateTrainingLinkMutationVariables, TContext> => {
+
+const mutationKey = getCreateTrainingLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTrainingLink>>, CreateTrainingLinkMutationVariables> = (props) => {
+          const {practicalModuleId,data} = props ?? {};
+
+          return  createTrainingLink(practicalModuleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTrainingLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createTrainingLink>>>
+    export type CreateTrainingLinkMutationBody = null | CreateTrainingLinkRequest | undefined
+    export type CreateTrainingLinkMutationError = HttpValidationProblemDetails | void
+    export type CreateTrainingLinkMutationVariables = {practicalModuleId: string;data?: null | CreateTrainingLinkRequest}
+
+    /**
+ * @summary Ссылка входа студента в банк заданий модуля
+ */
+export const useCreateTrainingLink = <TError = HttpValidationProblemDetails | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTrainingLink>>, TError,CreateTrainingLinkMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTrainingLink>>,
+        TError,
+        CreateTrainingLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateTrainingLinkMutationOptions(options), queryClient);
     }

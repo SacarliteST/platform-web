@@ -63,6 +63,9 @@ const StudentModulePage = lazy(() =>
 const StudentTheoryPage = lazy(() =>
   import('../../pages/student-theory').then((m) => ({ default: m.StudentTheoryPage })),
 );
+const StudentTrainingPage = lazy(() =>
+  import('../../pages/student-training').then((m) => ({ default: m.StudentTrainingPage })),
+);
 const StudentPracticalPage = lazy(() =>
   import('../../pages/student-practical').then((m) => ({ default: m.StudentPracticalPage })),
 );
@@ -193,6 +196,7 @@ export function AppRouter() {
           }
         />
         <Route path="student/courses" element={<StudentRoute><StudentCoursesPage /></StudentRoute>} />
+        <Route path="student/training" element={<StudentRoute><StudentTrainingPage /></StudentRoute>} />
         <Route
           path="student/courses/:courseId"
           element={<StudentRoute><StudentCoursePage /></StudentRoute>}

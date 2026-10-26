@@ -1113,6 +1113,111 @@
         }
       }
     },
+    "/api/v1/practical-modules/training": {
+      "get": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Модули с открытым банком заданий (студент)",
+        "description": "Включённые модули, у которых в конфигурации trainingBank.enabled = true.",
+        "operationId": "GetTrainingModules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrainingModuleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practical-modules/{practicalModuleId}/training-link": {
+      "post": {
+        "tags": [
+          "PracticalModules"
+        ],
+        "summary": "Ссылка входа студента в банк заданий модуля",
+        "description": "Обменивает токен студента на токен под audience модуля без сессии и возвращает URL перехода в банк заданий. Открывать в текущей вкладке; необязательный returnPath добавляет кнопку возврата на платформу.",
+        "operationId": "CreateTrainingLink",
+        "parameters": [
+          {
+            "name": "practicalModuleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateTrainingLinkRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleTrainingLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "502": {
+            "description": "Bad Gateway"
+          }
+        }
+      }
+    },
     "/api/v1/practicals/{practicalId}/module-sessions": {
       "post": {
         "tags": [
@@ -4877,6 +4982,22 @@
         },
         "description": "Запрос на создание теоретического материала внутри модуля."
       },
+      "CreateTrainingLinkRequest": {
+        "required": [
+          "returnPath"
+        ],
+        "type": "object",
+        "properties": {
+          "returnPath": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Относительный путь на платформе для кнопки «На платформу» в модуле (например, `/student/training`);\r\n`null` — без кнопки."
+          }
+        },
+        "description": "Запрос ссылки входа в банк заданий."
+      },
       "CurrentModuleSessionResponse": {
         "required": [
           "session",
@@ -5341,6 +5462,25 @@
           }
         },
         "description": "Задание из каталога внешнего практического модуля."
+      },
+      "ModuleTrainingLinkResponse": {
+        "required": [
+          "url",
+          "expiresInSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Адрес перехода (токен только во фрагменте). Открывать в текущей вкладке."
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "description": "Время жизни вложенного токена, секунды.",
+            "format": "int32"
+          }
+        },
+        "description": "Ссылка входа студента в банк заданий модуля."
       },
       "MyEducationProfileResponse": {
         "required": [
@@ -6369,6 +6509,35 @@
           }
         },
         "description": "Текст теоретического материала, возвращаемый API системы обучения."
+      },
+      "TrainingModuleResponse": {
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор модуля.",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Короткий идентификатор модуля."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название модуля."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание модуля."
+          }
+        },
+        "description": "Модуль с включённым открытым банком заданий."
       },
       "UpdateAdminProfileRequest": {
         "type": "object",

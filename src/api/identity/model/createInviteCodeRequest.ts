@@ -7,7 +7,7 @@
  */
 
 /**
- * Создание кода приглашения. Пустой Code — сгенерировать случайный.
+ * Создание кода приглашения.
  */
 export interface CreateInviteCodeRequest {
   /** @nullable */
@@ -18,4 +18,6 @@ export interface CreateInviteCodeRequest {
   expiresAt?: string | null;
   /** @nullable */
   maxUses?: number | null;
+  /** @nullable */
+  groupName?: string | null;
 }

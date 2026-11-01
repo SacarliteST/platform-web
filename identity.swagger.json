@@ -824,7 +824,7 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": { }
+                "schema": {}
               }
             }
           }
@@ -844,7 +844,7 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": { }
+                "schema": {}
               }
             }
           }
@@ -1785,10 +1785,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false,
-        "description": "Создание кода приглашения. Пустой Code — сгенерировать случайный."
+        "description": "Создание кода приглашения."
       },
       "CreateUserRequest": {
         "required": [
@@ -1849,6 +1853,10 @@
             "type": "string"
           },
           "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "groupName": {
             "type": "string",
             "nullable": true
           },
@@ -1978,7 +1986,7 @@
             "nullable": true
           }
         },
-        "additionalProperties": { }
+        "additionalProperties": {}
       },
       "RefreshRequest": {
         "required": [
@@ -2429,7 +2437,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ],
   "tags": [

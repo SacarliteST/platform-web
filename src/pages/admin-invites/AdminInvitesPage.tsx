@@ -9,8 +9,8 @@ import { AdminContourTabs } from '../../features/admin-contour';
 import { getIdentityProblemPresentation, type IdentityApiProblemPresentation } from '../../shared/lib/identity-problem-details';
 import { AppCard, ConfirmModal, FormActions, Page, PageBreadcrumbs, PageHeader, QueryBoundary } from '../../shared/ui';
 
-type Form = { code: string; note: string; maxUses: number | string; expiresOn: string };
-const emptyForm: Form = { code: '', note: '', maxUses: '', expiresOn: '' };
+type Form = { code: string; note: string; groupName: string; maxUses: number | string; expiresOn: string };
+const emptyForm: Form = { code: '', note: '', groupName: '', maxUses: '', expiresOn: '' };
 
 function codeState(code: InviteCodeDto): { label: string; color: string } {
   if (!code.isActive) return { label: 'Выключен', color: 'gray' };
@@ -41,6 +41,7 @@ export function AdminInvitesPage() {
         data: {
           code: form.code.trim() || null,
           note: form.note.trim() || null,
+          groupName: form.groupName.trim() || null,
           maxUses,
           // Срок действует до конца выбранного дня (по местному времени).
           expiresAt: form.expiresOn ? new Date(`${form.expiresOn}T23:59:59`).toISOString() : null,
@@ -114,6 +115,7 @@ export function AdminInvitesPage() {
                 <Table.Tr>
                   <Table.Th>Код</Table.Th>
                   <Table.Th>Заметка</Table.Th>
+                  <Table.Th>Группа</Table.Th>
                   <Table.Th>Использован</Table.Th>
                   <Table.Th>Действует до</Table.Th>
                   <Table.Th>Статус</Table.Th>
@@ -133,6 +135,11 @@ export function AdminInvitesPage() {
                       <Table.Td>
                         <Text size="sm" c={code.note ? undefined : 'dimmed'}>
                           {code.note ?? '—'}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm" c={code.groupName ? undefined : 'dimmed'}>
+                          {code.groupName ?? '—'}
                         </Text>
                       </Table.Td>
                       <Table.Td>
@@ -191,6 +198,14 @@ export function AdminInvitesPage() {
               value={form.note}
               maxLength={500}
               onChange={(event) => setForm({ ...form, note: event.currentTarget.value })}
+            />
+            <TextInput
+              label="Учебная группа"
+              description="Студенты, зарегистрированные по коду, сразу попадут в эту группу. Пусто — без группы"
+              placeholder="ИС-21"
+              value={form.groupName}
+              maxLength={50}
+              onChange={(event) => setForm({ ...form, groupName: event.currentTarget.value })}
             />
             <NumberInput
               label="Сколько раз можно использовать"

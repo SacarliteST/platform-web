@@ -17,7 +17,9 @@ Thumbs.db
 /[Pp]romts/
 /[Pp]rompts/
 .codex/
-.agents/
+.agents/*
+!.agents/skills/
+!.agents/skills/**
 .claude/
 .cursor/
 .aider*

@@ -19,5 +19,5 @@ export interface CreateInviteCodeRequest {
   /** @nullable */
   maxUses?: number | null;
   /** @nullable */
-  groupName?: string | null;
+  groupId?: string | null;
 }

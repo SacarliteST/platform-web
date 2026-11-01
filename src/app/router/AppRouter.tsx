@@ -17,6 +17,7 @@ const AdminEventsPage = lazy(() => import('../../pages/admin-events').then((m) =
 const AdminInvitesPage = lazy(() =>
   import('../../pages/admin-invites').then((m) => ({ default: m.AdminInvitesPage })),
 );
+const AdminGroupsPage = lazy(() => import('../../pages/admin-groups').then((m) => ({ default: m.AdminGroupsPage })));
 const RegisterPage = lazy(() => import('../../pages/register').then((m) => ({ default: m.RegisterPage })));
 const ProfilePage = lazy(() => import('../../pages/profile').then((m) => ({ default: m.ProfilePage })));
 const AdminProfilesPage = lazy(() =>
@@ -149,6 +150,7 @@ export function AppRouter() {
         <Route path="admin/events" element={<AdminRoute><AdminEventsPage /></AdminRoute>} />
         <Route path="admin/profiles" element={<AdminRoute><AdminProfilesPage /></AdminRoute>} />
         <Route path="admin/invites" element={<AdminRoute><AdminInvitesPage /></AdminRoute>} />
+        <Route path="admin/groups" element={<AdminRoute><AdminGroupsPage /></AdminRoute>} />
         <Route path="admin/modules" element={<AdminRoute><AdminModulesPage /></AdminRoute>} />
         <Route path="admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 

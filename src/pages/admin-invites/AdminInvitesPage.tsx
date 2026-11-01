@@ -1,7 +1,8 @@
-import { Alert, Badge, Button, Group, Modal, NumberInput, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Alert, Badge, Button, Group, Modal, NumberInput, Select, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useListGroups } from '../../api/identity/groups/groups';
 import { useCreateInviteCode, useDeactivateInviteCode, useListInviteCodes } from '../../api/identity/invite-codes/invite-codes';
 import type { InviteCodeDto } from '../../api/identity/model';
 import { formatUserDateTime } from '../../entities/user';
@@ -9,8 +10,8 @@ import { AdminContourTabs } from '../../features/admin-contour';
 import { getIdentityProblemPresentation, type IdentityApiProblemPresentation } from '../../shared/lib/identity-problem-details';
 import { AppCard, ConfirmModal, FormActions, Page, PageBreadcrumbs, PageHeader, QueryBoundary } from '../../shared/ui';
 
-type Form = { code: string; note: string; groupName: string; maxUses: number | string; expiresOn: string };
-const emptyForm: Form = { code: '', note: '', groupName: '', maxUses: '', expiresOn: '' };
+type Form = { code: string; note: string; groupId: string | null; maxUses: number | string; expiresOn: string };
+const emptyForm: Form = { code: '', note: '', groupId: null, maxUses: '', expiresOn: '' };
 
 function codeState(code: InviteCodeDto): { label: string; color: string } {
   if (!code.isActive) return { label: 'Выключен', color: 'gray' };
@@ -22,6 +23,7 @@ function codeState(code: InviteCodeDto): { label: string; color: string } {
 export function AdminInvitesPage() {
   const queryClient = useQueryClient();
   const codesQuery = useListInviteCodes({ query: { retry: false } });
+  const groupsQuery = useListGroups({ query: { retry: false } });
   const createMutation = useCreateInviteCode();
   const deactivateMutation = useDeactivateInviteCode();
 
@@ -41,7 +43,7 @@ export function AdminInvitesPage() {
         data: {
           code: form.code.trim() || null,
           note: form.note.trim() || null,
-          groupName: form.groupName.trim() || null,
+          groupId: form.groupId,
           maxUses,
           // Срок действует до конца выбранного дня (по местному времени).
           expiresAt: form.expiresOn ? new Date(`${form.expiresOn}T23:59:59`).toISOString() : null,
@@ -199,13 +201,17 @@ export function AdminInvitesPage() {
               maxLength={500}
               onChange={(event) => setForm({ ...form, note: event.currentTarget.value })}
             />
-            <TextInput
+            <Select
               label="Учебная группа"
-              description="Студенты, зарегистрированные по коду, сразу попадут в эту группу. Пусто — без группы"
-              placeholder="ИС-21"
-              value={form.groupName}
-              maxLength={50}
-              onChange={(event) => setForm({ ...form, groupName: event.currentTarget.value })}
+              description="Студенты, зарегистрированные по коду, сразу попадут в эту группу. Пусто — без группы. Список групп задаётся на вкладке «Группы»"
+              placeholder="Без группы"
+              clearable
+              data={(groupsQuery.data?.status === 200 ? groupsQuery.data.data : []).map((group) => ({
+                value: group.id,
+                label: group.name,
+              }))}
+              value={form.groupId}
+              onChange={(value) => setForm({ ...form, groupId: value })}
             />
             <NumberInput
               label="Сколько раз можно использовать"

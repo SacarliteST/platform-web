@@ -7,6 +7,7 @@ const adminTabs = [
   { value: 'events', label: 'Аудит', to: '/admin/events' },
   { value: 'profiles', label: 'Учебные профили', to: '/admin/profiles' },
   { value: 'invites', label: 'Коды приглашения', to: '/admin/invites' },
+  { value: 'groups', label: 'Группы', to: '/admin/groups' },
   { value: 'modules', label: 'Модули', to: '/admin/modules' },
   { value: 'settings', label: 'Настройки', to: '/admin/settings' },
 ] as const;
@@ -26,6 +27,10 @@ function getActiveTab(pathname: string) {
 
   if (pathname.startsWith('/admin/invites')) {
     return 'invites';
+  }
+
+  if (pathname.startsWith('/admin/groups')) {
+    return 'groups';
   }
 
   if (pathname.startsWith('/admin/modules')) {

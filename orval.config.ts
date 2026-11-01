@@ -8,6 +8,7 @@ const identityTagNames: Record<string, string> = {
   Пользователи: 'users',
   Состояние: 'health',
   'Личный кабинет': 'cabinet',
+  Группы: 'groups',
   'Коды приглашения': 'invite-codes',
 };
 

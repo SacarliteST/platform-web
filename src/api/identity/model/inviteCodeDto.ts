@@ -15,6 +15,8 @@ export interface InviteCodeDto {
   /** @nullable */
   note?: string | null;
   /** @nullable */
+  groupId?: string | null;
+  /** @nullable */
   groupName?: string | null;
   createdAt: string;
   /** @nullable */

@@ -18,12 +18,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getCourseStudentAssignments,
   getGetCourseStudentAssignmentsQueryKey,
-  getGetPracticalStudentAssignmentsQueryKey,
-  getPracticalStudentAssignments,
   useChangeCourseStudents,
-  useChangePracticalStudents,
   useGetCourseStudentAssignments,
-  useGetPracticalStudentAssignments,
   useGetStudentGroups,
 } from '../../../api/education/admin-profiles/admin-profiles';
 import type {
@@ -43,8 +39,7 @@ import {
 } from '../model/pending-changes';
 
 type Props = {
-  kind: 'course' | 'practical';
-  id: string;
+  courseId: string;
 };
 
 type AssignmentFilter = 'assigned' | 'all' | 'unassigned';
@@ -84,11 +79,12 @@ function studentsWord(count: number): string {
 }
 
 /**
- * Преподаватель: назначение студентов на курс / практику. Список постраничный, с поиском и фильтром;
+ * Преподаватель: назначение студентов на курс (назначение единое — на курс; доступ к практикам
+ * определяется назначением на их курс). Список постраничный, с поиском и фильтром;
  * правки копятся локально и уходят одним запросом «добавить / убрать», не затрагивая остальных.
  */
-export function StudentAssignmentCard({ kind, id }: Props) {
-  const isCourse = kind === 'course';
+export function StudentAssignmentCard({ courseId }: Props) {
+  const id = courseId;
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
@@ -123,18 +119,13 @@ export function StudentAssignmentCard({ kind, id }: Props) {
     [groupsData],
   );
 
-  const courseQuery = useGetCourseStudentAssignments(id, params, {
-    query: { enabled: isCourse && Boolean(id), retry: false, placeholderData: keepPreviousData },
+  const listQuery = useGetCourseStudentAssignments(id, params, {
+    query: { enabled: Boolean(id), retry: false, placeholderData: keepPreviousData },
   });
-  const practicalQuery = useGetPracticalStudentAssignments(id, params, {
-    query: { enabled: !isCourse && Boolean(id), retry: false, placeholderData: keepPreviousData },
-  });
-  const listQuery = isCourse ? courseQuery : practicalQuery;
   const data = listQuery.data?.status === 200 ? listQuery.data.data : undefined;
 
   const changeCourse = useChangeCourseStudents();
-  const changePractical = useChangePracticalStudents();
-  const saving = isCourse ? changeCourse.isPending : changePractical.isPending;
+  const saving = changeCourse.isPending;
 
   // Первый показ: если на курс ещё никого не назначили, сразу открываем «Все», а не пустой список.
   useEffect(() => {
@@ -175,9 +166,7 @@ export function StudentAssignmentCard({ kind, id }: Props) {
       page: pageNumber,
       pageSize: BULK_PAGE_SIZE,
     };
-    return isCourse
-      ? getCourseStudentAssignments(id, bulkParams)
-      : getPracticalStudentAssignments(id, bulkParams);
+    return getCourseStudentAssignments(id, bulkParams);
   };
 
   /** Собирает всех найденных по текущему поиску и фильтру: страницами по 200 и с подтверждением. */
@@ -218,12 +207,10 @@ export function StudentAssignmentCard({ kind, id }: Props) {
     const batches = buildChangeBatches(pending);
     try {
       for (const batch of batches) {
-        const response = await (isCourse
-          ? changeCourse.mutateAsync({ courseId: id, data: batch })
-          : changePractical.mutateAsync({ practicalId: id, data: batch }));
+        const response = await changeCourse.mutateAsync({ courseId: id, data: batch });
         if (response.status === 204) continue;
         if (response.status === 403) {
-          setNotice({ tone: 'err', text: 'Нет доступа — курс или практика принадлежат другому преподавателю.' });
+          setNotice({ tone: 'err', text: 'Нет доступа — курс принадлежит другому преподавателю.' });
         } else {
           setNotice({
             tone: 'err',
@@ -248,9 +235,7 @@ export function StudentAssignmentCard({ kind, id }: Props) {
 
   const refresh = () =>
     queryClient.invalidateQueries({
-      queryKey: isCourse
-        ? getGetCourseStudentAssignmentsQueryKey(id)
-        : getGetPracticalStudentAssignmentsQueryKey(id),
+      queryKey: getGetCourseStudentAssignmentsQueryKey(id),
     });
 
   const listFailed = listQuery.isError || (listQuery.data !== undefined && listQuery.data.status !== 200);

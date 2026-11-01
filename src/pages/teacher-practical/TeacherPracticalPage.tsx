@@ -29,7 +29,6 @@ import {
   useUpdatePracticalTaskText,
 } from '../../api/education/practicals/practicals';
 import { TeacherExternalPractical, TeacherSessionProtocols } from '../../features/module-practice';
-import { StudentAssignmentCard } from '../../features/student-assignment';
 import { PracticalGradesTable, TestProtocolsTable } from '../../features/teacher-results';
 import {
   useAcceptTaskFile,
@@ -103,7 +102,6 @@ export function TeacherPracticalPage() {
 
             {data.kind === 'external' ? (
               <>
-                <StudentAssignmentCard kind="practical" id={practicalId} />
                 <TeacherSessionProtocols practicalId={practicalId} />
                 <GradesTab practicalId={practicalId} />
               </>
@@ -112,7 +110,6 @@ export function TeacherPracticalPage() {
                 <Tabs.List>
                   <Tabs.Tab value="setup">Настройка</Tabs.Tab>
                   <Tabs.Tab value="tasks">Задания</Tabs.Tab>
-                  <Tabs.Tab value="students">Студенты</Tabs.Tab>
                   <Tabs.Tab value="submissions">Сдачи</Tabs.Tab>
                   <Tabs.Tab value="protocols">Протоколы</Tabs.Tab>
                   <Tabs.Tab value="grades">Оценки</Tabs.Tab>
@@ -122,9 +119,6 @@ export function TeacherPracticalPage() {
                 </Tabs.Panel>
                 <Tabs.Panel value="tasks" pt="md">
                   <TasksTab practicalId={practicalId} />
-                </Tabs.Panel>
-                <Tabs.Panel value="students" pt="md">
-                  <StudentAssignmentCard kind="practical" id={practicalId} />
                 </Tabs.Panel>
                 <Tabs.Panel value="submissions" pt="md">
                   <SubmissionsTab practicalId={practicalId} />

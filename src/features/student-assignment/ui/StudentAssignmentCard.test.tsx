@@ -15,17 +15,13 @@ let pageData: StudentAssignmentPageResponse;
 
 vi.mock('../../../api/education/admin-profiles/admin-profiles', () => ({
   getCourseStudentAssignments: (...args: unknown[]) => fetchCoursePage(...args),
-  getPracticalStudentAssignments: vi.fn(),
   getGetCourseStudentAssignmentsQueryKey: (id: string) => ['course-students', id],
-  getGetPracticalStudentAssignmentsQueryKey: (id: string) => ['practical-students', id],
   useGetCourseStudentAssignments: (_id: string, params: unknown) => {
     courseListParams(params);
     return { data: { status: 200, data: pageData }, isPending: false, isError: false };
   },
   useGetStudentGroups: () => groupsResult,
-  useGetPracticalStudentAssignments: () => ({ data: undefined, isPending: false, isError: false }),
   useChangeCourseStudents: () => ({ mutateAsync: changeCourse, isPending: false }),
-  useChangePracticalStudents: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 const ann = { legacyUserId: 'a', fullName: 'Иванова Анна ', login: 'ivanova', isAssigned: true, group: 'ИС-21' };
@@ -44,7 +40,7 @@ describe('StudentAssignmentCard', () => {
   });
 
   it('показывает студентов с логином и счётчиком назначенных', () => {
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     expect(screen.getByText('Иванова Анна')).toBeInTheDocument();
     expect(screen.getByText('petrov')).toBeInTheDocument();
@@ -55,7 +51,7 @@ describe('StudentAssignmentCard', () => {
   it('копит правки и отправляет их одним запросом «добавить / убрать»', async () => {
     changeCourse.mockResolvedValue({ status: 204, data: undefined });
     const user = userEvent.setup();
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     await user.click(screen.getByLabelText('Назначить: Петров Борис'));
     await user.click(screen.getByLabelText('Назначить: Иванова Анна'));
@@ -74,7 +70,7 @@ describe('StudentAssignmentCard', () => {
 
   it('«Сбросить» отменяет несохранённые правки', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     await user.click(screen.getByLabelText('Назначить: Петров Борис'));
     await user.click(screen.getByRole('button', { name: 'Сбросить' }));
@@ -105,7 +101,7 @@ describe('StudentAssignmentCard', () => {
         }),
       });
     const user = userEvent.setup();
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     await user.click(screen.getByRole('button', { name: /Назначить всех найденных/ }));
 
@@ -119,12 +115,12 @@ describe('StudentAssignmentCard', () => {
   it('показывает ошибку, если сервер отказал в сохранении', async () => {
     changeCourse.mockResolvedValue({ status: 403, data: undefined });
     const user = userEvent.setup();
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     await user.click(screen.getByLabelText('Назначить: Петров Борис'));
     await user.click(screen.getByRole('button', { name: 'Сохранить' }));
 
-    expect(await screen.findByText(/принадлежат другому преподавателю/)).toBeInTheDocument();
+    expect(await screen.findByText(/принадлежит другому преподавателю/)).toBeInTheDocument();
     // правки не потеряны — их можно повторить
     expect(screen.getByText('Изменения: назначить 1, снять 0')).toBeInTheDocument();
   });
@@ -139,7 +135,7 @@ describe('StudentAssignmentCard: группа', () => {
   });
 
   it('показывает группу студента, а без группы — прочерк', () => {
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     expect(screen.getByRole('columnheader', { name: 'Группа' })).toBeInTheDocument();
     expect(screen.getByText('ИС-21')).toBeInTheDocument();
@@ -148,7 +144,7 @@ describe('StudentAssignmentCard: группа', () => {
 
   it('фильтр по группе передаёт её в запрос и сбрасывается', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<StudentAssignmentCard kind="course" id="c-1" />);
+    renderWithProviders(<StudentAssignmentCard courseId="c-1" />);
 
     await user.selectOptions(screen.getByLabelText('Фильтр по группе'), 'ИС-22');
 

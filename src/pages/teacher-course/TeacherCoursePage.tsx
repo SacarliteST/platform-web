@@ -127,6 +127,7 @@ export function TeacherCoursePage() {
         <Tabs.List>
           <Tabs.Tab value="modules">Модули</Tabs.Tab>
           <Tabs.Tab value="windows">Пары</Tabs.Tab>
+          <Tabs.Tab value="students">Студенты</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="modules" pt="md">
       <AppCard p={0}>
@@ -184,9 +185,10 @@ export function TeacherCoursePage() {
         <Tabs.Panel value="windows" pt="md">
           {courseId ? <TeacherClassWindows courseId={courseId} /> : null}
         </Tabs.Panel>
+        <Tabs.Panel value="students" pt="md">
+          {courseId ? <StudentAssignmentCard courseId={courseId} /> : null}
+        </Tabs.Panel>
       </Tabs>
-
-      {courseId ? <StudentAssignmentCard kind="course" id={courseId} /> : null}
 
       <Modal opened={createOpened} onClose={createModal.close} title="Создать модуль" centered>
         <form

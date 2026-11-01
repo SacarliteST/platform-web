@@ -5,12 +5,14 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ClassWindowResponse } from './classWindowResponse';
+import type { ClassWindowStudentOptionResponse } from './classWindowStudentOptionResponse';
 
 /**
- * Режим курса, группы студентов и пары.
+ * Режим курса, группы и студенты для запуска пар, сами пары.
  */
 export interface CourseClassWindowsResponse {
   practiceOnlyDuringClass: boolean;
   groups: string[];
+  students: ClassWindowStudentOptionResponse[];
   windows: ClassWindowResponse[];
 }

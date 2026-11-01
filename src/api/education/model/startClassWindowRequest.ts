@@ -9,8 +9,16 @@
  * Запрос запуска пары.
  */
 export interface StartClassWindowRequest {
-  /** Группа студентов. */
-  groupName: string;
+  /**
+     * Группа студентов; null — пара только для перечисленных студентов.
+     * @nullable
+     */
+  groupName: string | null;
+  /**
+     * Студенты с точечным доступом; нужна группа и/или хотя бы один студент.
+     * @nullable
+     */
+  studentUserIds: string[] | null;
   /** Длительность, минут (5–480). */
   durationMinutes: number;
 }

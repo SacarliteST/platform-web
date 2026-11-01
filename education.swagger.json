@@ -4319,7 +4319,7 @@
         "required": [
           "id",
           "courseId",
-          "groupName",
+          "students",
           "startsAt",
           "endsAt",
           "closedAt",
@@ -4336,7 +4336,16 @@
             "format": "uuid"
           },
           "groupName": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassWindowStudentResponse"
+            }
           },
           "startsAt": {
             "type": "string",
@@ -4358,6 +4367,47 @@
           }
         },
         "description": "Пара."
+      },
+      "ClassWindowStudentResponse": {
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "description": "Студент, которому открыта пара точечно."
+      },
+      "ClassWindowStudentOptionResponse": {
+        "required": [
+          "userId",
+          "displayName",
+          "groupName"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "groupName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Студент курса, которому преподаватель может открыть пару точечно."
       },
       "CompleteModuleSessionRequest": {
         "required": [
@@ -4432,6 +4482,7 @@
         "required": [
           "practiceOnlyDuringClass",
           "groups",
+          "students",
           "windows"
         ],
         "type": "object",
@@ -4445,6 +4496,12 @@
               "type": "string"
             }
           },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassWindowStudentOptionResponse"
+            }
+          },
           "windows": {
             "type": "array",
             "items": {
@@ -4452,7 +4509,7 @@
             }
           }
         },
-        "description": "Режим курса, группы студентов и пары."
+        "description": "Режим курса, группы и студенты для запуска пар, сами пары."
       },
       "CourseGradebookResponse": {
         "required": [
@@ -5676,13 +5733,28 @@
       "StartClassWindowRequest": {
         "required": [
           "groupName",
+          "studentUserIds",
           "durationMinutes"
         ],
         "type": "object",
         "properties": {
           "groupName": {
-            "type": "string",
-            "description": "Группа студентов."
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Группа студентов; null — пара только для перечисленных студентов."
+          },
+          "studentUserIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Студенты с точечным доступом; нужна группа и/или хотя бы один студент."
           },
           "durationMinutes": {
             "type": "integer",

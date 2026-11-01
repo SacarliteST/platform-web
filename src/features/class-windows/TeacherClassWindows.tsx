@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Group, Select, Stack, Switch, Table, Text } from '@mantine/core';
+import { Alert, Badge, Button, Group, MultiSelect, Select, Stack, Switch, Table, Text } from '@mantine/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import {
@@ -9,6 +9,7 @@ import {
   useSetCoursePracticeAccess,
   useStartClassWindow,
 } from '../../api/education/class-windows/class-windows';
+import type { ClassWindowResponse } from '../../api/education/model';
 import { AppCard } from '../../shared/ui';
 import { formatRemaining } from './ClassAccessGate';
 
@@ -29,7 +30,18 @@ function formatTime(value: string) {
   });
 }
 
-/** Вкладка преподавателя «Пары»: режим курса, запуск, продление и завершение пар по группам. */
+function audienceLabel(item: ClassWindowResponse): string {
+  const parts: string[] = [];
+  if (item.groupName) {
+    parts.push(item.groupName);
+  }
+  if (item.students.length > 0) {
+    parts.push(item.students.map((student) => student.displayName).join(', '));
+  }
+  return parts.join(' · ');
+}
+
+/** Вкладка преподавателя «Пары»: режим курса, запуск, продление и завершение пар по группам и студентам. */
 export function TeacherClassWindows({ courseId }: { courseId: string }) {
   const queryClient = useQueryClient();
   const query = useGetCourseClassWindows(courseId, { query: { retry: false, refetchInterval: 20_000 } });
@@ -39,6 +51,7 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
   const modeMutation = useSetCoursePracticeAccess();
 
   const [group, setGroup] = useState<string | null>(null);
+  const [studentIds, setStudentIds] = useState<string[]>([]);
   const [duration, setDuration] = useState<string>('90');
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -58,12 +71,15 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
   };
 
   const start = async () => {
-    if (!group) {
+    if (!group && studentIds.length === 0) {
       return;
     }
     setError(null);
     const response = await startMutation
-      .mutateAsync({ courseId, data: { groupName: group, durationMinutes: Number(duration) } })
+      .mutateAsync({
+        courseId,
+        data: { groupName: group, studentUserIds: studentIds, durationMinutes: Number(duration) },
+      })
       .catch(() => null);
     if (!response) {
       setError('Education API недоступен.');
@@ -71,7 +87,10 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
     }
     if (response.status !== 200) {
       setError(reasonOf(response, 'Не удалось начать пару.'));
+      return;
     }
+    setGroup(null);
+    setStudentIds([]);
     await refresh();
   };
 
@@ -107,7 +126,11 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
   const windows = data?.windows ?? [];
   const active = windows.filter((item) => item.isActive && new Date(item.endsAt).getTime() > now);
   const history = windows.filter((item) => !active.includes(item));
-  const busyGroups = new Set(active.map((item) => item.groupName.toLowerCase()));
+  const busyGroups = new Set(
+    active.map((item) => item.groupName?.toLowerCase()).filter((name): name is string => Boolean(name)),
+  );
+  const busyStudents = new Set(active.flatMap((item) => item.students.map((student) => student.userId)));
+  const hasAudience = (data?.groups.length ?? 0) > 0 || (data?.students.length ?? 0) > 0;
 
   return (
     <Stack gap="md">
@@ -115,7 +138,7 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
         <Stack gap="sm">
           <Switch
             label="Тесты и практика только на парах"
-            description="Когда включено, студенты запускают тесты, практику и сдают файлы только пока идёт пара их группы. Теория и результаты открыты всегда."
+            description="Когда включено, студенты запускают тесты, практику и сдают файлы только пока идёт пара их группы или открытая им лично. Теория и результаты открыты всегда."
             checked={data?.practiceOnlyDuringClass ?? false}
             disabled={!data || modeMutation.isPending}
             onChange={(event) => void toggleMode(event.currentTarget.checked)}
@@ -132,36 +155,63 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
       <AppCard p="md">
         <Stack gap="sm">
           <Text fw={600}>Начать пару</Text>
-          {data && data.groups.length === 0 ? (
+          {!hasAudience && data ? (
             <Text size="sm" c="dimmed">
-              На курс не назначены студенты с указанной группой. Назначьте студентов и задайте им группу.
+              На курс не назначены студенты. Назначьте студентов, чтобы открывать им пары.
             </Text>
           ) : (
-            <Group align="flex-end" gap="sm" wrap="wrap">
-              <Select
-                label="Группа"
-                placeholder="Выберите группу"
-                data={(data?.groups ?? []).map((name) => ({
-                  value: name,
-                  label: name,
-                  disabled: busyGroups.has(name.toLowerCase()),
-                }))}
-                value={group}
-                onChange={setGroup}
-                w={200}
-              />
-              <Select
-                label="Длительность"
-                data={DURATIONS}
-                value={duration}
-                onChange={(value) => setDuration(value ?? '90')}
-                allowDeselect={false}
-                w={200}
-              />
-              <Button onClick={() => void start()} disabled={!group} loading={startMutation.isPending}>
-                Начать пару
-              </Button>
-            </Group>
+            <>
+              <Group align="flex-end" gap="sm" wrap="wrap">
+                <Select
+                  label="Группа"
+                  placeholder="Без группы"
+                  clearable
+                  data={(data?.groups ?? []).map((name) => ({
+                    value: name,
+                    label: name,
+                    disabled: busyGroups.has(name.toLowerCase()),
+                  }))}
+                  value={group}
+                  onChange={setGroup}
+                  w={200}
+                />
+                <MultiSelect
+                  label="Студенты"
+                  placeholder="Без конкретных студентов"
+                  clearable
+                  searchable
+                  data={(data?.students ?? []).map((student) => ({
+                    value: student.userId,
+                    label: student.groupName
+                      ? `${student.displayName} · ${student.groupName}`
+                      : student.displayName,
+                    disabled: busyStudents.has(student.userId),
+                  }))}
+                  value={studentIds}
+                  onChange={setStudentIds}
+                  w={380}
+                />
+                <Select
+                  label="Длительность"
+                  data={DURATIONS}
+                  value={duration}
+                  onChange={(value) => setDuration(value ?? '90')}
+                  allowDeselect={false}
+                  w={200}
+                />
+                <Button
+                  onClick={() => void start()}
+                  disabled={!group && studentIds.length === 0}
+                  loading={startMutation.isPending}
+                >
+                  Начать пару
+                </Button>
+              </Group>
+              <Text size="xs" c="dimmed">
+                Укажите группу, конкретных студентов или и то, и другое. Студенты получат доступ, даже если их группа
+                не выбрана.
+              </Text>
+            </>
           )}
         </Stack>
       </AppCard>
@@ -174,7 +224,7 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
               <Group key={item.id} justify="space-between" wrap="wrap" gap="sm">
                 <Group gap="sm">
                   <Badge color="green" variant="light">
-                    {item.groupName}
+                    {audienceLabel(item)}
                   </Badge>
                   <Text size="sm">
                     до {formatTime(item.endsAt)} · осталось{' '}
@@ -210,7 +260,7 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
         <Table striped withTableBorder withColumnBorders>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Группа</Table.Th>
+              <Table.Th>Аудитория</Table.Th>
               <Table.Th>Начало</Table.Th>
               <Table.Th>Конец</Table.Th>
               <Table.Th>Статус</Table.Th>
@@ -228,7 +278,7 @@ export function TeacherClassWindows({ courseId }: { courseId: string }) {
             ) : (
               history.map((item) => (
                 <Table.Tr key={item.id}>
-                  <Table.Td>{item.groupName}</Table.Td>
+                  <Table.Td>{audienceLabel(item)}</Table.Td>
                   <Table.Td>{formatTime(item.startsAt)}</Table.Td>
                   <Table.Td>{formatTime(item.endsAt)}</Table.Td>
                   <Table.Td>{item.closedAt ? 'Завершена досрочно' : 'Закончилась'}</Table.Td>

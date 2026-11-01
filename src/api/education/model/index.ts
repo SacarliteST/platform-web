@@ -14,6 +14,8 @@ export * from './bindPracticalModuleRequest';
 export * from './changeStudentsRequest';
 export * from './classAccessResponse';
 export * from './classWindowResponse';
+export * from './classWindowStudentOptionResponse';
+export * from './classWindowStudentResponse';
 export * from './completeModuleSessionRequest';
 export * from './configurePracticalQuestionsRequest';
 export * from './courseClassWindowsResponse';

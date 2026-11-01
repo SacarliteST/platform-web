@@ -4,6 +4,7 @@
  * Education.Web | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { ClassWindowStudentResponse } from './classWindowStudentResponse';
 
 /**
  * Пара.
@@ -11,7 +12,9 @@
 export interface ClassWindowResponse {
   id: string;
   courseId: string;
-  groupName: string;
+  /** @nullable */
+  groupName?: string | null;
+  students: ClassWindowStudentResponse[];
   startsAt: string;
   endsAt: string;
   /** @nullable */

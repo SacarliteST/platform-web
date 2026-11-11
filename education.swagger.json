@@ -1510,7 +1510,7 @@
         "tags": [
           "ClassWindows"
         ],
-        "summary": "Начать пару для группы",
+        "summary": "Начать пару для группы и/или перечисленных студентов",
         "operationId": "StartClassWindow",
         "parameters": [
           {
@@ -2509,6 +2509,348 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/task-selection-rule": {
+      "get": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Правило случайной выборки заданий практики",
+        "operationId": "GetTaskSelectionRule",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskSelectionRuleResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Создание/замена правила случайной выборки",
+        "description": "Переводит практику в режим случайной выборки заданий из каталога модуля. Несовместимо с ручным списком заданий (409).",
+        "operationId": "UpsertTaskSelectionRule",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertTaskSelectionRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskSelectionRuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Удаление правила случайной выборки",
+        "description": "Возвращает практику в фиксированный режим. 409, если по назначениям уже есть сессии.",
+        "operationId": "DeleteTaskSelectionRule",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/assignments": {
+      "get": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Таблица «студент → задания» по практике на пару",
+        "operationId": "ListTaskAssignments",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classWindowId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentAssignmentsResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/assignments/regenerate": {
+      "post": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Пересбор набора заданий студента (до первой сессии)",
+        "operationId": "RegenerateTaskAssignments",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateAssignmentsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/my-assignments": {
+      "get": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Набор заданий текущего студента по практике",
+        "description": "404 — правила нет или набор ещё не сформирован (будет сформирован при открытии пары).",
+        "operationId": "GetMyTaskAssignments",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyAssignmentsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/practicals/{practicalId}/assignments/{assignmentId}/start": {
+      "post": {
+        "tags": [
+          "TaskAssignments"
+        ],
+        "summary": "Запуск/продолжение сессии модуля по назначению случайного набора",
+        "operationId": "StartModuleSessionByAssignment",
+        "parameters": [
+          {
+            "name": "practicalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartModuleSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "502": {
+            "description": "Bad Gateway"
           }
         }
       }
@@ -4185,6 +4527,48 @@
         },
         "description": "Студент, доступный для назначения на курс или практический материал."
       },
+      "AssignmentTaskResponse": {
+        "required": [
+          "assignmentId",
+          "externalTaskRef",
+          "sortOrder",
+          "lastState",
+          "bestGrade"
+        ],
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "description": "Идентификатор назначения.",
+            "format": "uuid"
+          },
+          "externalTaskRef": {
+            "type": "string",
+            "description": "Ключ задания внутри модуля."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок задания в наборе.",
+            "format": "int32"
+          },
+          "lastState": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Состояние последней сессии (active/completed/expired) или `null` — сессий не было."
+          },
+          "bestGrade": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Оценка последней завершённой сессии или `null`.",
+            "format": "int32"
+          }
+        },
+        "description": "Задание из случайного набора студента с состоянием последней сессии по нему."
+      },
       "AuthMeResponse": {
         "required": [
           "userId",
@@ -4319,6 +4703,7 @@
         "required": [
           "id",
           "courseId",
+          "groupName",
           "students",
           "startsAt",
           "endsAt",
@@ -4368,23 +4753,6 @@
         },
         "description": "Пара."
       },
-      "ClassWindowStudentResponse": {
-        "required": [
-          "userId",
-          "displayName"
-        ],
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "displayName": {
-            "type": "string"
-          }
-        },
-        "description": "Студент, которому открыта пара точечно."
-      },
       "ClassWindowStudentOptionResponse": {
         "required": [
           "userId",
@@ -4408,6 +4776,23 @@
           }
         },
         "description": "Студент курса, которому преподаватель может открыть пару точечно."
+      },
+      "ClassWindowStudentResponse": {
+        "required": [
+          "userId",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "description": "Студент, которому открыта пара точечно."
       },
       "CompleteModuleSessionRequest": {
         "required": [
@@ -5291,18 +5676,46 @@
         "required": [
           "ref",
           "name",
-          "description"
+          "description",
+          "difficultyLevel",
+          "topicId",
+          "topicName"
         ],
         "type": "object",
         "properties": {
           "ref": {
-            "type": "string"
+            "type": "string",
+            "description": "Непрозрачный ключ задания внутри модуля."
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Название задания."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "Описание задания."
+          },
+          "difficultyLevel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Уровень сложности по шкале модуля или `null`, если модуль его не отдал.",
+            "format": "int16"
+          },
+          "topicId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Идентификатор темы модуля или `null`, если модуль её не отдал."
+          },
+          "topicName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Название темы модуля или `null`, если модуль её не отдал."
           }
         },
         "description": "Задание из каталога внешнего практического модуля."
@@ -5325,6 +5738,28 @@
           }
         },
         "description": "Ссылка входа студента в банк заданий модуля."
+      },
+      "MyAssignmentsResponse": {
+        "required": [
+          "classWindowId",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "classWindowId": {
+            "type": "string",
+            "description": "Пара, к которой относится набор.",
+            "format": "uuid"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentTaskResponse"
+            },
+            "description": "Набор заданий студента."
+          }
+        },
+        "description": "Набор заданий текущего студента по практике на пару."
       },
       "MyEducationProfileResponse": {
         "required": [
@@ -5683,6 +6118,26 @@
         },
         "description": "Данные вопроса тестирования, возвращаемые API системы обучения."
       },
+      "RegenerateAssignmentsRequest": {
+        "required": [
+          "studentId",
+          "classWindowId"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "description": "Идентификатор студента.",
+            "format": "uuid"
+          },
+          "classWindowId": {
+            "type": "string",
+            "description": "Идентификатор пары.",
+            "format": "uuid"
+          }
+        },
+        "description": "Запрос пересбора набора заданий студента на пару (преподаватель, только до первой сессии)."
+      },
       "SelectableQuestionResponse": {
         "required": [
           "id",
@@ -5743,7 +6198,7 @@
               "null",
               "string"
             ],
-            "description": "Группа студентов; null — пара только для перечисленных студентов."
+            "description": "Группа студентов; `null` — пара только для перечисленных студентов."
           },
           "studentUserIds": {
             "type": [
@@ -5899,6 +6354,33 @@
           }
         },
         "description": "Страница студентов для назначения на курс или практический материал."
+      },
+      "StudentAssignmentsResponse": {
+        "required": [
+          "studentId",
+          "studentName",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "description": "Идентификатор студента.",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "description": "Отображаемое имя студента."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentTaskResponse"
+            },
+            "description": "Набор заданий студента на пару."
+          }
+        },
+        "description": "Строка таблицы «студент → задания» по практике на пару (для преподавателя)."
       },
       "StudentGroupResponse": {
         "required": [
@@ -6060,6 +6542,54 @@
           }
         },
         "description": "Данные задания практического материала."
+      },
+      "TaskSelectionRuleResponse": {
+        "required": [
+          "practicalId",
+          "practicalModuleId",
+          "taskCount",
+          "difficultyLevels",
+          "topicRefs",
+          "emptySelectionWarning"
+        ],
+        "type": "object",
+        "properties": {
+          "practicalId": {
+            "type": "string",
+            "description": "Практика.",
+            "format": "uuid"
+          },
+          "practicalModuleId": {
+            "type": "string",
+            "description": "Внешний модуль, из каталога которого выбираются задания.",
+            "format": "uuid"
+          },
+          "taskCount": {
+            "type": "integer",
+            "description": "Количество заданий в наборе студента.",
+            "format": "int32"
+          },
+          "difficultyLevels": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int16"
+            },
+            "description": "Допустимые уровни сложности; пусто — любые."
+          },
+          "topicRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Допустимые темы модуля; пусто — любые."
+          },
+          "emptySelectionWarning": {
+            "type": "boolean",
+            "description": "`true`, если по правилу каталог модуля прямо сейчас не даёт ни одного задания\r\n        (или каталог недоступен) — правило сохранено, но наборы не сформируются."
+          }
+        },
+        "description": "Правило случайной выборки заданий практики."
       },
       "TestProtocolAnswerResponse": {
         "required": [
@@ -6532,6 +7062,49 @@
           }
         },
         "description": "Запрос на обновление заголовка теоретического материала."
+      },
+      "UpsertTaskSelectionRuleRequest": {
+        "required": [
+          "practicalModuleId",
+          "taskCount",
+          "difficultyLevels",
+          "topicRefs"
+        ],
+        "type": "object",
+        "properties": {
+          "practicalModuleId": {
+            "type": "string",
+            "description": "Внешний модуль, из каталога которого выбираются задания.",
+            "format": "uuid"
+          },
+          "taskCount": {
+            "type": "integer",
+            "description": "Количество заданий в наборе студента (1–10).",
+            "format": "int32"
+          },
+          "difficultyLevels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int16"
+            },
+            "description": "Допустимые уровни сложности модуля; пусто — любые."
+          },
+          "topicRefs": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Допустимые темы модуля (идентификаторы тем из каталога); пусто — любые."
+          }
+        },
+        "description": "Запрос создания/замены правила случайной выборки заданий практики."
       }
     }
   },
@@ -6571,6 +7144,9 @@
     },
     {
       "name": "Practicals"
+    },
+    {
+      "name": "TaskAssignments"
     },
     {
       "name": "Questions"

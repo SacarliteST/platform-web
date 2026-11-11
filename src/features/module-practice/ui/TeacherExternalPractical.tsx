@@ -11,6 +11,7 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useBindPracticalModule } from '../../../api/education/practicals/practicals';
+import { useGetTaskSelectionRule } from '../../../api/education/task-assignments/task-assignments';
 import {
   useGetEnabledPracticalModules,
   useGetPracticalModuleTasks,
@@ -31,6 +32,22 @@ export function TeacherExternalPractical({ practicalId, detail, onChanged }: Pro
   const authoring = useOpenModuleAuthoring();
   const isExternal = detail.kind === 'external';
   const binding = detail.moduleBinding;
+  const ruleQuery = useGetTaskSelectionRule(practicalId, { query: { retry: false } });
+  const hasRandomRule = ruleQuery.data?.status === 200;
+
+  if (hasRandomRule) {
+    return (
+      <AppCard p="md">
+        <Stack gap="xs">
+          <Text fw={600}>Внешний модуль</Text>
+          <Text size="sm" c="dimmed">
+            Действует режим случайной выборки заданий — привязка фиксированного задания
+            недоступна. Управление — в карточке «Случайная выборка заданий» ниже.
+          </Text>
+        </Stack>
+      </AppCard>
+    );
+  }
 
   return (
     <AppCard p="md">

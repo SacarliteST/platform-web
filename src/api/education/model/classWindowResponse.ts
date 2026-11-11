@@ -13,7 +13,7 @@ export interface ClassWindowResponse {
   id: string;
   courseId: string;
   /** @nullable */
-  groupName?: string | null;
+  groupName: string | null;
   students: ClassWindowStudentResponse[];
   startsAt: string;
   endsAt: string;

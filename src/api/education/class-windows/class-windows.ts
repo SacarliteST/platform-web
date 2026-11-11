@@ -211,7 +211,7 @@ export const getStartClassWindowUrl = (courseId: string,) => {
 }
 
 /**
- * @summary Начать пару для группы
+ * @summary Начать пару для группы и/или перечисленных студентов
  */
 export const startClassWindow = async (courseId: string,
     startClassWindowRequest: StartClassWindowRequest, options?: Parameters<typeof educationFetch>[1]): Promise<startClassWindowResponse> => {
@@ -270,7 +270,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type StartClassWindowMutationVariables = {courseId: string;data: StartClassWindowRequest}
 
     /**
- * @summary Начать пару для группы
+ * @summary Начать пару для группы и/или перечисленных студентов
  */
 export const useStartClassWindow = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startClassWindow>>, TError,StartClassWindowMutationVariables, TContext>, request?: SecondParameter<typeof educationFetch>}

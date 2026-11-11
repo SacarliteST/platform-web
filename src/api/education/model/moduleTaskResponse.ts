@@ -9,7 +9,25 @@
  * Задание из каталога внешнего практического модуля.
  */
 export interface ModuleTaskResponse {
+  /** Непрозрачный ключ задания внутри модуля. */
   ref: string;
+  /** Название задания. */
   name: string;
+  /** Описание задания. */
   description: string;
+  /**
+     * Уровень сложности по шкале модуля или `null`, если модуль его не отдал.
+     * @nullable
+     */
+  difficultyLevel: number | null;
+  /**
+     * Идентификатор темы модуля или `null`, если модуль её не отдал.
+     * @nullable
+     */
+  topicId: string | null;
+  /**
+     * Название темы модуля или `null`, если модуль её не отдал.
+     * @nullable
+     */
+  topicName: string | null;
 }

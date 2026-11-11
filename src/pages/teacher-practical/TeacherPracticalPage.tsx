@@ -28,7 +28,12 @@ import {
   usePublishPractical,
   useUpdatePracticalTaskText,
 } from '../../api/education/practicals/practicals';
-import { TeacherExternalPractical, TeacherSessionProtocols } from '../../features/module-practice';
+import {
+  TeacherAssignmentSets,
+  TeacherExternalPractical,
+  TeacherSessionProtocols,
+  TaskSelectionRuleCard,
+} from '../../features/module-practice';
 import { PracticalGradesTable, TestProtocolsTable } from '../../features/teacher-results';
 import {
   useAcceptTaskFile,
@@ -102,6 +107,12 @@ export function TeacherPracticalPage() {
 
             {data.kind === 'external' ? (
               <>
+                <TaskSelectionRuleCard
+                  practicalId={practicalId}
+                  binding={data.moduleBinding}
+                  onChanged={() => void detailQuery.refetch()}
+                />
+                <TeacherAssignmentSets practicalId={practicalId} courseId={courseId} />
                 <TeacherSessionProtocols practicalId={practicalId} />
                 <GradesTab practicalId={practicalId} />
               </>

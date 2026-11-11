@@ -17,7 +17,7 @@ import { ClassAccessGate, useClassLock } from '../../features/class-windows';
 import { useGetPracticalDetail } from '../../api/education/practicals/practicals';
 import { useGetPracticalTasks } from '../../api/education/practicals/practicals';
 import { useGetPracticalGrade } from '../../api/education/grades/grades';
-import { StudentExternalPractical } from '../../features/module-practice';
+import { StudentExternalPractical, StudentRandomAssignments } from '../../features/module-practice';
 import {
   useGetStudentTaskFile,
   useUploadStudentTaskFile,
@@ -87,14 +87,18 @@ export function StudentPracticalPage() {
       >
         {(data) =>
           data.kind === 'external' ? (
-            <StudentExternalPractical
-              practicalId={practicalId}
-              binding={data.moduleBinding}
-              triesCount={toNumber(data.triesCount)}
-              timeLimitMinutes={
-                data.timeLimitMinutes == null ? null : toNumber(data.timeLimitMinutes)
-              }
-            />
+            data.moduleBinding ? (
+              <StudentExternalPractical
+                practicalId={practicalId}
+                binding={data.moduleBinding}
+                triesCount={toNumber(data.triesCount)}
+                timeLimitMinutes={
+                  data.timeLimitMinutes == null ? null : toNumber(data.timeLimitMinutes)
+                }
+              />
+            ) : (
+              <StudentRandomAssignments practicalId={practicalId} />
+            )
           ) : (
             <Tabs defaultValue="test">
               <Tabs.List>

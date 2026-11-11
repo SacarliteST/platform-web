@@ -10,7 +10,7 @@
  */
 export interface StartClassWindowRequest {
   /**
-     * Группа студентов; null — пара только для перечисленных студентов.
+     * Группа студентов; `null` — пара только для перечисленных студентов.
      * @nullable
      */
   groupName: string | null;

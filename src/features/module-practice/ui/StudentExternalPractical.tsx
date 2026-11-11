@@ -20,7 +20,19 @@ import { useClassLock } from '../../class-windows';
 
 /** ~40 с ожидания оценки после возврата, дальше — ручное обновление. */
 const RETURN_POLL_TIMEOUT_MS = 40_000;
-const RETURN_POLL_INTERVAL_MS = 2_000;
+
+function getReturnPollInterval(elapsedMs: number): number | false {
+  if (elapsedMs >= RETURN_POLL_TIMEOUT_MS) {
+    return false;
+  }
+  if (elapsedMs < 5_000) {
+    return 1_000;
+  }
+  if (elapsedMs < 15_000) {
+    return 2_000;
+  }
+  return 5_000;
+}
 
 type Props = {
   practicalId: string;
@@ -49,7 +61,11 @@ export function StudentExternalPractical({
   return (
     <Stack gap="md">
       {returnSessionId ? (
-        <ReturnStatus practicalId={practicalId} sessionId={returnSessionId} />
+        <ReturnStatus
+          practicalId={practicalId}
+          taskId={binding.taskId}
+          sessionId={returnSessionId}
+        />
       ) : null}
       <Gate
         practicalId={practicalId}
@@ -298,9 +314,19 @@ function Gate({
   );
 }
 
-function ReturnStatus({ practicalId, sessionId }: { practicalId: string; sessionId: string }) {
+function ReturnStatus({
+  practicalId,
+  taskId,
+  sessionId,
+}: {
+  practicalId: string;
+  taskId: string;
+  sessionId: string;
+}) {
+  const queryClient = useQueryClient();
   const [slow, setSlow] = useState(false);
   const startedAt = useRef(Date.now());
+  const gateInvalidated = useRef(false);
 
   const sessionQuery = useGetModuleSession(practicalId, sessionId, {
     query: {
@@ -312,7 +338,7 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
         if (status !== 'ACTIVE' || slow) {
           return false;
         }
-        return RETURN_POLL_INTERVAL_MS;
+        return getReturnPollInterval(Date.now() - startedAt.current);
       },
     },
   });
@@ -328,6 +354,16 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
     const timer = setTimeout(() => setSlow(true), Math.max(0, remaining));
     return () => clearTimeout(timer);
   }, [status]);
+
+  useEffect(() => {
+    if ((status !== 'COMPLETED' && status !== 'EXPIRED') || gateInvalidated.current) {
+      return;
+    }
+    gateInvalidated.current = true;
+    void queryClient.invalidateQueries({
+      queryKey: getGetCurrentModuleSessionQueryKey(practicalId, { taskId }),
+    });
+  }, [practicalId, queryClient, status, taskId]);
 
   const endReasonText = useMemo(() => {
     switch (session?.endReason) {
@@ -346,11 +382,29 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
 
   const terminal = status === 'COMPLETED' || status === 'EXPIRED';
 
+  if (sessionQuery.isError || (sessionQuery.data && sessionQuery.data.status !== 200)) {
+    return (
+      <Alert color="red" variant="light" title="Не удалось проверить результат">
+        <Stack gap="xs">
+          <Text size="sm">Education API недоступен. Сам результат не потерян.</Text>
+          <Button size="xs" variant="subtle" w="fit-content" onClick={() => void sessionQuery.refetch()}>
+            Повторить
+          </Button>
+        </Stack>
+      </Alert>
+    );
+  }
+
   return (
     <Stack gap="md">
     <AppCard p="md">
       <Stack gap="sm">
-        {status === 'COMPLETED' ? (
+        {sessionQuery.isPending ? (
+          <Group gap="sm">
+            <Loader size="sm" />
+            <Text size="sm">Проверяем результат попытки…</Text>
+          </Group>
+        ) : status === 'COMPLETED' ? (
           <>
             <Group gap="xs">
               <Text fw={600}>Попытка засчитана</Text>
@@ -369,7 +423,7 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
               {endReasonText}
             </Text>
           </>
-        ) : (
+        ) : status === 'ACTIVE' ? (
           <Group gap="sm">
             <Loader size="sm" />
             <Stack gap={2}>
@@ -392,6 +446,10 @@ function ReturnStatus({ practicalId, sessionId }: { practicalId: string; session
               ) : null}
             </Stack>
           </Group>
+        ) : (
+          <Alert color="yellow" variant="light" title="Неизвестное состояние попытки">
+            Обновите страницу. Если состояние не изменится, обратитесь к преподавателю.
+          </Alert>
         )}
       </Stack>
     </AppCard>

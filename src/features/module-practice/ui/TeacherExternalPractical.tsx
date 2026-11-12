@@ -3,7 +3,9 @@ import {
   Button,
   Group,
   Modal,
+  MultiSelect,
   NumberInput,
+  SegmentedControl,
   Select,
   Stack,
   Switch,
@@ -11,7 +13,10 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useBindPracticalModule } from '../../../api/education/practicals/practicals';
-import { useGetTaskSelectionRule } from '../../../api/education/task-assignments/task-assignments';
+import {
+  useGetTaskSelectionRule,
+  useUpsertTaskSelectionRule,
+} from '../../../api/education/task-assignments/task-assignments';
 import {
   useGetEnabledPracticalModules,
   useGetPracticalModuleTasks,
@@ -20,6 +25,14 @@ import type { PracticalDetailResponse } from '../../../api/education/model';
 import { getEducationProblemMessage, toNumber } from '../../../shared/lib';
 import { AppCard } from '../../../shared/ui';
 import { useOpenModuleAuthoring } from '../model/use-open-module-authoring';
+
+const DIFFICULTY_OPTIONS = [
+  { value: '1', label: '1 — базовая' },
+  { value: '2', label: '2 — лёгкая' },
+  { value: '3', label: '3 — средняя' },
+  { value: '4', label: '4 — сложная' },
+  { value: '5', label: '5 — экспертная' },
+];
 
 type Props = {
   practicalId: string;
@@ -88,7 +101,8 @@ export function TeacherExternalPractical({ practicalId, detail, onChanged }: Pro
             <Text fw={600}>Внешний модуль</Text>
             <Text size="sm" c="dimmed">
               Практика проходится на платформе (тест и задания). Можно перевести её на
-              внешний модуль — доступно только для практики без сдач студентов.
+              внешний модуль — одно задание всем или случайный набор каждому студенту.
+              Доступно только для практики без сдач студентов.
             </Text>
             <Button size="xs" w="fit-content" onClick={() => setOpened(true)}>
               Привязать внешний модуль
@@ -126,13 +140,18 @@ function BindModal({
 }) {
   const modulesQuery = useGetEnabledPracticalModules({ query: { enabled: opened, retry: false } });
   const bindMutation = useBindPracticalModule();
+  const upsertRuleMutation = useUpsertTaskSelectionRule();
 
+  const [mode, setMode] = useState<'fixed' | 'random'>('fixed');
   const [moduleId, setModuleId] = useState<string | null>(null);
   const [taskRef, setTaskRef] = useState<string | null>(null);
   const [tries, setTries] = useState<number | string>(1);
   const [attemptsPerSession, setAttemptsPerSession] = useState<number | string>('');
   const [noLimit, setNoLimit] = useState(true);
   const [limit, setLimit] = useState<number | string>(120);
+  const [taskCount, setTaskCount] = useState<number | string>(3);
+  const [difficulty, setDifficulty] = useState<string[]>([]);
+  const [topics, setTopics] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -140,6 +159,7 @@ function BindModal({
       return;
     }
     const b = detail.moduleBinding;
+    setMode('fixed');
     setModuleId(b?.practicalModuleId ?? null);
     setTaskRef(b?.externalTaskRef ?? null);
     setTries(toNumber(detail.triesCount, 1));
@@ -148,6 +168,9 @@ function BindModal({
     );
     setNoLimit(detail.timeLimitMinutes == null);
     setLimit(detail.timeLimitMinutes == null ? 120 : toNumber(detail.timeLimitMinutes));
+    setTaskCount(3);
+    setDifficulty([]);
+    setTopics([]);
     setError(null);
   }, [opened, detail]);
 
@@ -164,10 +187,62 @@ function BindModal({
   });
   const tasks = tasksQuery.data?.status === 200 ? tasksQuery.data.data : [];
 
+  const topicOptions = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const task of tasks) {
+      if (task.topicId && !byId.has(task.topicId)) {
+        byId.set(task.topicId, task.topicName ?? task.topicId);
+      }
+    }
+    return [...byId.entries()].map(([value, label]) => ({ value, label }));
+  }, [tasks]);
+
+  const submitRandom = async (selectedModuleId: string) => {
+    const response = await upsertRuleMutation
+      .mutateAsync({
+        practicalId,
+        data: {
+          practicalModuleId: selectedModuleId,
+          taskCount: Number(taskCount) || 1,
+          difficultyLevels: difficulty.map(Number),
+          topicRefs: topics,
+        },
+      })
+      .catch(() => null);
+
+    if (!response) {
+      setError('Education API недоступен.');
+      return;
+    }
+    if (response.status === 200) {
+      onDone();
+      return;
+    }
+    if (response.status === 409) {
+      setError(
+        'Случайную выборку нельзя включить: у практики есть ручной список заданий или уже выданные наборы с сессиями студентов.',
+      );
+      return;
+    }
+    if (response.status === 404) {
+      setError('Модуль не найден или отключён.');
+      return;
+    }
+    setError('Не удалось сохранить правило случайной выборки.');
+  };
+
   const submit = async () => {
     setError(null);
-    if (!moduleId || !taskRef) {
-      setError('Выберите модуль и задание.');
+    if (!moduleId) {
+      setError('Выберите модуль.');
+      return;
+    }
+    if (mode === 'random') {
+      await submitRandom(moduleId);
+      return;
+    }
+    if (!taskRef) {
+      setError('Выберите задание модуля.');
       return;
     }
 
@@ -224,57 +299,112 @@ function BindModal({
           onChange={(value) => {
             setModuleId(value);
             setTaskRef(null);
+            setTopics([]);
           }}
           withAsterisk
         />
 
-        <Select
-          label="Задание модуля"
-          placeholder={
-            !moduleId
-              ? 'Сначала выберите модуль'
-              : tasksQuery.isPending
-                ? 'Загрузка каталога…'
-                : tasksQuery.data?.status === 502
-                  ? 'Модуль недоступен'
-                  : 'Выберите задание'
-          }
-          data={tasks.map((task) => ({ value: task.ref, label: task.name }))}
-          value={taskRef}
-          onChange={setTaskRef}
-          disabled={!moduleId || tasks.length === 0}
-          withAsterisk
+        <SegmentedControl
+          value={mode}
+          onChange={(value) => setMode(value as 'fixed' | 'random')}
+          data={[
+            { value: 'fixed', label: 'Одно задание всем' },
+            { value: 'random', label: 'Случайный набор каждому' },
+          ]}
+          fullWidth
         />
 
-        <Group grow align="flex-start">
-          <NumberInput label="Заходов (запусков модуля)" min={1} value={tries} onChange={setTries} />
-          <NumberInput
-            label="Отправок решения в одном заходе"
-            description="Пусто — без ограничения"
-            min={1}
-            value={attemptsPerSession}
-            onChange={setAttemptsPerSession}
-          />
-          <NumberInput
-            label="Лимит времени, мин"
-            min={1}
-            value={limit}
-            onChange={setLimit}
-            disabled={noLimit}
-          />
-        </Group>
-        <Switch
-          label="Без лимита времени"
-          checked={noLimit}
-          onChange={(event) => setNoLimit(event.currentTarget.checked)}
-        />
+        {mode === 'fixed' ? (
+          <>
+            <Select
+              label="Задание модуля"
+              placeholder={
+                !moduleId
+                  ? 'Сначала выберите модуль'
+                  : tasksQuery.isPending
+                    ? 'Загрузка каталога…'
+                    : tasksQuery.data?.status === 502
+                      ? 'Модуль недоступен'
+                      : 'Выберите задание'
+              }
+              data={tasks.map((task) => ({ value: task.ref, label: task.name }))}
+              value={taskRef}
+              onChange={setTaskRef}
+              disabled={!moduleId || tasks.length === 0}
+              withAsterisk
+            />
+
+            <Group grow align="flex-start">
+              <NumberInput label="Заходов (запусков модуля)" min={1} value={tries} onChange={setTries} />
+              <NumberInput
+                label="Отправок решения в одном заходе"
+                description="Пусто — без ограничения"
+                min={1}
+                value={attemptsPerSession}
+                onChange={setAttemptsPerSession}
+              />
+              <NumberInput
+                label="Лимит времени, мин"
+                min={1}
+                value={limit}
+                onChange={setLimit}
+                disabled={noLimit}
+              />
+            </Group>
+            <Switch
+              label="Без лимита времени"
+              checked={noLimit}
+              onChange={(event) => setNoLimit(event.currentTarget.checked)}
+            />
+          </>
+        ) : (
+          <>
+            <NumberInput
+              label="Заданий каждому студенту"
+              description="При открытии пары каждый студент получит свой случайный набор из каталога модуля"
+              min={1}
+              max={10}
+              value={taskCount}
+              onChange={setTaskCount}
+              withAsterisk
+            />
+            <MultiSelect
+              label="Сложность"
+              description="Пусто — любая сложность"
+              data={DIFFICULTY_OPTIONS}
+              value={difficulty}
+              onChange={setDifficulty}
+              clearable
+            />
+            <MultiSelect
+              label="Темы модуля"
+              description={
+                !moduleId
+                  ? 'Сначала выберите модуль'
+                  : tasksQuery.data?.status === 502
+                    ? 'Каталог модуля недоступен — темы можно задать позже'
+                    : 'Пусто — любые темы'
+              }
+              placeholder={tasksQuery.isPending ? 'Загрузка каталога…' : 'Выберите темы'}
+              data={topicOptions}
+              value={topics}
+              onChange={setTopics}
+              disabled={!moduleId || topicOptions.length === 0}
+              searchable
+              clearable
+            />
+          </>
+        )}
 
         <Group justify="flex-end" mt="sm">
           <Button variant="default" onClick={onClose}>
             Отмена
           </Button>
-          <Button loading={bindMutation.isPending} onClick={submit}>
-            Привязать
+          <Button
+            loading={mode === 'fixed' ? bindMutation.isPending : upsertRuleMutation.isPending}
+            onClick={submit}
+          >
+            {mode === 'fixed' ? 'Привязать' : 'Включить случайную выборку'}
           </Button>
         </Group>
       </Stack>

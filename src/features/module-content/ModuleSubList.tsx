@@ -16,7 +16,8 @@ type ModuleSubListProps = {
   creating: boolean;
   deleting: boolean;
   onCreate: (name: string) => Promise<string | null>;
-  onDelete: (id: string) => Promise<void>;
+  /** Возвращает текст ошибки или null при успехе — как onCreate. */
+  onDelete: (id: string) => Promise<string | null>;
   renderActions?: (item: ModuleSubItem) => ReactNode;
 };
 
@@ -148,7 +149,11 @@ export function ModuleSubList({
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (deleteTarget) {
-            await onDelete(deleteTarget.id);
+            setError(null);
+            const failure = await onDelete(deleteTarget.id);
+            if (failure) {
+              setError(failure);
+            }
           }
           setDeleteTarget(null);
         }}

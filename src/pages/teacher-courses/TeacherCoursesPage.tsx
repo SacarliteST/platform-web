@@ -65,6 +65,7 @@ export function TeacherCoursesPage() {
   const [createOpened, createModal] = useDisclosure(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const trimmedSearch = search.trim();
 
@@ -112,9 +113,20 @@ export function TeacherCoursesPage() {
     if (!deleteTarget) {
       return;
     }
-    await deleteMutation.mutateAsync({ courseId: deleteTarget.id }).catch(() => null);
-    await coursesQuery.refetch();
-    setDeleteTarget(null);
+    setDeleteError(null);
+    const response = await deleteMutation
+      .mutateAsync({ courseId: deleteTarget.id })
+      .catch(() => null);
+    if (response && response.status === 204) {
+      await coursesQuery.refetch();
+      setDeleteTarget(null);
+      return;
+    }
+    setDeleteError(
+      response && response.data && typeof response.data === 'object'
+        ? getEducationProblemMessage(response.data, response.status)
+        : 'Не удалось удалить курс.',
+    );
   };
 
   return (
@@ -134,6 +146,12 @@ export function TeacherCoursesPage() {
           Создать курс
         </Button>
       </Group>
+
+      {deleteError ? (
+        <Alert color="red" variant="light" withCloseButton onClose={() => setDeleteError(null)}>
+          {deleteError}
+        </Alert>
+      ) : null}
 
       <TextInput
         label="Поиск"

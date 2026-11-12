@@ -46,6 +46,7 @@ export function TeacherCoursePage() {
   const [name, setName] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const course =
     coursesQuery.data?.status === 200
@@ -85,9 +86,20 @@ export function TeacherCoursePage() {
     if (!deleteTarget) {
       return;
     }
-    await deleteMutation.mutateAsync({ moduleId: deleteTarget.id }).catch(() => null);
-    await modulesQuery.refetch();
-    setDeleteTarget(null);
+    setDeleteError(null);
+    const response = await deleteMutation
+      .mutateAsync({ moduleId: deleteTarget.id })
+      .catch(() => null);
+    if (response && response.status === 204) {
+      await modulesQuery.refetch();
+      setDeleteTarget(null);
+      return;
+    }
+    setDeleteError(
+      response && response.data && typeof response.data === 'object'
+        ? getEducationProblemMessage(response.data, response.status)
+        : 'Не удалось удалить модуль.',
+    );
   };
 
   return (
@@ -122,6 +134,12 @@ export function TeacherCoursePage() {
           </Button>
         </Group>
       </Group>
+
+      {deleteError ? (
+        <Alert color="red" variant="light" withCloseButton onClose={() => setDeleteError(null)}>
+          {deleteError}
+        </Alert>
+      ) : null}
 
       <Tabs defaultValue="modules">
         <Tabs.List>

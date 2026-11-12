@@ -130,8 +130,13 @@ export function TeacherModulePage() {
               return problemText(response.data, response.status, 'Не удалось создать материал.');
             }}
             onDelete={async (id) => {
-              await deleteTheory.mutateAsync({ theoryId: id }).catch(() => null);
-              await theoriesQuery.refetch();
+              const response = await deleteTheory.mutateAsync({ theoryId: id }).catch(() => null);
+              if (!response) return 'Education API недоступен.';
+              if (response.status === 204) {
+                await theoriesQuery.refetch();
+                return null;
+              }
+              return problemText(response.data, response.status, 'Не удалось удалить материал.');
             }}
             renderActions={(item) => (
               <Button
@@ -241,8 +246,13 @@ export function TeacherModulePage() {
               return problemText(response.data, response.status, 'Не удалось создать практику.');
             }}
             onDelete={async (id) => {
-              await deletePractical.mutateAsync({ practicalId: id }).catch(() => null);
-              await practicalsQuery.refetch();
+              const response = await deletePractical.mutateAsync({ practicalId: id }).catch(() => null);
+              if (!response) return 'Education API недоступен.';
+              if (response.status === 204) {
+                await practicalsQuery.refetch();
+                return null;
+              }
+              return problemText(response.data, response.status, 'Не удалось удалить практику.');
             }}
             renderActions={(item) => (
               <Button
